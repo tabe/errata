@@ -3,7 +3,7 @@ YPSILON = ypsilon --sitelib=sitelib
 .PHONY: migrate test
 
 migrate:
-	mysql -u root -p typo < db/typo.sql
+	mysql -u root -p errata < db/errata.sql
 
 test:
-	$(YPSILON) tests/typo.scm
+	$(YPSILON) tests/errata.scm

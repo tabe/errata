@@ -1,4 +1,4 @@
-(library (typo)
+(library (errata)
   (export start
           connect
           close
@@ -58,7 +58,7 @@
       (cond ((logged-in? x)
              => (lambda (sess)
                   (if (destroy (user-account (session-user sess)))
-                      (page (io) "Now you have left typo. Thanks for your favor.")
+                      (page (io) "Now you have left errata.fixedpoint.jp. Thanks for your favor.")
                       (page (io sess) "Hmm ... an error occurred."))))
             (else
              (redirect (io) "/")))))

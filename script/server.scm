@@ -3,7 +3,7 @@
 
 (import (rnrs)
         (srfi :48)
-        (typo))
+        (errata))
 
 (define *port-number* 3000)
 
@@ -16,7 +16,7 @@
 
 (dynamic-wind
     (lambda ()
-      (connect "localhost" "root" "yoursql" "typo"))
+      (connect "localhost" "root" "yoursql" "errata"))
     (lambda ()
       (start (port-number)))
     close)
