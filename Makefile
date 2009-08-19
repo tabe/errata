@@ -1,9 +1,26 @@
 YPSILON = ypsilon --sitelib=sitelib
+YPSILON_SITELIB = /home/tabe/lunula/sitelib:/home/tabe/base64:/home/tabe/ssax:/home/tabe/uri:/home/tabe/ypsilon-foreign-lib/sitelib:/home/tabe/ypsilon-http/sitelib
 
-.PHONY: migrate test
+.PHONY: check migrate stats test
+
+check: test
 
 migrate:
 	mysql -u root -p errata < db/errata.sql
 
+start:
+	env YPSILON_SITELIB=$(YPSILON_SITELIB) script/server
+
+image:
+	env YPSILON_SITELIB=$(YPSILON_SITELIB) $(YPSILON) script/image-server.scm
+
+stop:
+	kill -QUIT `pidof ypsilon`
+
+stats:
+	wc -l sitelib/errata.scm sitelib/errata/*.scm
+
 test:
-	$(YPSILON) tests/errata.scm
+	env YPSILON_SITELIB=$(YPSILON_SITELIB) $(YPSILON) tests/errata/isbn.scm
+	env YPSILON_SITELIB=$(YPSILON_SITELIB) $(YPSILON) tests/errata/query.scm
+	env YPSILON_SITELIB=$(YPSILON_SITELIB) $(YPSILON) tests/errata.scm

@@ -1,0 +1,22 @@
+body {
+    background-color: #ffffff;
+}
+
+#menus {
+    padding: 0.5em;
+    background-color: #a7f43d;
+    width: 60%;
+    float: left;
+}
+
+#links {
+    background-color: #dddddd;
+    width: 38%;
+    float: right;
+}
+
+#bottom {
+    clear: both;
+    text-align: right;
+    font-size: small;
+}
