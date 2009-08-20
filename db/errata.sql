@@ -2,6 +2,8 @@ drop table if exists account;
 drop table if exists bib;
 drop table if exists revision;
 drop table if exists exlibris;
+drop table if exists publicity;
+drop table if exists review;
 drop table if exists quote;
 drop table if exists fix;
 drop table if exists rep;
@@ -45,6 +47,21 @@ create table exlibris (
   id int not null auto_increment,
   account_id int not null,
   revision_id int not null,
+  created_at datetime,
+  updated_at datetime,
+  primary key (id)
+);
+create table publicity (
+  id int not null auto_increment,
+  exlibris_id int not null,
+  created_at datetime,
+  updated_at datetime,
+  primary key (id)
+);
+create table review (
+  id int not null auto_increment,
+  exlibris_id int not null,
+  body text not null,
   created_at datetime,
   updated_at datetime,
   primary key (id)

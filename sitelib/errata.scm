@@ -16,52 +16,21 @@
           (lunula tree)
           (lunula gettext)
           (only (errata query) query-image)
-          (only (errata isbn) valid-isbn?))
+          (only (errata isbn) valid-isbn?)
+          (errata model))
 
   (define (blank? x)
     (or (not x)
         (and (string? x) (string-null? x))))
 
-  (define (maybe-number id)
-    (if (string? id) (string->number id) id))
-
-  (define-record-type account-to-login
-    (parent account)
-    (fields nick password)
-    (protocol
-     (lambda (n)
-       (lambda (nick password)
-         (let ((p (n #f nick #f password #f "plain")))
-           (p nick password))))))
-
-  (define-record-type bib
-    (fields (mutable id) (mutable title) isbn (mutable image))
-    (protocol
-     (lambda (p)
-       (lambda (id title isbn image)
-         (p (maybe-number id)
-            title
-            isbn
-            image)))))
-
-  (define-record-type revision
-    (fields (mutable id) (mutable bib-id) (mutable name) revised-at)
-    (protocol
-     (lambda (p)
-       (lambda (id bib-id name revised-at)
-         (p (maybe-number id)
-            (maybe-number bib-id)
-            name
-            revised-at)))))
-
-  (define-record-type exlibris
-    (fields (mutable id) account-id revision-id)
-    (protocol
-     (lambda (p)
-       (lambda (id account-id revision-id)
-         (p (maybe-number id)
-            (maybe-number account-id)
-            (maybe-number revision-id))))))
+  (define (string->id str)
+    (cond ((string->number str)
+           => (lambda (id)
+                (and (exact? id)
+                     (integer? id)
+                     (< 0 id)
+                     id)))
+          (else #f)))
 
   (define (valid-account? a)
     (and (account? a)
@@ -216,60 +185,125 @@
 
        (specify-bib (form (io sess) (bib) base)))))
 
+  (define-syntax with-session&id
+    (syntax-rules ()
+      ((_ (io request data) proc)
+       (with-session
+        (io request)
+        (lambda (sess)
+          (cond ((and data (assq 'id (content->alist data)))
+                 => (lambda (pair)
+                      (cond ((string->id (cdr pair))
+                             => (lambda (id) (proc sess id)))
+                            (else (redirect (io sess) 'shelf)))))
+                (else (redirect (io sess) 'shelf))))))))
+
   (define-scenario (put-off io request data)
-    (with-session
-     (io request)
-     (lambda (sess)
-       (cond ((and data (assq 'id (content->alist data)))
-              => (lambda (pair)
-                   (cond ((string->number (cdr pair))
-                          => (lambda (id)
-                               (let ((c (form (io sess) (confirmation) base (__ are-you-sure-put-off-this-one?))))
-                                 (cond ((yes? c)
-                                        (if (destroy exlibris id)
-                                            (page (io sess) base (__ you-have-put-it-off))
-                                            (page (io sess) base (__ hmm-we-have-failed-to-put-off-your-exlibris))))
-                                       (else
-                                        (redirect (io sess) 'shelf))))))
-                         (else
-                          (redirect (io sess) 'shelf)))))
-             (else
-              (redirect (io sess) 'shelf))))))
+    (with-session&id
+     (io request data)
+     (lambda (sess id)
+       (let ((c (form (io sess) (confirmation) base (__ are-you-sure-put-off-this-one?))))
+         (cond ((yes? c)
+                (if (destroy exlibris id)
+                    (page (io sess) base (__ you-have-put-it-off))
+                    (page (io sess) base (__ hmm-we-have-failed-to-put-off-your-exlibris))))
+               (else
+                (redirect (io sess) 'shelf)))))))
 
   (define-scenario (shelf io request)
     (with-session
      (io request)
      (lambda (sess)
        (let ((id (account-id (user-account (session-user sess)))))
-         (page (io sess) shelf
-               (tree->string
-                (map (lambda (ex)
-                       (let ((r (lookup revision (exlibris-revision-id ex))))
-                         (if r
-                             (let ((b (lookup bib (revision-bib-id r))))
-                               (if r
-                                   (html:div
-                                    (html:image ((src (bib-image b))))
-                                    (html:p (bib-title b))
-                                    (html:p (bib-isbn b))
-                                    (html:form ((action (build-entry-path 'put-off (session-uuid sess)))
-                                                (method "POST"))
-                                               (html:input ((type "hidden") (name "id") (value (exlibris-id ex))))
-                                               (html:input ((type "submit") (value (__ put-off)))))
-                                    )
-                                   "??"))
-                             "?")))
-                     (lookup-all exlibris `((account-id ,id))))))))))
+         (page (io sess) shelf id)))))
+
+  (define-scenario (modify-exlibris io request data)
+    (with-session&id
+     (io request data)
+     (lambda (sess id)
+       (let ((ex (lookup exlibris id)))
+         (if ex
+             (let ((r (lookup revision (exlibris-revision-id ex))))
+               (let loop ((r-new (form (io sess) (revision r) base)))
+                 (cond ((valid-revision? r-new)
+                        (revision-bib-id-set! r-new (revision-bib-id r))
+                        (if (and (save r-new)
+                                 (begin
+                                   (exlibris-revision-id-set! ex (revision-id r-new))
+                                   (save ex)))
+                            (page (io sess) base (__ updated))
+                            (page (io sess) base (__ hmm-an-error-occurred))))
+                       (else
+                        (loop (form (io sess) (revision r-new) base (__ please-retry)))))))
+             (redirect (io sess) 'shelf))))))
+
+  (define-scenario (share-exlibris io request data)
+    (with-session&id
+     (io request data)
+     (lambda (sess id)
+       (let ((ex (lookup exlibris id)))
+         (if ex
+             (let ((c (form (io sess) (confirmation) base (__ are-you-sure-share-this-one?))))
+               (if (yes? c)
+                   (if (save (make-publicity #f id))
+                       (redirect (io sess) 'shelf)
+                       (page (io sess) base (__ hmm-an-error-occurred)))
+                   (redirect (io sess) 'shelf)))
+             (redirect (io sess) 'shelf))))))
+
+  (define-scenario (hide-exlibris io request data)
+    (with-session&id
+     (io request data)
+     (lambda (sess id)
+       (let ((c (form (io sess) (confirmation) base (__ are-you-sure-hide-this-one?))))
+         (if (yes? c)
+             (if (destroy publicity id)
+                 (redirect (io sess) 'shelf)
+                 (page (io sess) base (__ hmm-an-error-occurred)))
+             (redirect (io sess) 'shelf))))))
+
+  (define (valid-review? r)
+    (and (review? r)
+         (cond ((review-body r)
+                => (lambda (body)
+                     (let ((length (string-length body)))
+                       (< 0 length 1024))))
+               (else #f))))
+
+  (define-scenario (edit-review io request data)
+    (with-session&id
+     (io request data)
+     (lambda (sess id)
+       (let ((r (lookup review `((exlibris-id ,id)))))
+         (let loop ((r-new (form (io sess) (review r) base)))
+           (cond ((valid-review? r-new)
+                  (if (review? r) (review-id-set! r-new (review-id r)))
+                  (review-exlibris-id-set! r-new id)
+                  (if (save r-new)
+                      (redirect (io sess) 'shelf)
+                      (page (io sess) base (__ hmm-an-error-occurred))))
+                 (else
+                  (loop (form (io sess) (review r-new) base (__ please-retry))))))))))
+
+  (define-scenario (board io request)
+    (cond ((logged-in? (parameter-of request))
+           => (lambda (sess)
+                (page (io sess) board "")))
+          (else
+           (page (io) board ""))))
 
   (add-input-fields account (#f text text password text #f))
   (add-input-fields account-to-login (text password))
   (add-input-fields confirmation (text))
   (add-input-fields bib (#f text text #f))
   (add-input-fields revision (#f #f text text))
+  (add-input-fields review (#f #f textarea))
 
   (templates "/home/tabe/errata/templates")
   (static-template "static")
-  ;;(template-environment (only (rnrs) list quote) (lunula html))
+  (template-environment (except (rnrs) div)
+                        (lunula html)
+                        (errata helper))
 
   (gettext
 
