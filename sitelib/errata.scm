@@ -261,17 +261,43 @@
                              "?")))
                      (lookup-all exlibris `((account-id ,id))))))))))
 
-  (add-input-types account (#f text text password text #f))
-  (add-input-types account-to-login (text password))
-  (add-input-types confirmation (text))
-  (add-input-types bib (#f text text #f))
-  (add-input-types revision (#f #f text text))
+  (add-input-fields account (#f text text password text #f))
+  (add-input-fields account-to-login (text password))
+  (add-input-fields confirmation (text))
+  (add-input-fields bib (#f text text #f))
+  (add-input-fields revision (#f #f text text))
 
   (templates "/home/tabe/errata/templates")
   (static-template "static")
   ;;(template-environment (only (rnrs) list quote) (lunula html))
 
   (gettext
+
+   ;; fields
+   (account-nick (en "nick")
+                 (ja "ニックネーム"))
+   (account-name (en "name")
+                 (ja "名前"))
+   (account-password (en "password")
+                     (ja "パスワード"))
+   (account-mail-address (en "mail address")
+                         (ja "メールアドレス"))
+   (account-to-login-nick (en "nick")
+                          (ja "ニックネーム"))
+   (account-to-login-password (en "password")
+                              (ja "パスワード"))
+   (confirmation-ok (en "OK?")
+                    (ja "OK?"))
+   (bib-title (en "title")
+              (ja "タイトル"))
+   (bib-isbn (en "ISBN")
+             (ja "ISBN"))
+   (revision-name (en "name")
+                  (ja "名前"))
+   (revision-revised-at (en "revised at")
+                        (ja "改訂日時"))
+
+   ;; messages
    (hmm-an-error-occurred (en "Hmm ... an error occurred.")
                           (ja "残念ながら ... エラーが発生しました。"))
    (you-have-already-logged-in (en "You have already logged in!")
