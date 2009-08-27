@@ -231,7 +231,7 @@
                                  (begin
                                    (exlibris-revision-id-set! ex (revision-id r-new))
                                    (save ex)))
-                            (page (io sess) base (__ updated))
+                            (redirect (io sess) 'shelf)
                             (page (io sess) base (__ hmm-an-error-occurred))))
                        (else
                         (loop (form (io sess) (revision r-new) base (__ please-retry)))))))
@@ -243,12 +243,9 @@
      (lambda (sess id)
        (let ((ex (lookup exlibris id)))
          (if ex
-             (let ((c (form (io sess) (confirmation) base (__ are-you-sure-share-this-one?))))
-               (if (yes? c)
-                   (if (save (make-publicity #f id))
-                       (redirect (io sess) 'shelf)
-                       (page (io sess) base (__ hmm-an-error-occurred)))
-                   (redirect (io sess) 'shelf)))
+             (if (save (make-publicity #f id))
+                 (redirect (io sess) 'shelf)
+                 (page (io sess) base (__ hmm-an-error-occurred)))
              (redirect (io sess) 'shelf))))))
 
   (define-scenario (hide-exlibris io request data)
