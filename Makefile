@@ -1,5 +1,5 @@
 YPSILON = ypsilon --sitelib=sitelib
-YPSILON_SITELIB = /home/tabe/lunula/sitelib:/home/tabe/base64:/home/tabe/ssax:/home/tabe/uri:/home/tabe/ypsilon-foreign-lib/sitelib:/home/tabe/ypsilon-http/sitelib
+YPSILON_SITELIB = /home/tabe/lunula/sitelib:/home/tabe/base64:/home/tabe/lcs:/home/tabe/ssax:/home/tabe/uri:/home/tabe/ypsilon-foreign-lib/sitelib:/home/tabe/ypsilon-http/sitelib
 
 .PHONY: check migrate fixtures stats test
 
@@ -22,6 +22,7 @@ stop:
 
 stats:
 	wc -l sitelib/errata.scm sitelib/errata/*.scm
+	wc -l templates/*.scm
 
 test:
 	env YPSILON_SITELIB=$(YPSILON_SITELIB) $(YPSILON) tests/errata/helper.scm

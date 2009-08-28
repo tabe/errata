@@ -27,9 +27,18 @@
     (cond ((string->number str)
            => (lambda (id)
                 (and (exact? id)
-                     (integer? id)
+                     (fixnum? id)
                      (< 0 id)
                      id)))
+          (else #f)))
+
+  (define (string->page str)
+    (cond ((string->number str)
+           => (lambda (page)
+                (and (exact? page)
+                     (fixnum? page)
+                     (<= 0 page)
+                     page)))
           (else #f)))
 
   (define (valid-account? a)
@@ -131,15 +140,17 @@
 
        (define (specify-bib b)
 
-         (define (confirm-bib url title)
+         (define (confirm-bib isbn13 isbn10 url title)
            (let ((c (form (io sess) (confirmation) base
                           (__ is-this-content-ok?)
-                          (if (eof-object? url)
-                              (bib-title b)
-                              (tree->string (list (html:br)
-                                                  title
-                                                  (html:br)
-                                                  (html:image ((src url)))))))))
+                          (tree->string
+                           (if (eof-object? url)
+                               (list (html:br)
+                                     (bib-title b))
+                               (list (html:br)
+                                     title
+                                     (html:br)
+                                     (html:image ((src url)))))))))
 
              (define (specify-revision r)
                (cond ((valid-revision? r)
@@ -156,6 +167,10 @@
                       (specify-revision (form (io sess) (revision r) base (__ please-retry))))))
 
              (cond ((pregexp-match "^[yY]" (ok? c))
+                    (unless (eof-object? isbn13)
+                      (bib-isbn13-set! b isbn13))
+                    (unless (eof-object? isbn10)
+                      (bib-isbn10-set! b isbn10))
                     (unless (eof-object? title)
                       (bib-title-set! b title))
                     (unless (eof-object? url)
@@ -169,17 +184,24 @@
                     (specify-bib (form (io sess) (bib b) base (__ please-retry)))))))
 
          (let ((title (bib-title b))
-               (isbn (bib-isbn b)))
+               (isbn (bib-isbn13 b)))
            (cond ((and (blank? title)
                        (blank? isbn))
                   (specify-bib (form (io sess) (bib b) base (__ please-input-title-or-isbn))))
                  ((blank? isbn)
-                  (confirm-bib (eof-object) (eof-object)))
+                  (confirm-bib (eof-object) (eof-object) (eof-object) (eof-object)))
                  ((valid-isbn? isbn)
-                  (let ((url-and-title (query-image isbn)))
-                    (call-with-port (open-string-input-port url-and-title)
-                      (lambda (port)
-                        (confirm-bib (get-line port) (get-line port))))))
+                  (let ((info (query-image isbn)))
+                    (cond ((eof-object? info)
+                           (specify-bib (form (io sess) (bib b) base (__ please-check-isbn))))
+                          (else
+                           (call-with-port (open-string-input-port info)
+                             (lambda (port)
+                               (let* ((isbn13 (get-line port))
+                                      (isbn10 (get-line port))
+                                      (url (get-line port))
+                                      (title (get-line port)))
+                                 (confirm-bib isbn13 isbn10 url title))))))))
                  (else
                   (specify-bib (form (io sess) (bib b) base (__ please-check-isbn)))))))
 
@@ -198,6 +220,19 @@
                             (else (redirect (io sess) 'shelf)))))
                 (else (redirect (io sess) 'shelf))))))))
 
+  (define-syntax with-session/
+    (syntax-rules ()
+      ((_ (io request data) (sess (v key string->v default) ...) thunk)
+       (with-session
+        (io request)
+        (lambda (sess)
+          (let ((alist (and data (content->alist data))))
+            (let ((v (cond ((and alist (assq 'key alist))
+                            => (lambda (pair) (or (string->v (cdr pair)) default)))
+                           (else default)))
+                  ...)
+              thunk)))))))
+
   (define-scenario (put-off io request data)
     (with-session&id
      (io request data)
@@ -210,12 +245,21 @@
                (else
                 (redirect (io sess) 'shelf)))))))
 
-  (define-scenario (shelf io request)
-    (with-session
-     (io request)
-     (lambda (sess)
-       (let ((id (account-id (user-account (session-user sess)))))
-         (page (io sess) shelf id)))))
+  (define-scenario (shelf io request data)
+    (with-session/
+     (io request data)
+     (sess (p page string->page 0))
+     (let ((id (account-id (user-account (session-user sess)))))
+       (page (io sess) shelf (list id p)))))
+
+  (define-scenario (desk io request data)
+    (with-session&id
+     (io request data)
+     (lambda (sess id)
+       (let ((ex (lookup exlibris id)))
+         (if ex
+             (page (io sess) desk id)
+             (redirect (io sess) 'shelf))))))
 
   (define-scenario (modify-exlibris io request data)
     (with-session&id
@@ -231,7 +275,7 @@
                                  (begin
                                    (exlibris-revision-id-set! ex (revision-id r-new))
                                    (save ex)))
-                            (redirect (io sess) 'shelf)
+                            (page (io sess) desk id)
                             (page (io sess) base (__ hmm-an-error-occurred))))
                        (else
                         (loop (form (io sess) (revision r-new) base (__ please-retry)))))))
@@ -244,7 +288,7 @@
        (let ((ex (lookup exlibris id)))
          (if ex
              (if (save (make-publicity #f id))
-                 (redirect (io sess) 'shelf)
+                 (page (io sess) desk id)
                  (page (io sess) base (__ hmm-an-error-occurred)))
              (redirect (io sess) 'shelf))))))
 
@@ -255,7 +299,7 @@
        (let ((c (form (io sess) (confirmation) base (__ are-you-sure-hide-this-one?))))
          (if (yes? c)
              (if (destroy publicity id)
-                 (redirect (io sess) 'shelf)
+                 (page (io sess) desk id)
                  (page (io sess) base (__ hmm-an-error-occurred)))
              (redirect (io sess) 'shelf))))))
 
@@ -277,7 +321,7 @@
                   (if (review? r) (review-id-set! r-new (review-id r)))
                   (review-exlibris-id-set! r-new id)
                   (if (save r-new)
-                      (redirect (io sess) 'shelf)
+                      (page (io sess) desk id)
                       (page (io sess) base (__ hmm-an-error-occurred))))
                  (else
                   (loop (form (io sess) (review r-new) base (__ please-retry))))))))))
@@ -289,12 +333,117 @@
           (else
            (page (io) board ""))))
 
+  (define-scenario (new-report io request data)
+    (with-session&id
+     (io request data)
+     (lambda (sess id)
+       (let ((acc-id (account-id (user-account (session-user sess))))
+             (r (lookup revision id)))
+         (if r
+             (let loop ((q (form (io sess) (quotation) base)))
+               (cond ((valid-quotation? q)
+                      (quotation-account-id-set! q acc-id)
+                      (quotation-revision-id-set! q id)
+                      (if (save q)
+                          (let lp ((c (form (io sess) (correction) base)))
+                            (cond ((valid-correction? c)
+                                   (correction-account-id-set! c acc-id)
+                                   (correction-quotation-id-set! c (quotation-id q))
+                                   (if (save c)
+                                       (let ((r (make-report #f acc-id id "Example" (quotation-id q) (correction-id c))))
+                                         (if (save r)
+                                             (page (io sess) base (__ reported))
+                                             (page (io sess) base (__ hmm-an-error-occurred))))
+                                       (page (io sess) base (__ hmm-an-error-occurred))))
+                                  (else
+                                   (lp (form (io sess) (correction c) base)))))
+                          (page (io sess) base (__ hmm-an-error-occurred))))
+                     (else
+                      (loop (form (io sess) (quotation q) base)))))
+             (redirect (io sess) 'shelf))))))
+
+  (define (prepare-report-to-modify rep q c)
+    (make-report-to-modify
+     (report-subject rep)
+     (quotation-page q)
+     (quotation-position q)
+     (quotation-body q)
+     (correction-body c)))
+
+  (define (update-quotation q modified)
+    (make-quotation
+     #f
+     (quotation-account-id q)
+     (quotation-revision-id q)
+     (report-to-modify-page modified)
+     (report-to-modify-position modified)
+     (report-to-modify-quotation-body modified)))
+
+  (define (update-correction c q modified)
+    (make-correction
+     #f
+     (correction-account-id c)
+     (quotation-id q)
+     (report-to-modify-correction-body modified)))
+
+  (define (update-report rep q c modified)
+    (let ((q-new (update-quotation q modified)))
+      (and (save q-new)
+           (let ((c-new (update-correction c q-new modified)))
+             (and (save c-new)
+                  (let ((rep-new (make-report
+                                  #f
+                                  (report-account-id rep)
+                                  (report-revision-id rep)
+                                  (report-to-modify-subject modified)
+                                  (quotation-id q-new)
+                                  (correction-id c-new))))
+                    (and (destroy rep)
+                         (save rep-new)
+                         rep-new)))))))
+
+  (define-scenario (modify-report io request data)
+    (with-session&id
+     (io request data)
+     (lambda (sess id)
+       (let ((acc-id (account-id (user-account (session-user sess))))
+             (rep (lookup report id)))
+         (if rep
+             (let ((q (lookup quotation (report-quotation-id rep)))
+                   (c (lookup correction (report-correction-id rep))))
+               (cond ((and (quotation? q)
+                           (correction? c))
+                      (let loop ((modified (form (io sess) (report-to-modify (prepare-report-to-modify rep q c)) base)))
+                        (cond ((valid-report-to-modify? modified)
+                               (if (update-report rep q c modified)
+                                   (redirect (io sess) 'shelf)
+                                   (page (io sess) base (__ hmm-an-error-occurred))))
+                              (else
+                               (loop (form (io sess) (report-to-modify modified) base (__ please-retry)))))))
+                     (else
+                      (redirect (io sess) 'shelf))))
+             (redirect (io sess) 'shelf))))))
+
+  (define-scenario (drop-report io request data)
+    (with-session&id
+     (io request data)
+     (lambda (sess id)
+       (let ((rep (lookup report id)))
+         (if (and (report? rep)
+                  (destroy rep))
+             (redirect (io sess) 'shelf)
+             (page (io sess) base (__ hmm-an-error-occurred)))))))
+
   (add-input-fields account (#f text text password text #f))
   (add-input-fields account-to-login (text password))
   (add-input-fields confirmation (text))
-  (add-input-fields bib (#f text text #f))
+  (add-input-fields bib (#f text text #f #f))
   (add-input-fields revision (#f #f text text))
   (add-input-fields review (#f #f textarea))
+  (add-input-fields quotation (#f #f #f text text textarea))
+  (add-input-fields correction (#f #f #f textarea))
+  (add-input-fields report (#f #f #f text #f #f))
+  (add-input-fields report-to-modify (text text text textarea textarea))
 
   (templates "/home/tabe/errata/templates")
   (static-template "static")
@@ -321,8 +470,8 @@
                     (ja "OK?"))
    (bib-title (en "title")
               (ja "タイトル"))
-   (bib-isbn (en "ISBN")
-             (ja "ISBN"))
+   (bib-isbn13 (en "ISBN")
+               (ja "ISBN"))
    (revision-name (en "name")
                   (ja "名前"))
    (revision-revised-at (en "revised at")

@@ -2,16 +2,20 @@ body {
     background-color: #ffffff;
 }
 
+form {
+    display: inline;
+}
+
 #menus {
     padding: 0.5em;
     background-color: #a7f43d;
-    width: 60%;
+    width: 70%;
     float: left;
 }
 
 #links {
     background-color: #dddddd;
-    width: 38%;
+    width: 28%;
     float: right;
 }
 
@@ -19,4 +23,31 @@ body {
     clear: both;
     text-align: right;
     font-size: small;
+}
+
+.diff {
+    width: 98%;
+    border: 1px solid #dddddd;
+}
+
+.diff tr {
+    border: 1px solid #dddddd;
+}
+
+.diff td {
+    width: 49%;
+}
+
+.diff blockquote {
+    width: 98%;
+    margin: 0.3em;
+    background-color: #dddddd;
+}
+
+.diff .minus {
+    background-color: #ffc573;
+}
+
+.diff .plus {
+    background-color: #78afe3;
 }

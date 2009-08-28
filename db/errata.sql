@@ -4,9 +4,9 @@ drop table if exists revision;
 drop table if exists exlibris;
 drop table if exists publicity;
 drop table if exists review;
-drop table if exists quote;
-drop table if exists fix;
-drop table if exists rep;
+drop table if exists quotation;
+drop table if exists correction;
+drop table if exists report;
 drop table if exists ack;
 drop table if exists nak;
 drop table if exists pro;
@@ -28,7 +28,8 @@ create table account (
 create table bib (
   id int not null auto_increment,
   title text not null,
-  isbn varchar(13),
+  isbn13 varchar(13),
+  isbn10 varchar(10),
   image varchar(256),
   created_at datetime,
   updated_at datetime,
@@ -66,27 +67,31 @@ create table review (
   updated_at datetime,
   primary key (id)
 );
-create table quote (
+create table quotation (
   id int not null auto_increment,
-  user_id int not null,
+  account_id int not null,
   revision_id int not null,
+  page varchar(256),
+  position varchar(256),
   body text not null,
   created_at datetime,
   updated_at datetime,
   primary key (id)
 );
-create table fix (
+create table correction (
   id int not null auto_increment,
-  quote_id int not null,
+  account_id int not null,
+  quotation_id int not null,
   body text not null,
   primary key (id)
 );
-create table rep (
+create table report (
   id int not null auto_increment,
-  user_id int not null,
+  account_id int not null,
+  revision_id int not null,
   subject varchar(256) not null,
-  quote_id int not null,
-  fix_id int,
+  quotation_id int not null,
+  correction_id int,
   created_at datetime,
   updated_at datetime,
   primary key (id)
@@ -95,7 +100,7 @@ create table ack (
   id int not null auto_increment,
   user_id int not null,
   comment text not null,
-  fix_id int,
+  correction_id int,
   created_at datetime,
   updated_at datetime,
   primary key (id)
@@ -111,7 +116,7 @@ create table nak (
 create table pro (
   id int not null auto_increment,
   user_id int not null,
-  fix_id int not null,
+  correction_id int not null,
   comment text not null,
   created_at datetime,
   updated_at datetime,
@@ -120,9 +125,9 @@ create table pro (
 create table con (
   id int not null auto_increment,
   user_id int not null,
-  fix_id int not null,
+  correction_id int not null,
   comment text not null,
-  alternative_fix_id int,
+  alternative_correction_id int,
   created_at datetime,
   updated_at datetime,
   primary key (id)

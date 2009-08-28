@@ -10,7 +10,10 @@
           bib-id
           bib-title
           bib-title-set!
-          bib-isbn
+          bib-isbn10
+          bib-isbn10-set!
+          bib-isbn13
+          bib-isbn13-set!
           bib-image
           bib-image-set!
           revision
@@ -45,7 +48,55 @@
           review-id-set!
           review-exlibris-id
           review-exlibris-id-set!
-          review-body)
+          review-body
+          quotation
+          quotation?
+          valid-quotation?
+          make-quotation
+          quotation-id
+          quotation-id-set!
+          quotation-account-id
+          quotation-account-id-set!
+          quotation-revision-id
+          quotation-revision-id-set!
+          quotation-page
+          quotation-position
+          quotation-body
+          correction
+          correction?
+          valid-correction?
+          make-correction
+          correction-id
+          correction-id-set!
+          correction-account-id
+          correction-account-id-set!
+          correction-quotation-id
+          correction-quotation-id-set!
+          correction-body
+          report
+          report?
+          make-report
+          report-id
+          report-id-set!
+          report-account-id
+          report-account-id-set!
+          report-revision-id
+          report-revision-id-set!
+          report-subject
+          report-quotation-id
+          report-quotation-id-set!
+          report-correction-id
+          report-correction-id-set!
+          report-to-modify
+          report-to-modify?
+          valid-report-to-modify?
+          make-report-to-modify
+          report-to-modify-subject
+          report-to-modify-page
+          report-to-modify-position
+          report-to-modify-quotation-body
+          report-to-modify-correction-body
+          )
   (import (rnrs)
           (lunula session))
 
@@ -62,13 +113,14 @@
            (p nick password))))))
 
   (define-record-type bib
-    (fields (mutable id) (mutable title) isbn (mutable image))
+    (fields (mutable id) (mutable title) (mutable isbn13) (mutable isbn10) (mutable image))
     (protocol
      (lambda (p)
-       (lambda (id title isbn image)
+       (lambda (id title isbn13 isbn10 image)
          (p (maybe-number id)
             title
-            isbn
+            isbn13
+            isbn10
             image)))))
 
   (define-record-type revision
@@ -106,5 +158,57 @@
          (p (maybe-number id)
             (maybe-number exlibris-id)
             body)))))
+
+  (define-record-type quotation
+    (fields (mutable id) (mutable account-id) (mutable revision-id) page position body)
+    (protocol
+     (lambda (p)
+       (lambda (id account-id revision-id page position body)
+         (p (maybe-number id)
+            (maybe-number account-id)
+            (maybe-number revision-id)
+            page
+            position
+            body)))))
+
+  (define (valid-quotation? q)
+    (quotation? q))
+
+  (define-record-type correction
+    (fields (mutable id) (mutable account-id) (mutable quotation-id) body)
+    (protocol
+     (lambda (p)
+       (lambda (id account-id quotation-id body)
+         (p (maybe-number id)
+            (maybe-number account-id)
+            (maybe-number quotation-id)
+            body)))))
+
+  (define (valid-correction? c)
+    (correction? c))
+
+  (define-record-type report
+    (fields (mutable id) (mutable account-id) (mutable revision-id) subject (mutable quotation-id) (mutable correction-id))
+    (protocol
+     (lambda (p)
+       (lambda (id account-id exlibris-id subject quotation-id correction-id)
+         (p (maybe-number id)
+            (maybe-number account-id)
+            (maybe-number revision-id)
+            subject
+            (maybe-number quotation-id)
+            (maybe-number correction-id))))))
+
+  (define-record-type report-to-modify
+    (fields subject page position quotation-body correction-body))
+
+  (define (valid-report-to-modify? x)
+    (and (report-to-modify? x)
+         (let ((qb (report-to-modify-quotation-body x))
+               (cb (report-to-modify-correction-body x)))
+           (and (string? qb)
+                (not (string=? qb ""))
+                (string? cb)
+                (not (string=? qb cb))))))
 
 )
