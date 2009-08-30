@@ -193,8 +193,8 @@
                  ((valid-isbn? isbn)
                   (call/cc
                    (lambda (cont)
-                     (let ((info (guard ((i/o-error? e)
-                                         (else
+                     (let ((info (guard (e
+                                         ((i/o-error? e)
                                           (write e)
                                           (newline)
                                           (cont (specify-bib (form (io sess) (bib b) base (__ hmm-an-error-occurred))))))
