@@ -191,17 +191,24 @@
                  ((blank? isbn)
                   (confirm-bib (eof-object) (eof-object) (eof-object) (eof-object)))
                  ((valid-isbn? isbn)
-                  (let ((info (query-image isbn)))
-                    (cond ((eof-object? info)
-                           (specify-bib (form (io sess) (bib b) base (__ please-check-isbn))))
-                          (else
-                           (call-with-port (open-string-input-port info)
-                             (lambda (port)
-                               (let* ((isbn13 (get-line port))
-                                      (isbn10 (get-line port))
-                                      (url (get-line port))
-                                      (title (get-line port)))
-                                 (confirm-bib isbn13 isbn10 url title))))))))
+                  (call/cc
+                   (lambda (cont)
+                     (let ((info (guard ((i/o-error? e)
+                                         (else
+                                          (write e)
+                                          (newline)
+                                          (cont (specify-bib (form (io sess) (bib b) base (__ hmm-an-error-occurred))))))
+                                   (query-image isbn))))
+                       (cond ((eof-object? info)
+                              (specify-bib (form (io sess) (bib b) base (__ please-check-isbn))))
+                             (else
+                              (call-with-port (open-string-input-port info)
+                                (lambda (port)
+                                  (let* ((isbn13 (get-line port))
+                                         (isbn10 (get-line port))
+                                         (url    (get-line port))
+                                         (title  (get-line port)))
+                                    (confirm-bib isbn13 isbn10 url title))))))))))
                  (else
                   (specify-bib (form (io sess) (bib b) base (__ please-check-isbn)))))))
 
