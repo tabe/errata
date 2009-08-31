@@ -191,7 +191,7 @@
     (fields (mutable id) (mutable account-id) (mutable revision-id) subject (mutable quotation-id) (mutable correction-id))
     (protocol
      (lambda (p)
-       (lambda (id account-id exlibris-id subject quotation-id correction-id)
+       (lambda (id account-id revision-id subject quotation-id correction-id)
          (p (maybe-number id)
             (maybe-number account-id)
             (maybe-number revision-id)
