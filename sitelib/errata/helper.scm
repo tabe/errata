@@ -21,7 +21,7 @@
 
   (define (links uuid . _)
     (html:ul
-     (map
+     (vector-map
       (lambda (path)
         (if (string? uuid)
             (html:li (html:a ((href (string-append path "?" uuid))) path))
