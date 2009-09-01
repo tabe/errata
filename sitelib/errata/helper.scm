@@ -8,6 +8,7 @@
   (import (except (rnrs) div)
           (only (core) format)
           (match)
+          (only (srfi :13) string-tokenize)
           (only (lcs) lcs-fold)
           (only (lunula gettext) __)
           (only (lunula mod_lisp) entry-paths build-entry-path)
@@ -26,6 +27,9 @@
             (html:li (html:a ((href (string-append path "?" uuid))) path))
             (html:li (html:a ((href path)) path))))
       (entry-paths))))
+
+  (define (datetime->date str)
+    (car (string-tokenize str)))
 
   (define-syntax with-uuid
     (syntax-rules ()
@@ -50,7 +54,7 @@
           (html:td ((style "color:#555555;")) (bib-isbn10 b)))
          (html:tr
           (html:th ((style "text-align:left;")) (__ Revision))
-          (html:td ((style "color:#555555;")) (cons* (html:escape-string (revision-name r)) "(" (revision-revised-at r) ")" x)))
+          (html:td ((style "color:#555555;")) (cons* (html:escape-string (revision-name r)) "(" (datetime->date (revision-revised-at r)) ")" x)))
          (html:tr
           (html:td y)
           (html:td z)))))))
@@ -101,8 +105,8 @@
   (define (report-frame uuid b r rep)
     (html:div
      (revision-skeleton b r '() '() '())
-     (revision-reviews r)
      (go-to-table uuid r)
+     (html:h4 (__ Detail))
      (diff-table
       (revision-report-tr uuid r rep
                           (with-uuid
@@ -116,6 +120,7 @@
     (html:table
      ((class "diff"))
      (html:tr
+      ((class "title"))
       (html:th (__ Quotation))
       (html:th (__ Correction))
       (html:td))
@@ -141,8 +146,7 @@
 
   (define (revision-reviews r)
     (html:div
-     (__ Review)
-     "&nbsp;"
+     (html:h4 (__ Review))
      (let ((ls (lookup-all review (format "EXISTS (SELECT * FROM exlibris ex WHERE ex.id = review.exlibris_id AND ex.revision_id = '~d')" (revision-id r)))))
        (if (null? ls)
            "(なし)"
@@ -239,16 +243,15 @@
                 agms)))))))))
 
   (define (revision-reports uuid r proc)
-    (let ((reports (lookup-all report `((revision-id ,(revision-id r))))))
-      (cond ((null? reports) '())
-            (else
-             (diff-table
-              (map
-               (lambda (rep)
-                 (revision-report-tr uuid r rep
-                                     (proc rep)
-                                     (lambda (q c) '())))
-               reports))))))
+    (append
+     (html:h4 (__ Table))
+     (diff-table
+      (map
+       (lambda (rep)
+         (revision-report-tr uuid r rep
+                             (proc rep)
+                             (lambda (q c) '())))
+       (lookup-all report `((revision-id ,(revision-id r))))))))
 
   (define (revision-frame uuid b r)
     (html:div
