@@ -7,10 +7,8 @@ drop table if exists review;
 drop table if exists quotation;
 drop table if exists correction;
 drop table if exists report;
-drop table if exists ack;
-drop table if exists nak;
-drop table if exists pro;
-drop table if exists con;
+drop table if exists acknowledgement;
+drop table if exists agreement;
 drop table if exists draft;
 
 create table account (
@@ -96,38 +94,21 @@ create table report (
   updated_at datetime,
   primary key (id)
 );
-create table ack (
+create table acknowledgement (
   id int not null auto_increment,
-  user_id int not null,
-  comment text not null,
-  correction_id int,
-  created_at datetime,
-  updated_at datetime,
-  primary key (id)
-);
-create table nak (
-  id int not null auto_increment,
-  user_id int not null,
+  account_id int not null,
+  quotation_id int,
+  sign varchar(8) not null,
   comment text not null,
   created_at datetime,
   updated_at datetime,
   primary key (id)
 );
-create table pro (
+create table agreement (
   id int not null auto_increment,
-  user_id int not null,
+  account_id int not null,
   correction_id int not null,
   comment text not null,
-  created_at datetime,
-  updated_at datetime,
-  primary key (id)
-);
-create table con (
-  id int not null auto_increment,
-  user_id int not null,
-  correction_id int not null,
-  comment text not null,
-  alternative_correction_id int,
   created_at datetime,
   updated_at datetime,
   primary key (id)

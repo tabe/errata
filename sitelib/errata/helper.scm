@@ -1,21 +1,22 @@
 (library (errata helper)
   (export links
           public-exlibris
+          report-window
+          revision-window
           shelf-window
           exlibris-window)
   (import (except (rnrs) div)
           (only (core) format)
           (match)
-          (only (srfi :1) take)
           (only (lcs) lcs-fold)
           (only (lunula gettext) __)
           (only (lunula mod_lisp) entry-paths build-entry-path)
-          (lunula mysql)
+          (only (lunula mysql) lookup lookup-all)
           (prefix (lunula html) html:)
+          (only (lunula session) account account-nick)
           (only (errata isbn) isbn10->amazon)
-          (errata model))
-
-  (define *exlibris-per-page* 5)
+          (errata model)
+          (errata helper pagination))
 
   (define (links uuid . _)
     (html:ul
@@ -26,116 +27,128 @@
             (html:li (html:a ((href path)) path))))
       (entry-paths))))
 
-  (define (public-exlibris . args)
-    (map
-     (lambda (pub)
-       (cond ((lookup exlibris (publicity-exlibris-id pub))
-              => (lambda (ex)
-                   (cond ((lookup revision (exlibris-revision-id ex))
-                          => (lambda (rev)
-                               (cond ((lookup bib (revision-bib-id rev))
-                                      => (lambda (b)
-                                           (html:p (html:escape-string (bib-title b)))))
-                                     (else '()))))
-                         (else '()))))
-             (else '())))
-     (lookup-all publicity '())))
+  (define-syntax with-uuid
+    (syntax-rules ()
+      ((_ uuid thunk)
+       (if (string? uuid)
+           thunk
+           '()))))
 
-  (define (exlibris-skeleton b r ex x y z)
-    (let ((id (exlibris-id ex)))
-      (append
-       (html:h3 (html:escape-string (bib-title b)))
-       (html:table
-        (html:tr
-         (html:th
-          ((rowspan 4))
-          (html:a ((href (isbn10->amazon (bib-isbn10 b))) (target "_blank")) (html:image ((src (bib-image b)) (alt (html:escape-string (bib-title b)))))))
-         (html:th ((rowspan 2) (style "text-align:left;")) "ISBN")
-         (html:td ((style "color:#555555;")) (bib-isbn13 b)))
-        (html:tr
-         (html:td ((style "color:#555555;")) (bib-isbn10 b)))
-        (html:tr
-         (html:th ((style "text-align:left;")) "リビジョン情報")
-         (html:td ((style "color:#555555;")) (html:escape-string (revision-name r)) "(" (revision-revised-at r) ")" x))
-        (html:tr
-         (html:td y)
-         (html:td z))))))
+  (define-syntax revision-skeleton
+    (syntax-rules ()
+      ((_ b r x y z)
+       (append
+        (html:h3 (html:escape-string (bib-title b)))
+        (html:table
+         (html:tr
+          (html:th
+           ((rowspan 4))
+           (html:a ((href (isbn10->amazon (bib-isbn10 b))) (target "_blank")) (html:image ((src (bib-image b)) (alt (html:escape-string (bib-title b)))))))
+          (html:th ((rowspan 2) (style "text-align:left;")) (__ ISBN))
+          (html:td ((style "color:#555555;")) (bib-isbn13 b)))
+         (html:tr
+          (html:td ((style "color:#555555;")) (bib-isbn10 b)))
+         (html:tr
+          (html:th ((style "text-align:left;")) (__ Revision))
+          (html:td ((style "color:#555555;")) (cons* (html:escape-string (revision-name r)) "(" (revision-revised-at r) ")" x)))
+         (html:tr
+          (html:td y)
+          (html:td z)))))))
 
-  (define (exlibris-panel uuid b r ex)
+  (define (go-to-table uuid r)
+    (html:form ((action (build-entry-path 'table uuid)))
+               (html:input ((type "hidden") (name "id") (value (revision-id r))))
+               (html:input ((type "submit") (value (__ to-table))))))
+
+  (define (public-exlibris uuid page)
+    (with-pagination
+     (board uuid page)
+     (lookup-all revision "EXISTS (SELECT * FROM publicity p, exlibris ex WHERE ex.id = p.exlibris_id and revision.id = ex.revision_id)")
+     (lambda (r)
+       (cond ((lookup bib (revision-bib-id r))
+              => (lambda (b)
+                   (append
+                    (revision-skeleton b r
+                                       '()
+                                       (go-to-table uuid r)
+                                       '())
+                    (html:hr ((style "color:#999999;"))))))
+             (else '())))))
+
+  (define (revision-window uuid id)
+    (assert (integer? id))
+    (let ((r (lookup revision id)))
+      (if (revision? r)
+          (let ((b (lookup bib (revision-bib-id r))))
+            (if (bib? b)
+                (revision-frame uuid b r)
+                "???"))
+          "??")))
+
+  (define (report-window uuid id)
+    (assert (integer? id))
+    (let ((rep (lookup report id)))
+      (if (report? rep)
+          (let ((r (lookup revision (report-revision-id rep))))
+            (if (revision? r)
+                (let ((b (lookup bib (revision-bib-id r))))
+                  (if (bib? b)
+                      (report-frame uuid b r rep)
+                      "???"))
+                "??"))
+          "?")))
+
+  (define (report-frame uuid b r rep)
     (html:div
-     (exlibris-skeleton b r ex
-                        '()
-                        (html:form ((action (build-entry-path 'desk uuid))
-                                    (method "POST"))
-                                   (html:input ((type "hidden") (name "id") (value (exlibris-id ex))))
-                                   (html:input ((type "submit") (value (__ desk)))))
-                        '())
-     (html:hr ((style "color:#999999;")))))
+     (revision-skeleton b r '() '() '())
+     (revision-reviews r)
+     (go-to-table uuid r)
+     (diff-table
+      (revision-report-tr uuid r rep
+                          (with-uuid
+                           uuid
+                           (html:form ((action (build-entry-path 'disagree uuid)))
+                                      (html:input ((type "hidden") (name "id") (value (report-correction-id rep))))
+                                      (html:input ((type "submit") (value (__ disagree))))))
+                          (lambda (q c) (ack/nak-tr uuid rep q c))))))
 
-  (define (exlibris-frame uuid b r ex)
-    (let ((id (exlibris-id ex)))
-      (html:div
-       (exlibris-skeleton b r ex
-                          (html:form ((action (build-entry-path 'modify-exlibris uuid))
-                                      (method "POST"))
-                                     (html:input ((type "hidden") (name "id") (value id)))
-                                     (html:input ((type "submit") (value (__ modify-exlibris)))))
-                          (cond ((lookup publicity `((exlibris-id ,id)))
-                                 => (lambda (pub)
-                                      (html:form ((action (build-entry-path 'hide-exlibris uuid))
-                                                  (method "POST"))
-                                                 (html:input ((type "hidden") (name "id") (value (publicity-id pub))))
-                                                 (html:input ((type "submit") (value (__ hide-exlibris)))))))
-                                (else
-                                 (html:form ((action (build-entry-path 'share-exlibris uuid))
-                                             (method "POST"))
-                                            (html:input ((type "hidden") (name "id") (value id)))
-                                            (html:input ((type "submit") (value (__ share-exlibris)))))))
-                          (html:form ((action (build-entry-path 'put-off uuid))
-                                      (method "POST"))
-                                     (html:input ((type "hidden") (name "id") (value id)))
-                                     (html:input ((type "submit") (value (__ put-off))))))
-       (html:form ((action (build-entry-path 'edit-review uuid))
-                   (method "POST"))
-                  (html:div "レビュー:&nbsp;"
-                            (html:input ((type "hidden") (name "id") (value id)))
-                            (html:input ((type "submit") (value (__ edit-review))))
-                            (cond ((lookup review `((exlibris-id ,id)))
-                                   => (lambda (rvw) (html:div ((class "corner") (style "background-color: #ecfc71;")) (html:pre (html:escape-string (review-body rvw))))))
-                                  (else "(なし)"))))
+  (define (diff-table x)
+    (html:table
+     ((class "diff"))
+     (html:tr
+      (html:th (__ Quotation))
+      (html:th (__ Correction))
+      (html:td))
+     x))
 
-       (html:div
-        (html:form ((action (build-entry-path 'new-report uuid))
-                    (method "POST"))
-                   (html:input ((type "hidden") (name "id") (value (revision-id r))))
-                   (html:input ((type "submit") (value (__ new-report))))))
-       (let ((reports (lookup-all report `((revision-id ,(revision-id r))))))
-         (cond ((null? reports) '())
-               (else
-                (html:table
-                 ((class "diff"))
-                 (html:tr
-                  (html:th (__ Quotation))
-                  (html:th (__ Correction))
-                  (html:td))
-                 (map
-                  (lambda (rep)
-                    (let ((q (lookup quotation (report-quotation-id rep)))
-                          (c (lookup correction (report-correction-id rep))))
-                      (cons
-                       (html:tr
-                        (html:td ((style "font-size:small;"))
-                                 "pp." (quotation-page q) "/" (quotation-position q) "&nbsp;"
-                                 (report-subject rep) "&nbsp;")
-                        (html:td))
-                       (cond ((and (quotation? q)
-                                   (correction? c))
-                              (diff-tr uuid rep q c))
-                             (else
-                              '())))))
-                  reports))))))))
+  (define (revision-report-tr uuid r rep x proc)
+    (let ((q (lookup quotation (report-quotation-id rep)))
+          (c (lookup correction (report-correction-id rep))))
+      (cons
+       (html:tr
+        (html:td ((style "font-size:small;"))
+                 "pp." (quotation-page q) "/" (quotation-position q) "&nbsp;"
+                 (report-subject rep) "&nbsp;")
+        (html:td))
+       (cond ((and (quotation? q)
+                   (correction? c))
+              (append (diff-tr uuid rep q c x)
+                      (proc q c)))
+             (else '())))))
 
-  (define (diff-tr uuid rep q c)
+  (define (review-div rvw)
+    (html:div ((class "dog") (style "background-color: #ecfc71;")) (html:pre (html:escape-string (review-body rvw)))))
+
+  (define (revision-reviews r)
+    (html:div
+     (__ Review)
+     "&nbsp;"
+     (let ((ls (lookup-all review (format "EXISTS (SELECT * FROM exlibris ex WHERE ex.id = review.exlibris_id AND ex.revision_id = '~d')" (revision-id r)))))
+       (if (null? ls)
+           "(なし)"
+           (map review-div ls)))))
+
+  (define (diff-tr uuid rep q c forms)
     (let ((a (string->list (quotation-body q)))
           (b (string->list (correction-body c))))
       (match (lcs-fold
@@ -169,49 +182,144 @@
         ((xa . xb)
          (html:tr
           (html:td ((class "width:49%;"))
-                   (html:div ((class "corner")) (html:blockquote (reverse xa))))
+                   (html:div ((class "dog")) (html:blockquote (reverse xa))))
           (html:td ((class "width:49%;"))
-                   (html:div ((class "corner")) (html:blockquote (reverse xb))))
-          (html:td
-           (html:form ((action (build-entry-path 'modify-report uuid))
-                       (method "POST"))
-                      (html:input ((type "hidden") (name "id") (value (report-id rep))))
-                      (html:input ((type "submit") (value (__ modify-report)))))
-           (html:form ((action (build-entry-path 'drop-report uuid))
-                       (method "POST"))
-                      (html:input ((type "hidden") (name "id") (value (report-id rep))))
-                      (html:input ((type "submit") (value (__ drop-report))))))
-          )))))
+                   (html:div ((class "dog")) (html:blockquote (reverse xb))))
+          (html:td forms))))))
+
+  (define (ack/nak-tr uuid rep q c)
+    (append
+     (with-uuid
+      uuid
+      (html:tr
+       (html:td 
+        (html:form ((action (build-entry-path 'acknowledge uuid)))
+                   (html:input ((type "hidden") (name "id") (value (quotation-id q))))
+                   (html:input ((type "submit") (value (__ acknowledge))))))
+       (html:td
+        (html:form ((action (build-entry-path 'agree uuid)))
+                   (html:input ((type "hidden") (name "id") (value (correction-id c))))
+                   (html:input ((type "submit") (value (__ agree))))))))
+     (html:tr
+      (html:td
+
+       (let ((acks (reverse (lookup-all acknowledgement `((quotation-id ,(quotation-id q)))))))
+         (if (null? acks)
+             '()
+             (html:div
+              ((class "acknowledgement"))
+              (map
+               (lambda (a)
+                 (html:div
+                  (html:span ((class "credit"))
+                             (cond ((lookup account (acknowledgement-account-id a))
+                                    => (lambda (acc)
+                                         (html:escape-string (account-nick acc))))
+                                   (else "?"))
+                             ":&nbsp;")
+                  (html:span ((class (if (acknowledgement-positive? a) "ack" "nak")))
+                             (html:escape-string (acknowledgement-comment a)))))
+               acks))))
+       (html:td
+        (let ((agms (reverse (lookup-all agreement `((correction-id ,(correction-id c)))))))
+          (if (null? agms)
+              '()
+              (html:div
+               ((class "agreement"))
+               (map
+                (lambda (a)
+                  (html:div
+                   (html:span ((class "credit"))
+                              (cond ((lookup account (agreement-account-id a))
+                                     => (lambda (acc)
+                                          (html:escape-string (account-nick acc))))
+                                    (else "?"))
+                              ":&nbsp;")
+                   (html:span (html:escape-string (agreement-comment a)))))
+                agms)))))))))
+
+  (define (revision-reports uuid r proc)
+    (let ((reports (lookup-all report `((revision-id ,(revision-id r))))))
+      (cond ((null? reports) '())
+            (else
+             (diff-table
+              (map
+               (lambda (rep)
+                 (revision-report-tr uuid r rep
+                                     (proc rep)
+                                     (lambda (q c) '())))
+               reports))))))
+
+  (define (revision-frame uuid b r)
+    (html:div
+     (revision-skeleton b r '() '() '())
+     (revision-reviews r)
+     (revision-reports uuid r (lambda (rep)
+                                (html:form ((action (build-entry-path 'detail uuid)))
+                                           (html:input ((type "hidden") (name "id") (value (report-id rep))))
+                                           (html:input ((type "submit") (value (__ to-detail)))))))))
+
+  (define (exlibris-panel uuid b r ex)
+    (html:div
+     (revision-skeleton b r
+                        '()
+                        (html:form ((action (build-entry-path 'desk uuid)))
+                                   (html:input ((type "hidden") (name "id") (value (exlibris-id ex))))
+                                   (html:input ((type "submit") (value (__ to-desk)))))
+                        '())
+     (html:hr ((style "color:#999999;")))))
+
+  (define (exlibris-frame uuid b r ex)
+    (let ((id (exlibris-id ex)))
+      (html:div
+       (revision-skeleton b r
+                          (html:form ((action (build-entry-path 'modify-revision uuid)))
+                                     (html:input ((type "hidden") (name "id") (value id)))
+                                     (html:input ((type "submit") (value (__ modify-revision)))))
+                          (cond ((lookup publicity `((exlibris-id ,id)))
+                                 => (lambda (pub)
+                                      (html:form ((action (build-entry-path 'hide-exlibris uuid)))
+                                                 (html:input ((type "hidden") (name "id") (value (publicity-id pub))))
+                                                 (html:input ((type "submit") (value (__ hide-exlibris)))))))
+                                (else
+                                 (html:form ((action (build-entry-path 'share-exlibris uuid)))
+                                            (html:input ((type "hidden") (name "id") (value id)))
+                                            (html:input ((type "submit") (value (__ share-exlibris)))))))
+                          (html:form ((action (build-entry-path 'put-off uuid)))
+                                     (html:input ((type "hidden") (name "id") (value id)))
+                                     (html:input ((type "submit") (value (__ put-off))))))
+       (html:form ((action (build-entry-path 'edit-review uuid)))
+                  (html:div "レビュー:&nbsp;"
+                            (html:input ((type "hidden") (name "id") (value id)))
+                            (html:input ((type "submit") (value (__ edit-review))))
+                            (cond ((lookup review `((exlibris-id ,id))) => review-div)
+                                  (else "(なし)"))))
+
+       (html:div
+        (html:form ((action (build-entry-path 'new-report uuid)))
+                   (html:input ((type "hidden") (name "id") (value (revision-id r))))
+                   (html:input ((type "submit") (value (__ new-report))))))
+       (revision-reports uuid r (lambda (rep)
+                                  (append
+                                   (html:form ((action (build-entry-path 'modify-report uuid)))
+                                              (html:input ((type "hidden") (name "id") (value (report-id rep))))
+                                              (html:input ((type "submit") (value (__ modify-report)))))
+                                   (html:form ((action (build-entry-path 'drop-report uuid)))
+                                              (html:input ((type "hidden") (name "id") (value (report-id rep))))
+                                              (html:input ((type "submit") (value (__ drop-report)))))))))))
 
   (define (shelf-window uuid body)
     (match body
       ((id page)
-       (let ((ls (lookup-all exlibris
-                             `((account-id ,id))
-                             (format " ORDER BY id DESC LIMIT ~d OFFSET ~d" (+ *exlibris-per-page* 1) (* *exlibris-per-page* page)))))
-         (append
-          (map
-           (lambda (ex)
-             (let ((r (lookup revision (exlibris-revision-id ex))))
-               (if r
-                   (let ((b (lookup bib (revision-bib-id r))))
-                     (if b (exlibris-panel uuid b r ex) "??"))
-                   "?")))
-           (if (< *exlibris-per-page* (length ls))
-               (take ls *exlibris-per-page*)
-               ls))
-          (if (< 0 page)
-              (html:form ((action (build-entry-path 'shelf uuid))
-                          (method "POST"))
-                         (html:input ((type "hidden") (name "page") (value (- page 1))))
-                         (html:input ((type "submit") (value (html:escape-string "<<")))))
-              '())
-          (if (< *exlibris-per-page* (length ls))
-              (html:form ((action (build-entry-path 'shelf uuid))
-                          (method "POST"))
-                         (html:input ((type "hidden") (name "page") (value (+ page 1))))
-                         (html:input ((type "submit") (value (html:escape-string ">>")))))
-              '()))))))
+       (with-pagination
+        (shelf uuid page)
+        (lookup-all exlibris `((account-id ,id)))
+        (lambda (ex)
+          (let ((r (lookup revision (exlibris-revision-id ex))))
+            (if r
+                (let ((b (lookup bib (revision-bib-id r))))
+                  (if b (exlibris-panel uuid b r ex) "??"))
+                "?")))))))
 
   (define (exlibris-window uuid id)
     (let ((ex (lookup exlibris id)))

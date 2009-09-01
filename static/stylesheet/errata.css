@@ -49,5 +49,34 @@ form {
 }
 
 .diff .plus {
-    background-color: #78afe3;
+    background-color: lightblue;
+}
+
+.acknowledgement {
+    background-color: white;
+}
+
+.credit {
+    font-size: x-small;
+    color: black;
+}
+
+.ack {
+    font-size: small;
+    color: lightgreen;
+/*     color: #222222; */
+/*    border: 5px lightgreen solid;  */
+}
+
+.nak {
+    font-size: small;
+    color: orange;
+/*     color: #222222; */
+/*    border: 5px orange solid; */
+}
+
+.agreement {
+    font-size: small;
+    color: #222222;
+    background-color: white;
 }

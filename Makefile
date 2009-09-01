@@ -25,6 +25,7 @@ stats:
 	wc -l templates/*.scm
 
 test:
+	env YPSILON_SITELIB=$(YPSILON_SITELIB) $(YPSILON) tests/errata/helper/pagination.scm
 	env YPSILON_SITELIB=$(YPSILON_SITELIB) $(YPSILON) tests/errata/helper.scm
 	env YPSILON_SITELIB=$(YPSILON_SITELIB) $(YPSILON) tests/errata/isbn.scm
 	env YPSILON_SITELIB=$(YPSILON_SITELIB) $(YPSILON) tests/errata/model.scm

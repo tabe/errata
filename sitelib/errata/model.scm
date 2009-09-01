@@ -96,6 +96,31 @@
           report-to-modify-position
           report-to-modify-quotation-body
           report-to-modify-correction-body
+          acknowledgement
+          acknowledgement?
+          valid-acknowledgement?
+          make-acknowledgement
+          acknowledgement-id
+          acknowledgement-id-set!
+          acknowledgement-account-id
+          acknowledgement-account-id-set!
+          acknowledgement-quotation-id
+          acknowledgement-quotation-id-set!
+          acknowledgement-sign
+          acknowledgement-comment
+          acknowledgement-positive?
+          acknowledgement-negative?
+          agreement
+          agreement?
+          valid-agreement?
+          make-agreement
+          agreement-id
+          agreement-id-set!
+          agreement-account-id
+          agreement-account-id-set!
+          agreement-correction-id
+          agreement-correction-id-set!
+          agreement-comment
           )
   (import (rnrs)
           (lunula session))
@@ -210,5 +235,47 @@
                 (not (string=? qb ""))
                 (string? cb)
                 (not (string=? qb cb))))))
+
+  (define (valid-comment? c)
+    (and (string? c)
+         (< (string-length c) 1024)))
+
+  (define-record-type acknowledgement
+    (fields (mutable id) (mutable account-id) (mutable quotation-id) sign comment)
+    (protocol
+     (lambda (p)
+       (lambda (id account-id quotation-id sign comment)
+         (p (maybe-number id)
+            (maybe-number account-id)
+            (maybe-number quotation-id)
+            sign
+            comment)))))
+
+  (define (valid-acknowledgement? a)
+    (and (acknowledgement? a)
+         (member (acknowledgement-sign a) '("positive" "negative"))
+         (valid-comment? (acknowledgement-comment a))))
+
+  (define (acknowledgement-positive? a)
+    (assert (acknowledgement? a))
+    (string=? (acknowledgement-sign a) "positive"))
+
+  (define (acknowledgement-negative? a)
+    (assert (acknowledgement? a))
+    (string=? (acknowledgement-sign a) "negative"))
+
+  (define-record-type agreement
+    (fields (mutable id) (mutable account-id) (mutable correction-id) comment)
+    (protocol
+     (lambda (p)
+       (lambda (id account-id correction-id comment)
+         (p (maybe-number id)
+            (maybe-number account-id)
+            (maybe-number correction-id)
+            comment)))))
+
+  (define (valid-agreement? a)
+    (and (agreement? a)
+         (valid-comment? (agreement-comment a))))
 
 )

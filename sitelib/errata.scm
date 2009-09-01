@@ -73,6 +73,11 @@
               => (lambda (sess) (page (io sess) base (__ you-have-already-logged-in))))
              (else thunk)))))
 
+  (define-syntax with-or-without-session
+    (syntax-rules ()
+      ((_ (io request) proc)
+       (proc (logged-in? (parameter-of request))))))
+
   (define-scenario (sign-up io request)
     (without-session
      (io request)
@@ -240,6 +245,19 @@
                   ...)
               thunk)))))))
 
+  (define-syntax with-or-without-session/
+    (syntax-rules ()
+      ((_ (io request data) (sess (v key string->v default) ...) thunk)
+       (with-or-without-session
+        (io request)
+        (lambda (sess)
+          (let ((alist (and data (content->alist data))))
+            (let ((v (cond ((and alist (assq 'key alist))
+                            => (lambda (pair) (or (string->v (cdr pair)) default)))
+                           (else default)))
+                  ...)
+              thunk)))))))
+
   (define-scenario (put-off io request data)
     (with-session&id
      (io request data)
@@ -268,7 +286,7 @@
              (page (io sess) desk id)
              (redirect (io sess) 'shelf))))))
 
-  (define-scenario (modify-exlibris io request data)
+  (define-scenario (modify-revision io request data)
     (with-session&id
      (io request data)
      (lambda (sess id)
@@ -333,12 +351,27 @@
                  (else
                   (loop (form (io sess) (review r-new) base (__ please-retry))))))))))
 
-  (define-scenario (board io request)
-    (cond ((logged-in? (parameter-of request))
-           => (lambda (sess)
-                (page (io sess) board "")))
-          (else
-           (page (io) board ""))))
+  (define-scenario (board io request data)
+    (with-or-without-session/
+     (io request data)
+     (sess (p page string->page 0))
+     (page (io sess) board p)))
+
+  (define-scenario (table io request data)
+    (with-or-without-session/
+     (io request data)
+     (sess (id id string->id #f))
+     (if id
+         (page (io sess) table id)
+         (redirect (io sess) 'board))))
+
+  (define-scenario (detail io request data)
+    (with-or-without-session/
+     (io request data)
+     (sess (id id string->id #f))
+     (if id
+         (page (io sess) detail id)
+         (redirect (io sess) 'board))))
 
   (define-scenario (new-report io request data)
     (with-session&id
@@ -441,6 +474,37 @@
              (redirect (io sess) 'shelf)
              (page (io sess) base (__ hmm-an-error-occurred)))))))
 
+  (define-scenario (acknowledge io request data)
+    (with-session&id
+     (io request data)
+     (lambda (sess id)
+       (let ((q (lookup quotation id)))
+         (if (quotation? q)
+             (let loop ((a (form (io sess) (acknowledgement) base)))
+               (cond ((valid-acknowledgement? a)
+                      (acknowledgement-account-id-set! a (account-id (user-account (session-user sess))))
+                      (acknowledgement-quotation-id-set! a id)
+                      (if (save a)
+                          (page (io sess) base (__ done))
+                          (page (io sess) base (__ hmm-an-error-occurred))))
+                     (else (loop (form (io sess) (acknowledgement a) base (__ please-retry)))))))))))
+
+  (define-scenario (agree io request data)
+    (with-session&id
+     (io request data)
+     (lambda (sess id)
+       (let ((c (lookup correction id)))
+         (if (correction? c)
+             (let loop ((a (form (io sess) (agreement) base)))
+               (cond ((valid-agreement? a)
+                      (agreement-account-id-set! a (account-id (user-account (session-user sess))))
+                      (agreement-correction-id-set! a id)
+                      (if (save a)
+                          (page (io sess) base (__ done))
+                          (page (io sess) base (__ hmm-an-error-occurred))))
+                     (else (loop (form (io sess) (agreement a) base (__ please-retry)))))))))))
+
+  ;; input fields
   (add-input-fields account (#f text text password text #f))
   (add-input-fields account-to-login (text password))
   (add-input-fields confirmation (text))
@@ -451,7 +515,10 @@
   (add-input-fields correction (#f #f #f textarea))
   (add-input-fields report (#f #f #f text #f #f))
   (add-input-fields report-to-modify (text text text textarea textarea))
+  (add-input-fields acknowledgement (#f #f #f text textarea))
+  (add-input-fields agreement (#f #f #f textarea))
 
+  ;; templates
   (templates "/home/tabe/errata/templates")
   (static-template "static")
   (template-environment (except (rnrs) div)
@@ -483,8 +550,34 @@
                   (ja "名前"))
    (revision-revised-at (en "revised at")
                         (ja "改訂日時"))
+   (review-body (en "Body")
+                (ja "レビュー本文"))
+   (quotation-page (en "Page")
+                   (ja "ページ"))
+   (quotation-position (en "Position")
+                       (ja "位置"))
+   (quotation-body (en "Quotation's Body")
+                   (ja "引用本文"))
+   (correction-body (en "Correction's Body")
+                    (ja "訂正本文"))
+   (report-to-modify-subject (en "Subject")
+                             (ja "題名"))
+   (report-to-modify-page (en "Page")
+                          (ja "ページ"))
+   (report-to-modify-position (en "Position")
+                              (ja "位置"))
+   (report-to-modify-quotation-body (en "Quotation's Body")
+                                    (ja "引用本文"))
+   (report-to-modify-correction-body (en "Correction's Body")
+                                     (ja "訂正本文"))
+   (acknowledgement-sign (en "Sign")
+                         (ja "賛成/反対"))
+   (acknowledgement-comment (en "Comment")
+                            (ja "コメント"))
 
    ;; messages
+   (submit (en "submit")
+           (ja "送信"))
    (hmm-an-error-occurred (en "Hmm ... an error occurred.")
                           (ja "残念ながら ... エラーが発生しました。"))
    (you-have-already-logged-in (en "You have already logged in!")
@@ -509,6 +602,45 @@
                                  (ja "新しい蔵書があなたの書棚に並びました: "))
    (hmm-we-have-failed-to-put-on-your-exlibris (en "Hmm ... we have failed to put on your exlibris.")
                                                (ja "残念ながら ... あなたの蔵書の追加に失敗しました。"))
+
+   (ISBN (en "ISBN")
+         (ja "ISBN"))
+   (Revision (en "Revision")
+             (ja "改訂情報"))
+   (Review (en "Review")
+           (ja "レビュー"))
+   (Quotation (en "Quotation")
+              (ja "誤(引用)"))
+   (Correction (en "Correction")
+               (ja "正(訂正)"))
+   (to-desk (en "To Desk")
+            (ja "デスクへ"))
+   (to-detail (en "To Detail")
+              (ja "詳細へ"))
+   (to-table (en "To Table")
+             (ja "正誤表へ"))
+   (share-exlibris (en "Share Exlibris")
+                   (ja "共有する"))
+   (hide-exlibris (en "Hide Exlibris")
+                  (ja "隠す"))
+   (put-off (en "Put Off")
+            (ja "外す"))
+   (edit-review (en "Edit")
+                (ja "編集"))
+   (new-report (en "New Report")
+               (ja "新たに報告"))
+   (modify-revision (en "Modify Revision")
+                    (ja "修正"))
+   (modify-report (en "Modify Report")
+                  (ja "報告を修正"))
+   (drop-report (en "Drop Report")
+                (ja "報告を削除"))
+   (acknowledge (en "Acknowledge")
+                (ja "引用について言及"))
+   (agree (en "Agree")
+          (ja "訂正に同意"))
+   (disagree (en "Disagree")
+             (ja "訂正に反対"))
    )
 
   (locale ja)
