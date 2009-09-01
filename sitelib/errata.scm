@@ -373,33 +373,49 @@
          (page (io sess) detail id)
          (redirect (io sess) 'board))))
 
+  (define (report-to-modify->quotation rep a-id r-id)
+    (make-quotation #f
+                    a-id
+                    r-id
+                    (report-to-modify-page rep)
+                    (report-to-modify-position rep)
+                    (report-to-modify-quotation-body rep)))
+
+  (define (report-to-modify->correction rep a-id q-id)
+    (make-correction #f
+                     a-id
+                     q-id
+                     (report-to-modify-correction-body rep)))
+
+  (define (report-to-modify->report rep a-id r-id q-id c-id)
+    (make-report #f
+                 a-id
+                 r-id
+                 (report-to-modify-subject rep)
+                 q-id
+                 c-id))
+
   (define-scenario (new-report io request data)
     (with-session&id
      (io request data)
      (lambda (sess id)
-       (let ((acc-id (account-id (user-account (session-user sess))))
-             (r (lookup revision id)))
-         (if r
-             (let loop ((q (form (io sess) (quotation) base)))
-               (cond ((valid-quotation? q)
-                      (quotation-account-id-set! q acc-id)
-                      (quotation-revision-id-set! q id)
-                      (if (save q)
-                          (let lp ((c (form (io sess) (correction) base)))
-                            (cond ((valid-correction? c)
-                                   (correction-account-id-set! c acc-id)
-                                   (correction-quotation-id-set! c (quotation-id q))
-                                   (if (save c)
-                                       (let ((r (make-report #f acc-id id "Example" (quotation-id q) (correction-id c))))
-                                         (if (save r)
-                                             (page (io sess) base (__ reported))
-                                             (page (io sess) base (__ hmm-an-error-occurred))))
-                                       (page (io sess) base (__ hmm-an-error-occurred))))
-                                  (else
-                                   (lp (form (io sess) (correction c) base)))))
-                          (page (io sess) base (__ hmm-an-error-occurred))))
+       (let ((a-id (account-id (user-account (session-user sess))))
+             (ex (lookup exlibris id)))
+         (if ex
+             (let loop ((rep (form (io sess) (report-to-modify) base)))
+               (cond ((valid-report-to-modify? rep)
+                      (let ((q (report-to-modify->quotation rep a-id (exlibris-revision-id ex))))
+                        (if (save q)
+                            (let ((c (report-to-modify->correction rep a-id (quotation-id q))))
+                              (if (save c)
+                                  (let ((r (report-to-modify->report rep a-id (exlibris-revision-id ex) (quotation-id q) (correction-id c))))
+                                    (if (save r)
+                                        (page (io sess) desk id)
+                                        (page (io sess) base (__ hmm-an-error-occurred))))
+                                  (page (io sess) base (__ hmm-an-error-occurred))))
+                            (page (io sess) base (__ hmm-an-error-occurred)))))
                      (else
-                      (loop (form (io sess) (quotation q) base)))))
+                      (loop (form (io sess) (report-to-modify rep) base (__ please-retry))))))
              (redirect (io sess) 'shelf))))))
 
   (define (prepare-report-to-modify rep q c)
@@ -443,36 +459,38 @@
                          rep-new)))))))
 
   (define-scenario (modify-report io request data)
-    (with-session&id
+    (with-session/
      (io request data)
-     (lambda (sess id)
-       (let ((acc-id (account-id (user-account (session-user sess))))
-             (rep (lookup report id)))
-         (if rep
-             (let ((q (lookup quotation (report-quotation-id rep)))
-                   (c (lookup correction (report-correction-id rep))))
-               (cond ((and (quotation? q)
-                           (correction? c))
-                      (let loop ((modified (form (io sess) (report-to-modify (prepare-report-to-modify rep q c)) base)))
-                        (cond ((valid-report-to-modify? modified)
-                               (if (update-report rep q c modified)
-                                   (redirect (io sess) 'shelf)
-                                   (page (io sess) base (__ hmm-an-error-occurred))))
-                              (else
-                               (loop (form (io sess) (report-to-modify modified) base (__ please-retry)))))))
-                     (else
-                      (redirect (io sess) 'shelf))))
-             (redirect (io sess) 'shelf))))))
+     (sess (rep-id report string->id #f)
+           (ex-id exlibris string->id #f))
+     (let ((rep (lookup report rep-id)))
+       (if rep
+           (let ((q (lookup quotation (report-quotation-id rep)))
+                 (c (lookup correction (report-correction-id rep))))
+             (cond ((and (quotation? q)
+                         (correction? c))
+                    (let loop ((modified (form (io sess) (report-to-modify (prepare-report-to-modify rep q c)) base)))
+                      (cond ((valid-report-to-modify? modified)
+                             (if (update-report rep q c modified)
+                                 (page (io sess) desk ex-id)
+                                 (page (io sess) base (__ hmm-an-error-occurred))))
+                            (else
+                             (loop (form (io sess) (report-to-modify modified) base (__ please-retry)))))))
+                   (else
+                    (redirect (io sess) 'shelf))))
+           (redirect (io sess) 'shelf)))))
 
   (define-scenario (drop-report io request data)
-    (with-session&id
+    (with-session/
      (io request data)
-     (lambda (sess id)
-       (let ((rep (lookup report id)))
-         (if (and (report? rep)
-                  (destroy rep))
-             (redirect (io sess) 'shelf)
-             (page (io sess) base (__ hmm-an-error-occurred)))))))
+     (sess (rep-id report string->id #f)
+           (ex-id exlibris string->id #f))
+     (let ((rep (lookup report rep-id)))
+       (and (report? rep)
+            (let ((c (form (io sess) (confirmation) base (__ are-you-sure-drop-report?))))
+              (yes? c))
+            (destroy rep))
+       (page (io sess) desk ex-id))))
 
   (define-scenario (acknowledge io request data)
     (with-session&id

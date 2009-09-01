@@ -299,15 +299,17 @@
 
        (html:div
         (html:form ((action (build-entry-path 'new-report uuid)))
-                   (html:input ((type "hidden") (name "id") (value (revision-id r))))
+                   (html:input ((type "hidden") (name "id") (value (exlibris-id ex))))
                    (html:input ((type "submit") (value (__ new-report))))))
        (revision-reports uuid r (lambda (rep)
                                   (append
                                    (html:form ((action (build-entry-path 'modify-report uuid)))
-                                              (html:input ((type "hidden") (name "id") (value (report-id rep))))
+                                              (html:input ((type "hidden") (name "report") (value (report-id rep))))
+                                              (html:input ((type "hidden") (name "exlibris") (value (exlibris-id ex))))
                                               (html:input ((type "submit") (value (__ modify-report)))))
                                    (html:form ((action (build-entry-path 'drop-report uuid)))
-                                              (html:input ((type "hidden") (name "id") (value (report-id rep))))
+                                              (html:input ((type "hidden") (name "report") (value (report-id rep))))
+                                              (html:input ((type "hidden") (name "exlibris") (value (exlibris-id ex))))
                                               (html:input ((type "submit") (value (__ drop-report)))))))))))
 
   (define (shelf-window uuid body)
