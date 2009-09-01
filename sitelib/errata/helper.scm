@@ -120,9 +120,8 @@
     (html:table
      ((class "diff"))
      (html:tr
-      ((class "title"))
-      (html:th (__ Quotation))
-      (html:th (__ Correction))
+      (html:th ((class "title")) (__ Quotation))
+      (html:th ((class "title")) (__ Correction))
       (html:td))
      x))
 
