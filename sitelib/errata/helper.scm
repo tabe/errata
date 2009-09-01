@@ -14,7 +14,7 @@
           (only (lunula mod_lisp) entry-paths build-entry-path)
           (only (lunula mysql) lookup lookup-all)
           (prefix (lunula html) html:)
-          (only (lunula session) account account-nick)
+          (only (lunula session) account account-nick account-name)
           (only (errata isbn) isbn10->amazon)
           (errata model)
           (errata helper pagination))
@@ -30,6 +30,10 @@
 
   (define (datetime->date str)
     (car (string-tokenize str)))
+
+  (define (signature a)
+    (html:span ((title (html:escape-string (account-name a))))
+               (html:escape-string (account-nick a))))
 
   (define-syntax with-uuid
     (syntax-rules ()
@@ -131,13 +135,18 @@
      x))
 
   (define (revision-report-tr uuid r rep x proc)
-    (let ((q (lookup quotation (report-quotation-id rep)))
+    (let ((a (lookup account (report-account-id rep)))
+          (q (lookup quotation (report-quotation-id rep)))
           (c (lookup correction (report-correction-id rep))))
       (cons
        (html:tr
         (html:td ((style "font-size:small;"))
                  "pp." (quotation-page q) "/" (quotation-position q) "&nbsp;"
-                 (report-subject rep) "&nbsp;")
+                 (report-subject rep) "&nbsp;"
+                 "("
+                 (html:span ((style "font-size:x-small;")) "reported by ")
+                 (signature a)
+                 ")")
         (html:td))
        (cond ((and (quotation? q)
                    (correction? c))
@@ -220,9 +229,7 @@
                (lambda (a)
                  (html:div
                   (html:span ((class "credit"))
-                             (cond ((lookup account (acknowledgement-account-id a))
-                                    => (lambda (acc)
-                                         (html:escape-string (account-nick acc))))
+                             (cond ((lookup account (acknowledgement-account-id a)) => signature)
                                    (else "?"))
                              ":&nbsp;")
                   (html:span ((class (if (acknowledgement-positive? a) "ack" "nak")))
@@ -238,9 +245,7 @@
                 (lambda (a)
                   (html:div
                    (html:span ((class "credit"))
-                              (cond ((lookup account (agreement-account-id a))
-                                     => (lambda (acc)
-                                          (html:escape-string (account-nick acc))))
+                              (cond ((lookup account (agreement-account-id a)) => signature)
                                     (else "?"))
                               ":&nbsp;")
                    (html:span (html:escape-string (agreement-comment a)))))
