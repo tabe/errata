@@ -1,6 +1,6 @@
 (library (errata helper)
   (export links
-          public-exlibris
+          public-revisions
           report-window
           revision-window
           shelf-window
@@ -59,12 +59,16 @@
           (html:td y)
           (html:td z)))))))
 
+  (define (go-to-board uuid)
+    (html:form ((action (build-entry-path 'board uuid)))
+               (html:input  ((type "submit") (value (__ to-board))))))
+
   (define (go-to-table uuid r)
     (html:form ((action (build-entry-path 'table uuid)))
                (html:input ((type "hidden") (name "id") (value (revision-id r))))
                (html:input ((type "submit") (value (__ to-table))))))
 
-  (define (public-exlibris uuid page)
+  (define (public-revisions uuid page)
     (with-pagination
      (board uuid page)
      (lookup-all revision "EXISTS (SELECT * FROM publicity p, exlibris ex WHERE ex.id = p.exlibris_id and revision.id = ex.revision_id)")
@@ -76,6 +80,7 @@
                                        '()
                                        (go-to-table uuid r)
                                        '())
+                    (revision-reviews r)
                     (html:hr ((style "color:#999999;"))))))
              (else '())))))
 
@@ -104,8 +109,8 @@
 
   (define (report-frame uuid b r rep)
     (html:div
-     (revision-skeleton b r '() '() '())
      (go-to-table uuid r)
+     (revision-skeleton b r '() '() '())
      (html:h4 (__ Detail))
      (diff-table
       (revision-report-tr uuid r rep
@@ -254,8 +259,8 @@
 
   (define (revision-frame uuid b r)
     (html:div
+     (go-to-board uuid)
      (revision-skeleton b r '() '() '())
-     (revision-reviews r)
      (revision-reports uuid r (lambda (rep)
                                 (html:form ((action (build-entry-path 'detail uuid)))
                                            (html:input ((type "hidden") (name "id") (value (report-id rep))))

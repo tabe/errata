@@ -635,6 +635,8 @@
               (ja "誤(引用)"))
    (Correction (en "Correction")
                (ja "正(訂正)"))
+   (to-board (en "To Board")
+             (ja "一覧へ"))
    (to-desk (en "To Desk")
             (ja "デスクへ"))
    (to-detail (en "To Detail")
