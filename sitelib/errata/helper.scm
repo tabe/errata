@@ -1,5 +1,6 @@
 (library (errata helper)
-  (export preload-script
+  (export powered-by-lunula
+          preload-script
           links
           public-revisions
           report-window
@@ -22,14 +23,17 @@
           (errata model)
           (errata helper pagination))
 
+  (define powered-by-lunula
+    (html:div ((id "bottom")) "powered by "
+              (html:a ((href "http://fixedpoint.jp/lunula/")) 'Lunula)))
+
   (define preload-script 
-    (lambda _
-      '("$(document).ready(function() {"
-        "$('div#links').corner();"
-        "$('#private').corner();"
-        "$('#public').corner();"
-        "$('.dog').corner('dog tr 15px');"
-        "});")))
+    '("$(document).ready(function() {"
+      "$('div#links').corner();"
+      "$('#private').corner();"
+      "$('#public').corner();"
+      "$('.dog').corner('dog tr 15px');"
+      "});"))
 
   (define (links uuid . _)
     (html:ul
