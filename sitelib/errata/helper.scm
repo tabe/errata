@@ -106,6 +106,10 @@
                (hidden-field "id" (revision-id r))
                (html:input ((type "submit") (value (__ to-table))))))
 
+  (define (go-to-shelf uuid)
+    (html:form ((action (build-entry-path 'shelf uuid)))
+               (html:input ((type "submit") (value (__ to-shelf))))))
+
   (define (public-revisions uuid page)
     (with-pagination
      (board uuid page)
@@ -319,6 +323,7 @@
   (define (exlibris-frame uuid b r ex)
     (let ((id (exlibris-id ex)))
       (html:div
+       (go-to-shelf uuid)
        (revision-skeleton b r
                           (html:form ((action (build-entry-path 'modify-revision uuid)))
                                      (hidden-field "id" id)
