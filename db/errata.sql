@@ -22,7 +22,7 @@ create table account (
   created_at datetime,
   updated_at datetime,
   primary key (id)
-);
+) default charset=utf8;
 create table bib (
   id int not null auto_increment,
   title text not null,
@@ -32,7 +32,7 @@ create table bib (
   created_at datetime,
   updated_at datetime,
   primary key (id)
-);
+) default charset=utf8;
 create table revision (
   id int not null auto_increment,
   bib_id int not null,
@@ -41,7 +41,7 @@ create table revision (
   created_at datetime,
   updated_at datetime,
   primary key (id)
-);
+) default charset=utf8;
 create table exlibris (
   id int not null auto_increment,
   account_id int not null,
@@ -49,14 +49,14 @@ create table exlibris (
   created_at datetime,
   updated_at datetime,
   primary key (id)
-);
+) default charset=utf8;
 create table publicity (
   id int not null auto_increment,
   exlibris_id int not null,
   created_at datetime,
   updated_at datetime,
   primary key (id)
-);
+) default charset=utf8;
 create table review (
   id int not null auto_increment,
   exlibris_id int not null,
@@ -64,7 +64,7 @@ create table review (
   created_at datetime,
   updated_at datetime,
   primary key (id)
-);
+) default charset=utf8;
 create table quotation (
   id int not null auto_increment,
   account_id int not null,
@@ -75,14 +75,14 @@ create table quotation (
   created_at datetime,
   updated_at datetime,
   primary key (id)
-);
+) default charset=utf8;
 create table correction (
   id int not null auto_increment,
   account_id int not null,
   quotation_id int not null,
   body text not null,
   primary key (id)
-);
+) default charset=utf8;
 create table report (
   id int not null auto_increment,
   account_id int not null,
@@ -93,7 +93,7 @@ create table report (
   created_at datetime,
   updated_at datetime,
   primary key (id)
-);
+) default charset=utf8;
 create table acknowledgement (
   id int not null auto_increment,
   account_id int not null,
@@ -103,7 +103,7 @@ create table acknowledgement (
   created_at datetime,
   updated_at datetime,
   primary key (id)
-);
+) default charset=utf8;
 create table agreement (
   id int not null auto_increment,
   account_id int not null,
@@ -112,10 +112,10 @@ create table agreement (
   created_at datetime,
   updated_at datetime,
   primary key (id)
-);
+) default charset=utf8;
 create table draft (
   id int not null auto_increment,
   created_at datetime,
   updated_at datetime,
   primary key (id)
-);
+) default charset=utf8;
