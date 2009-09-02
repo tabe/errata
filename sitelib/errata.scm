@@ -24,19 +24,11 @@
         (and (string? x) (string-null? x))))
 
   (define (string->id str)
-    (cond ((string->number str)
-           => (lambda (id)
-                (and (fixnum? id)
-                     (< 0 id)
-                     id)))
+    (cond ((string->number str) => (lambda (id) (and (fixnum? id) (positive? id) id)))
           (else #f)))
 
   (define (string->page str)
-    (cond ((string->number str)
-           => (lambda (page)
-                (and (fixnum? page)
-                     (<= 0 page)
-                     page)))
+    (cond ((string->number str) => (lambda (page) (and (fixnum? page) (<= 0 page) page)))
           (else #f)))
 
   (define (valid-account? a)
