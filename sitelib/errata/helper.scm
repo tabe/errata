@@ -9,12 +9,14 @@
           (only (core) format)
           (match)
           (only (srfi :13) string-tokenize)
+          (only (srfi :19) date->string string->date date-year)
           (only (lcs) lcs-fold)
           (only (lunula gettext) __)
           (only (lunula mod_lisp) entry-paths build-entry-path)
           (only (lunula mysql) lookup lookup-all)
           (prefix (lunula html) html:)
           (only (lunula session) account account-nick account-name)
+          (only (errata calendar) ad->japanese-era)
           (only (errata isbn) isbn10->amazon)
           (errata model)
           (errata helper pagination))
@@ -29,7 +31,19 @@
       (entry-paths))))
 
   (define (datetime->date str)
-    (car (string-tokenize str)))
+    (guard (e (else #f))
+      (string->date str "~Y-~m-~d ~H:~M:~S")))
+
+  (define (date->ymd date)
+    (let ((year (date-year date)))
+      (guard (e
+              (else (date->string date "~Y-~m-~d")))
+        (append (html:span ((title (ad->japanese-era year))) year)
+                (date->string date "-~m-~d")))))
+
+  (define (datetime->ymd str)
+    (cond ((datetime->date str) => date->ymd)
+          (else #f)))
 
   (define (signature a)
     (html:span ((title (html:escape-string (account-name a))))
@@ -58,7 +72,7 @@
           (html:td ((style "color:#555555;")) (bib-isbn10 b)))
          (html:tr
           (html:th ((style "text-align:left;")) (__ Revision))
-          (html:td ((style "color:#555555;")) (cons* (html:escape-string (revision-name r)) "(" (datetime->date (revision-revised-at r)) ")" x)))
+          (html:td ((style "color:#555555;")) (cons* (html:escape-string (revision-name r)) "(" (datetime->ymd (revision-revised-at r)) ")" x)))
          (html:tr
           (html:td y)
           (html:td z)))))))
