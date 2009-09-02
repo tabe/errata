@@ -171,7 +171,7 @@
                      (else
                       (specify-revision (form (io sess) (revision r) private (__ please-retry))))))
 
-             (cond ((pregexp-match "^[yY]" (ok? c))
+             (cond ((yes? c)
                     (unless (eof-object? isbn13)
                       (bib-isbn13-set! b isbn13))
                     (unless (eof-object? isbn10)
