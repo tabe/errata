@@ -6,9 +6,16 @@ form {
     display: inline;
 }
 
-#menus {
+#public {
     padding: 0.5em;
     background-color: #a7f43d;
+    width: 70%;
+    float: left;
+}
+
+#private {
+    padding: 0.5em;
+    background-color: palegoldenrod;
     width: 70%;
     float: left;
 }
@@ -28,6 +35,7 @@ form {
 .diff {
     width: 98%;
     border: 1px solid #dddddd;
+    background-color: #ffffff;
 }
 
 .diff .title {
