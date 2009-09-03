@@ -21,7 +21,7 @@ stop:
 	kill -QUIT `pidof ypsilon`
 
 stats:
-	wc -l sitelib/errata.scm sitelib/errata/*.scm
+	find sitelib -type f -name '*.scm' | xargs wc -l
 	wc -l templates/*.scm
 
 test:
