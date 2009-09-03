@@ -12,7 +12,7 @@ fixtures:
 	env YPSILON_SITELIB=$(YPSILON_SITELIB) $(YPSILON) db/fixtures.scm
 
 start:
-	env YPSILON_SITELIB=$(YPSILON_SITELIB) script/server
+	env YPSILON_SITELIB=$(YPSILON_SITELIB) script/server 3000 yoursql
 
 image:
 	env YPSILON_SITELIB=$(YPSILON_SITELIB) $(YPSILON) script/image-server.scm

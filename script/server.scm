@@ -3,20 +3,25 @@
 
 (import (rnrs)
         (srfi :48)
+        (match)
         (errata))
 
 (define *port-number* 3000)
+(define *password* "")
 
-(define (port-number)
-  (let ((args (command-line)))
-    (cond ((< (length args) 2)
-           (number->string *port-number*))
-          (else
-           (cadr args)))))
+(define (with-command-parameters proc)
+  (match (command-line)
+    ((_ port-number password)
+     (proc port-number password))
+    ((_ port-number)
+     (proc port-number *password*))
+    (else
+     (proc (number->string *port-number*)
+           *password*))))
 
-(dynamic-wind
-    (lambda ()
-      (connect "localhost" "root" "yoursql" "errata"))
-    (lambda ()
-      (start (port-number)))
-    close)
+(with-command-parameters
+ (lambda (port-number password)
+   (dynamic-wind
+       (lambda () (connect "localhost" "root" password "errata"))
+       (lambda () (start port-number))
+       close)))
