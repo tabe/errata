@@ -18,7 +18,7 @@ image:
 	env YPSILON_SITELIB=$(YPSILON_SITELIB) $(YPSILON) script/image-server.scm
 
 stop:
-	kill -QUIT `pidof ypsilon`
+	kill -TERM `pidof ypsilon`
 
 stats:
 	find sitelib -type f -name '*.scm' | xargs wc -l
