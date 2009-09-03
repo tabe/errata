@@ -8,6 +8,7 @@
           logout
           put-on)
   (import (rnrs)
+          (only (core) lookup-process-environment)
           (pregexp)
           (only (srfi :13) string-null?)
           (srfi :48)
@@ -537,7 +538,7 @@
   (add-input-fields agreement (#f #f #f textarea))
 
   ;; templates
-  (templates "/home/tabe/errata/templates")
+  (templates (string-append (lookup-process-environment "PWD") "/templates"))
   (static-template "static")
   (template-environment (except (rnrs) div)
                         (lunula html)
