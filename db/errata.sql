@@ -81,6 +81,8 @@ create table correction (
   account_id int not null,
   quotation_id int not null,
   body text not null,
+  created_at datetime,
+  updated_at datetime,
   primary key (id)
 ) default charset=utf8;
 create table report (
