@@ -17,6 +17,7 @@
           (only (lunula mod_lisp) entry-paths build-entry-path)
           (only (lunula mysql) lookup lookup-all)
           (prefix (lunula html) html:)
+          (only (lunula persistent-record) id-of created-at-of)
           (only (lunula session) account account-nick account-name)
           (only (errata calendar) ad->japanese-era)
           (only (errata isbn) isbn10->amazon)
@@ -103,7 +104,7 @@
 
   (define (go-to-table uuid r)
     (html:form ((action (build-entry-path 'table uuid)))
-               (hidden-field "id" (revision-id r))
+               (hidden-field "id" (id-of r))
                (html:input ((type "submit") (value (__ to-table))))))
 
   (define (go-to-shelf uuid)
@@ -184,6 +185,8 @@
                  "("
                  (html:span ((style "font-size:x-small;")) "reported by ")
                  (signature a)
+                 (cond ((created-at-of rep) => (lambda (t) (html:span ((style "text-align:right;")) t)))
+                       (else '()))
                  ")")
         (html:td))
        (cond ((and (quotation? q)
@@ -198,7 +201,7 @@
   (define (revision-reviews r)
     (html:div
      (html:h4 (__ Review))
-     (let ((ls (lookup-all review (format "EXISTS (SELECT * FROM exlibris ex WHERE ex.id = review.exlibris_id AND ex.revision_id = '~d')" (revision-id r)))))
+     (let ((ls (lookup-all review (format "EXISTS (SELECT * FROM exlibris ex WHERE ex.id = review.exlibris_id AND ex.revision_id = '~d')" (id-of r)))))
        (if (null? ls)
            "(なし)"
            (map review-div ls)))))
@@ -249,17 +252,17 @@
       (html:tr
        (html:td 
         (html:form ((action (build-entry-path 'acknowledge uuid)))
-                   (hidden-field "report" (report-id rep))
-                   (hidden-field "quotation" (quotation-id q))
+                   (hidden-field "report" (id-of rep))
+                   (hidden-field "quotation" (id-of q))
                    (html:input ((type "submit") (value (__ acknowledge))))))
        (html:td
         (html:form ((action (build-entry-path 'agree uuid)))
-                   (hidden-field "report" (report-id rep))
-                   (hidden-field "correction" (correction-id c))
+                   (hidden-field "report" (id-of rep))
+                   (hidden-field "correction" (id-of c))
                    (html:input ((type "submit") (value (__ agree))))))))
      (html:tr
       (html:td
-       (let ((acks (reverse (lookup-all acknowledgement `((quotation-id ,(quotation-id q)))))))
+       (let ((acks (reverse (lookup-all acknowledgement `((quotation-id ,(id-of q)))))))
          (if (null? acks)
              '()
              (html:div
@@ -275,7 +278,7 @@
                              (html:escape-string (acknowledgement-comment a)))))
                acks))))
        (html:td
-        (let ((agms (reverse (lookup-all agreement `((correction-id ,(correction-id c)))))))
+        (let ((agms (reverse (lookup-all agreement `((correction-id ,(id-of c)))))))
           (if (null? agms)
               '()
               (html:div
@@ -299,7 +302,7 @@
          (revision-report-tr uuid r rep
                              (proc rep)
                              (lambda (q c) '())))
-       (lookup-all report `((revision-id ,(revision-id r))))))))
+       (lookup-all report `((revision-id ,(id-of r))))))))
 
   (define (revision-frame uuid b r)
     (html:div
@@ -307,7 +310,7 @@
      (revision-skeleton b r '() '() '())
      (revision-reports uuid r (lambda (rep)
                                 (html:form ((action (build-entry-path 'detail uuid)))
-                                           (hidden-field "id" (report-id rep))
+                                           (hidden-field "id" (id-of rep))
                                            (html:input ((type "submit") (value (__ to-detail)))))))))
 
   (define (exlibris-panel uuid b r ex)
@@ -315,13 +318,13 @@
      (revision-skeleton b r
                         '()
                         (html:form ((action (build-entry-path 'desk uuid)))
-                                   (hidden-field "id" (exlibris-id ex))
+                                   (hidden-field "id" (id-of ex))
                                    (html:input ((type "submit") (value (__ to-desk)))))
                         '())
      (html:hr ((style "color:#999999;")))))
 
   (define (exlibris-frame uuid b r ex)
-    (let ((id (exlibris-id ex)))
+    (let ((id (id-of ex)))
       (html:div
        (go-to-shelf uuid)
        (revision-skeleton b r
@@ -331,7 +334,7 @@
                           (cond ((lookup publicity `((exlibris-id ,id)))
                                  => (lambda (pub)
                                       (html:form ((action (build-entry-path 'hide-exlibris uuid)))
-                                                 (hidden-field "id" (publicity-id pub))
+                                                 (hidden-field "id" (id-of pub))
                                                  (html:input ((type "submit") (value (__ hide-exlibris)))))))
                                 (else
                                  (html:form ((action (build-entry-path 'share-exlibris uuid)))
@@ -349,17 +352,17 @@
 
        (html:div
         (html:form ((action (build-entry-path 'new-report uuid)))
-                   (hidden-field "id" (exlibris-id ex))
+                   (hidden-field "id" (id-of ex))
                    (html:input ((type "submit") (value (__ new-report))))))
        (revision-reports uuid r (lambda (rep)
                                   (append
                                    (html:form ((action (build-entry-path 'modify-report uuid)))
-                                              (hidden-field "report" (report-id rep))
-                                              (hidden-field "exlibris" (exlibris-id ex))
+                                              (hidden-field "report" (id-of rep))
+                                              (hidden-field "exlibris" (id-of ex))
                                               (html:input ((type "submit") (value (__ modify-report)))))
                                    (html:form ((action (build-entry-path 'drop-report uuid)))
-                                              (hidden-field "report" (report-id rep))
-                                              (hidden-field "exlibris" (exlibris-id ex))
+                                              (hidden-field "report" (id-of rep))
+                                              (hidden-field "exlibris" (id-of ex))
                                               (html:input ((type "submit") (value (__ drop-report)))))))))))
 
   (define (shelf-window uuid body)

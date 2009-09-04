@@ -16,6 +16,7 @@
           (prefix (lunula html) html:)
           (lunula tree)
           (lunula gettext)
+          (only (lunula persistent-record) string->id id-of id-set!)
           (lunula validation)
           (only (errata query) query-image)
           (only (errata isbn) valid-isbn?)
@@ -53,10 +54,6 @@
   (define (blank? x)
     (or (not x)
         (and (string? x) (string-null? x))))
-
-  (define (string->id str)
-    (cond ((string->number str) => (lambda (id) (and (fixnum? id) (positive? id) id)))
-          (else #f)))
 
   (define (string->page str)
     (cond ((string->number str) => (lambda (page) (and (fixnum? page) (<= 0 page) page)))
@@ -101,7 +98,7 @@
          (guide (validate-account a)
            (lambda (ht) (loop (form (io) (account a) public (hashtable->messages ht))))
            (lambda _
-             (account-id-set! a (account-id (user-account (session-user sess))))
+             (id-set! a (id-of (user-account (session-user sess))))
              (if (save a)
                  (page (io sess) private (__ your-account-has-been-updated))
                  (page (io sess) private (__ hmm-an-error-occurred)))))))))
@@ -163,11 +160,10 @@
 
              (define (specify-revision r)
                (cond ((valid-revision? r)
-                      (revision-bib-id-set! r (bib-id b))
+                      (revision-bib-id-set! r (id-of b))
                       (if (save r)
-                          (let ((ex (make-exlibris #f
-                                                   (account-id (user-account (session-user sess)))
-                                                   (revision-id r))))
+                          (let ((ex (make-exlibris (id-of (user-account (session-user sess)))
+                                                   (id-of r))))
                             (if (save ex)
                                 (page (io sess) private (__ you-are-done))
                                 (page (io sess) private (__ hmm-we-have-failed-to-put-on-your-exlibris))))
@@ -278,7 +274,7 @@
     (with-session/
      (io request data)
      (sess (p page string->page 0))
-     (let ((id (account-id (user-account (session-user sess)))))
+     (let ((id (id-of (user-account (session-user sess)))))
        (page (io sess) shelf (list id p)))))
 
   (define-scenario (desk io request data)
@@ -302,7 +298,7 @@
                         (revision-bib-id-set! r-new (revision-bib-id r))
                         (if (and (save r-new)
                                  (begin
-                                   (exlibris-revision-id-set! ex (revision-id r-new))
+                                   (exlibris-revision-id-set! ex (id-of r-new))
                                    (save ex)))
                             (page (io sess) desk id)
                             (page (io sess) private (__ hmm-an-error-occurred))))
@@ -316,7 +312,7 @@
      (lambda (sess id)
        (let ((ex (lookup exlibris id)))
          (if ex
-             (if (save (make-publicity #f id))
+             (if (save (make-publicity id))
                  (page (io sess) desk id)
                  (page (io sess) private (__ hmm-an-error-occurred)))
              (redirect (io sess) 'shelf))))))
@@ -347,7 +343,7 @@
        (let ((r (lookup review `((exlibris-id ,id)))))
          (let loop ((r-new (form (io sess) (review r) private)))
            (cond ((valid-review? r-new)
-                  (if (review? r) (review-id-set! r-new (review-id r)))
+                  (if (review? r) (id-set! r-new (id-of r)))
                   (review-exlibris-id-set! r-new id)
                   (if (save r-new)
                       (page (io sess) desk id)
@@ -378,22 +374,19 @@
          (redirect (io sess) 'board))))
 
   (define (report-to-modify->quotation rep a-id r-id)
-    (make-quotation #f
-                    a-id
+    (make-quotation a-id
                     r-id
                     (report-to-modify-page rep)
                     (report-to-modify-position rep)
                     (report-to-modify-quotation-body rep)))
 
   (define (report-to-modify->correction rep a-id q-id)
-    (make-correction #f
-                     a-id
+    (make-correction a-id
                      q-id
                      (report-to-modify-correction-body rep)))
 
   (define (report-to-modify->report rep a-id r-id q-id c-id)
-    (make-report #f
-                 a-id
+    (make-report a-id
                  r-id
                  (report-to-modify-subject rep)
                  q-id
@@ -403,16 +396,16 @@
     (with-session&id
      (io request data)
      (lambda (sess id)
-       (let ((a-id (account-id (user-account (session-user sess))))
+       (let ((a-id (id-of (user-account (session-user sess))))
              (ex (lookup exlibris id)))
          (if ex
              (let loop ((rep (form (io sess) (report-to-modify) private)))
                (cond ((valid-report-to-modify? rep)
                       (let ((q (report-to-modify->quotation rep a-id (exlibris-revision-id ex))))
                         (if (save q)
-                            (let ((c (report-to-modify->correction rep a-id (quotation-id q))))
+                            (let ((c (report-to-modify->correction rep a-id (id-of q))))
                               (if (save c)
-                                  (let ((r (report-to-modify->report rep a-id (exlibris-revision-id ex) (quotation-id q) (correction-id c))))
+                                  (let ((r (report-to-modify->report rep a-id (exlibris-revision-id ex) (id-of q) (id-of c))))
                                     (if (save r)
                                         (page (io sess) desk id)
                                         (page (io sess) private (__ hmm-an-error-occurred))))
@@ -432,7 +425,6 @@
 
   (define (update-quotation q modified)
     (make-quotation
-     #f
      (quotation-account-id q)
      (quotation-revision-id q)
      (report-to-modify-page modified)
@@ -441,9 +433,8 @@
 
   (define (update-correction c q modified)
     (make-correction
-     #f
      (correction-account-id c)
-     (quotation-id q)
+     (id-of q)
      (report-to-modify-correction-body modified)))
 
   (define (update-report rep q c modified)
@@ -452,12 +443,11 @@
            (let ((c-new (update-correction c q-new modified)))
              (and (save c-new)
                   (let ((rep-new (make-report
-                                  #f
                                   (report-account-id rep)
                                   (report-revision-id rep)
                                   (report-to-modify-subject modified)
-                                  (quotation-id q-new)
-                                  (correction-id c-new))))
+                                  (id-of q-new)
+                                  (id-of c-new))))
                     (and (destroy rep)
                          (save rep-new)
                          rep-new)))))))
@@ -508,7 +498,7 @@
            (if (quotation? q)
                (let loop ((a (form (io sess) (acknowledgement) private)))
                  (cond ((valid-acknowledgement? a)
-                        (acknowledgement-account-id-set! a (account-id (user-account (session-user sess))))
+                        (acknowledgement-account-id-set! a (id-of (user-account (session-user sess))))
                         (acknowledgement-quotation-id-set! a q-id)
                         (if (save a)
                             (page (io sess) detail r-id)
@@ -527,7 +517,7 @@
                 => (lambda (c)
                      (let loop ((a (form (io sess) (agreement) private)))
                        (cond ((valid-agreement? a)
-                              (agreement-account-id-set! a (account-id (user-account (session-user sess))))
+                              (agreement-account-id-set! a (id-of (user-account (session-user sess))))
                               (agreement-correction-id-set! a c-id)
                               (if (save a)
                                   (page (io sess) detail r-id)
@@ -537,18 +527,18 @@
          (redirect (io sess) 'board))))
 
   ;; input fields
-  (add-input-fields account (#f text text password text #f))
+  (add-input-fields account (text text password text #f))
   (add-input-fields account-to-login (text password))
   (add-input-fields confirmation (text))
-  (add-input-fields bib (#f text text #f #f))
-  (add-input-fields revision (#f #f text text))
-  (add-input-fields review (#f #f textarea))
-  (add-input-fields quotation (#f #f #f text text textarea))
-  (add-input-fields correction (#f #f #f textarea))
-  (add-input-fields report (#f #f #f text #f #f))
+  (add-input-fields bib (text text #f #f))
+  (add-input-fields revision (#f text text))
+  (add-input-fields review (#f textarea))
+  (add-input-fields quotation (#f #f text text textarea))
+  (add-input-fields correction (#f #f textarea))
+  (add-input-fields report (#f #f text #f #f #f))
   (add-input-fields report-to-modify (text text text textarea textarea))
-  (add-input-fields acknowledgement (#f #f #f text textarea))
-  (add-input-fields agreement (#f #f #f textarea))
+  (add-input-fields acknowledgement (#f #f text textarea))
+  (add-input-fields agreement (#f #f textarea))
 
   ;; templates
   (templates (string-append (lookup-process-environment "PWD") "/templates"))

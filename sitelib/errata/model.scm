@@ -7,7 +7,6 @@
           bib
           bib?
           make-bib
-          bib-id
           bib-title
           bib-title-set!
           bib-isbn10
@@ -19,8 +18,6 @@
           revision
           revision?
           make-revision
-          revision-id
-          revision-id-set!
           revision-bib-id
           revision-bib-id-set!
           revision-name
@@ -29,23 +26,17 @@
           exlibris
           exlibris?
           make-exlibris
-          exlibris-id
-          exlibris-id-set!
           exlibris-account-id
           exlibris-revision-id
           exlibris-revision-id-set!
           publicity
           publicity?
           make-publicity
-          publicity-id
-          publicity-id-set!
           publicity-exlibris-id
           publicity-exlibris-id-set!
           review
           review?
           make-review
-          review-id
-          review-id-set!
           review-exlibris-id
           review-exlibris-id-set!
           review-body
@@ -53,8 +44,6 @@
           quotation?
           valid-quotation?
           make-quotation
-          quotation-id
-          quotation-id-set!
           quotation-account-id
           quotation-account-id-set!
           quotation-revision-id
@@ -66,8 +55,6 @@
           correction?
           valid-correction?
           make-correction
-          correction-id
-          correction-id-set!
           correction-account-id
           correction-account-id-set!
           correction-quotation-id
@@ -76,8 +63,6 @@
           report
           report?
           make-report
-          report-id
-          report-id-set!
           report-account-id
           report-account-id-set!
           report-revision-id
@@ -100,8 +85,6 @@
           acknowledgement?
           valid-acknowledgement?
           make-acknowledgement
-          acknowledgement-id
-          acknowledgement-id-set!
           acknowledgement-account-id
           acknowledgement-account-id-set!
           acknowledgement-quotation-id
@@ -114,8 +97,6 @@
           agreement?
           valid-agreement?
           make-agreement
-          agreement-id
-          agreement-id-set!
           agreement-account-id
           agreement-account-id-set!
           agreement-correction-id
@@ -123,10 +104,8 @@
           agreement-comment
           )
   (import (rnrs)
+          (lunula persistent-record)
           (lunula session))
-
-  (define (maybe-number id)
-    (if (string? id) (string->number id) id))
 
   (define-record-type account-to-login
     (parent account)
@@ -134,95 +113,95 @@
     (protocol
      (lambda (n)
        (lambda (nick password)
-         (let ((p (n #f nick #f password #f "plain")))
+         (let ((p (n nick #f password #f "plain")))
            (p nick password))))))
 
-  (define-record-type bib
-    (fields (mutable id) (mutable title) (mutable isbn13) (mutable isbn10) (mutable image))
+  (define-persistent-record-type bib
+    (fields (mutable title) (mutable isbn13) (mutable isbn10) (mutable image))
     (protocol
-     (lambda (p)
-       (lambda (id title isbn13 isbn10 image)
-         (p (maybe-number id)
-            title
-            isbn13
-            isbn10
-            image)))))
+     (persistent-protocol
+      (lambda (p)
+        (lambda (title isbn13 isbn10 image)
+          (p title
+             isbn13
+             isbn10
+             image))))))
 
-  (define-record-type revision
-    (fields (mutable id) (mutable bib-id) (mutable name) revised-at)
+  (define-persistent-record-type revision
+    (fields (mutable bib-id) (mutable name) revised-at)
     (protocol
-     (lambda (p)
-       (lambda (id bib-id name revised-at)
-         (p (maybe-number id)
-            (maybe-number bib-id)
-            name
-            revised-at)))))
+     (persistent-protocol
+      (lambda (p)
+        (lambda (bib-id name revised-at)
+          (p (maybe-id bib-id)
+             name
+             revised-at))))))
 
-  (define-record-type exlibris
-    (fields (mutable id) account-id (mutable revision-id))
+  (define-persistent-record-type exlibris
+    (fields account-id (mutable revision-id))
     (protocol
-     (lambda (p)
-       (lambda (id account-id revision-id)
-         (p (maybe-number id)
-            (maybe-number account-id)
-            (maybe-number revision-id))))))
+     (persistent-protocol
+      (lambda (p)
+        (lambda (account-id revision-id)
+          (p (maybe-id account-id)
+             (maybe-id revision-id)))))))
 
-  (define-record-type publicity
-    (fields (mutable id) (mutable exlibris-id))
+  (define-persistent-record-type publicity
+    (fields (mutable exlibris-id))
     (protocol
-     (lambda (p)
-       (lambda (id exlibris-id)
-         (p (maybe-number id)
-            (maybe-number exlibris-id))))))
+     (persistent-protocol
+      (lambda (p)
+        (lambda (exlibris-id)
+          (p (maybe-id exlibris-id)))))))
 
-  (define-record-type review
-    (fields (mutable id) (mutable exlibris-id) body)
+  (define-persistent-record-type review
+    (fields (mutable exlibris-id) body)
     (protocol
-     (lambda (p)
-       (lambda (id exlibris-id body)
-         (p (maybe-number id)
-            (maybe-number exlibris-id)
-            body)))))
+     (persistent-protocol
+      (lambda (p)
+        (lambda (exlibris-id body)
+          (p (maybe-id exlibris-id)
+             body))))))
 
-  (define-record-type quotation
-    (fields (mutable id) (mutable account-id) (mutable revision-id) page position body)
+  (define-persistent-record-type quotation
+    (fields (mutable account-id) (mutable revision-id) page position body)
     (protocol
-     (lambda (p)
-       (lambda (id account-id revision-id page position body)
-         (p (maybe-number id)
-            (maybe-number account-id)
-            (maybe-number revision-id)
-            page
-            position
-            body)))))
+     (persistent-protocol
+      (lambda (p)
+        (lambda (account-id revision-id page position body)
+          (p (maybe-id account-id)
+             (maybe-id revision-id)
+             page
+             position
+             body))))))
 
   (define (valid-quotation? q)
     (quotation? q))
 
-  (define-record-type correction
-    (fields (mutable id) (mutable account-id) (mutable quotation-id) body)
+  (define-persistent-record-type correction
+    (fields (mutable account-id) (mutable quotation-id) body)
     (protocol
-     (lambda (p)
-       (lambda (id account-id quotation-id body)
-         (p (maybe-number id)
-            (maybe-number account-id)
-            (maybe-number quotation-id)
-            body)))))
+     (persistent-protocol
+      (lambda (p)
+        (lambda (account-id quotation-id body)
+          (p (maybe-id account-id)
+             (maybe-id quotation-id)
+             body))))))
 
   (define (valid-correction? c)
     (correction? c))
 
-  (define-record-type report
-    (fields (mutable id) (mutable account-id) (mutable revision-id) subject (mutable quotation-id) (mutable correction-id))
+  (define-persistent-record-type report
+    (fields (mutable account-id) (mutable revision-id) subject (mutable quotation-id) (mutable correction-id))
     (protocol
-     (lambda (p)
-       (lambda (id account-id revision-id subject quotation-id correction-id)
-         (p (maybe-number id)
-            (maybe-number account-id)
-            (maybe-number revision-id)
-            subject
-            (maybe-number quotation-id)
-            (maybe-number correction-id))))))
+     (persistent-protocol
+      (lambda (p)
+        (lambda (account-id revision-id subject quotation-id correction-id)
+          (p (maybe-id account-id)
+             (maybe-id revision-id)
+             subject
+             (maybe-id quotation-id)
+             (maybe-id correction-id)))))))
 
   (define-record-type report-to-modify
     (fields subject page position quotation-body correction-body))
@@ -240,16 +219,16 @@
     (and (string? c)
          (< (string-length c) 1024)))
 
-  (define-record-type acknowledgement
-    (fields (mutable id) (mutable account-id) (mutable quotation-id) sign comment)
+  (define-persistent-record-type acknowledgement
+    (fields (mutable account-id) (mutable quotation-id) sign comment)
     (protocol
-     (lambda (p)
-       (lambda (id account-id quotation-id sign comment)
-         (p (maybe-number id)
-            (maybe-number account-id)
-            (maybe-number quotation-id)
-            sign
-            comment)))))
+     (persistent-protocol
+      (lambda (p)
+        (lambda (account-id quotation-id sign comment)
+          (p (maybe-id account-id)
+             (maybe-id quotation-id)
+             sign
+             comment))))))
 
   (define (valid-acknowledgement? a)
     (and (acknowledgement? a)
@@ -264,15 +243,15 @@
     (assert (acknowledgement? a))
     (string=? (acknowledgement-sign a) "negative"))
 
-  (define-record-type agreement
-    (fields (mutable id) (mutable account-id) (mutable correction-id) comment)
+  (define-persistent-record-type agreement
+    (fields (mutable account-id) (mutable correction-id) comment)
     (protocol
-     (lambda (p)
-       (lambda (id account-id correction-id comment)
-         (p (maybe-number id)
-            (maybe-number account-id)
-            (maybe-number correction-id)
-            comment)))))
+     (persistent-protocol
+      (lambda (p)
+        (lambda (account-id correction-id comment)
+          (p (maybe-id account-id)
+             (maybe-id correction-id)
+             comment))))))
 
   (define (valid-agreement? a)
     (and (agreement? a)
