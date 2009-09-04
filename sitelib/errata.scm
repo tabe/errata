@@ -16,9 +16,39 @@
           (prefix (lunula html) html:)
           (lunula tree)
           (lunula gettext)
+          (lunula validation)
           (only (errata query) query-image)
           (only (errata isbn) valid-isbn?)
           (errata model))
+
+  (define-validator (validate-password password)
+    (password-too-short)
+    (when (< (string-length password) 8)
+      (password-too-short)))
+
+  (define-validator (validate-nick nick)
+    (nick-invalid-char)
+    (unless (pregexp-match "^[A-Za-z_][A-Za-z0-9_]*$" nick)
+      (nick-invalid-char)))
+
+  (define-composite-validator validate-account
+    (account-nick validate-nick)
+    (account-password validate-password))
+
+  (define-validator (validate-new-nick nick)
+    (nick-already-used)
+    (when (lookup account `((nick ,nick)))
+      (nick-already-used)))
+
+  (define-composite-validator validate-new-account
+    (account-nick validate-nick validate-new-nick)
+    (account-password validate-password))
+
+  (define-validator (authenticate-account a)
+    (does-not-exist)
+    (or (lookup account `((nick ,(account-nick a))
+                          (password ,(account-password a))))
+        (does-not-exist)))
 
   (define (blank? x)
     (or (not x)
@@ -31,23 +61,6 @@
   (define (string->page str)
     (cond ((string->number str) => (lambda (page) (and (fixnum? page) (<= 0 page) page)))
           (else #f)))
-
-  (define (valid-account? a)
-    (and (account? a)
-         (let ((nick (account-nick a))
-               (password (account-password a)))
-           (and (pregexp-match "^[A-Za-z_][A-Za-z0-9_]*$" nick)
-                (<= 8 (string-length password))))))
-
-  (define (new-account? a)
-    (and (account? a)
-         (not (lookup account `((nick ,(account-nick a))
-                                (password ,(account-password a)))))))
-
-  (define (authenticate-account a)
-    (and (account? a)
-         (lookup account `((nick ,(account-nick a))
-                           (password ,(account-password a))))))
 
   (define (yes? c) (pregexp-match "^[yY]" (ok? c)))
 
@@ -72,27 +85,26 @@
   (define-scenario (sign-up io request)
     (without-session
      (io request)
-     (let lp ((a (form (io) (account) public)))
-       (cond ((and (valid-account? a)
-                   (new-account? a))
-              (if (save a)
-                  (page (io) public (__ now-you-have-your-own-account))
-                  (page (io) public (__ hmm-we-have-failed-to-create-your-account))))
-             (else
-              (lp (form (io) (account a) public (__ please-retry))))))))
+     (let loop ((a (form (io) (account) public)))
+       (guide (validate-new-account a)
+         (lambda (ht) (loop (form (io) (account a) public (hashtable->messages ht))))
+         (lambda _
+           (if (save a)
+               (page (io) public (__ now-you-have-your-own-account))
+               (page (io) public (__ hmm-we-have-failed-to-create-your-account))))))))
 
   (define-scenario (modify-account io request)
     (with-session
      (io request)
      (lambda (sess)
        (let loop ((a (form (io sess) (account (user-account (session-user sess))) private)))
-         (cond ((valid-account? a)
-                (account-id-set! a (account-id (user-account (session-user sess))))
-                (if (save a)
-                    (page (io sess) private (__ your-account-has-been-updated))
-                    (page (io sess) private (__ hmm-an-error-occurred))))
-               (else
-                (loop (form (io sess) (account a) private (__ check-your-data)))))))))
+         (guide (validate-account a)
+           (lambda (ht) (loop (form (io) (account a) public (hashtable->messages ht))))
+           (lambda _
+             (account-id-set! a (account-id (user-account (session-user sess))))
+             (if (save a)
+                 (page (io sess) private (__ your-account-has-been-updated))
+                 (page (io sess) private (__ hmm-an-error-occurred)))))))))
 
   (define-scenario (cancel io request)
     (with-session
@@ -110,13 +122,14 @@
     (without-session
      (io request)
      (let loop ((a (form (io) (account-to-login) public)))
-       (cond ((and (valid-account? a)
-                   (authenticate-account a))
-              => (lambda (a)
-                   (let ((sess (do-login a)))
-                     (page (io sess) private (__ now-you-have-logged-in)))))
-             (else
-              (loop (form (io) (account-to-login a) public (__ please-retry))))))))
+       (guide (validate-account a)
+         (lambda _ (loop (form (io) (account-to-login a) public (__ please-retry))))
+         (lambda _
+           (guide (authenticate-account a)
+             (lambda _ (loop (form (io) (account-to-login a) public (__ please-retry))))
+             (lambda (a)
+               (let ((sess (do-login a)))
+                 (page (io sess) private (__ now-you-have-logged-in))))))))))
 
   (define-scenario (logout io request)
     (with-session
@@ -595,6 +608,12 @@
                             (ja "コメント"))
 
    ;; messages
+   (password-too-short (en "password is too short.")
+                       (ja "パスワードが短いです。"))
+   (nick-already-used (en "nick is already used.")
+                      (ja "ニックネームは既に使用されています。"))
+   (nick-invalid-char (en "nick contains invalid characters.")
+                      (ja "ニックネームに使えない文字が含まれています。"))
    (submit (en "submit")
            (ja "送信"))
    (hmm-an-error-occurred (en "Hmm ... an error occurred.")
@@ -615,8 +634,8 @@
                                (ja "タイトルまたは ISBN を入力してください。"))
    (is-this-content-ok? (en "Is this content OK?")
                         (ja "この内容でよろしいですか?"))
-   (please-retry (en "Please retry!")
-                 (ja "再度入力してください。"))
+   (please-retry (en "Please check your input and retry.")
+                 (ja "入力内容を確認して再度入力してください。"))
    (now-new-book-has-been-put-on (en "Now new book has been put on your bookshelf: ")
                                  (ja "新しい蔵書があなたの書棚に並びました: "))
    (hmm-we-have-failed-to-put-on-your-exlibris (en "Hmm ... we have failed to put on your exlibris.")
