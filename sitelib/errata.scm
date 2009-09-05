@@ -187,14 +187,10 @@
                       (specify-revision (form (io sess) (revision r) private (__ please-retry))))))
 
              (cond ((yes? c)
-                    (unless (eof-object? isbn13)
-                      (bib-isbn13-set! b isbn13))
-                    (unless (eof-object? isbn10)
-                      (bib-isbn10-set! b isbn10))
-                    (unless (eof-object? title)
-                      (bib-title-set! b title))
-                    (unless (eof-object? url)
-                      (bib-image-set! b url))
+                    (unless (eof-object? isbn13) (bib-isbn13-set! b isbn13))
+                    (unless (eof-object? isbn10) (bib-isbn10-set! b isbn10))
+                    (unless (eof-object? title) (bib-title-set! b title))
+                    (unless (eof-object? url) (bib-image-set! b url))
                     (cond ((save b)
                            (specify-revision
                             (form (io sess) (revision) private (__ now-new-book-has-been-put-on) (bib-title b))))
