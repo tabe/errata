@@ -1,12 +1,7 @@
 (library (errata)
   (export start
           connect
-          close
-          cancel
-          sign-up
-          login
-          logout
-          put-on)
+          close)
   (import (rnrs)
           (only (core) format lookup-process-environment)
           (pregexp)
