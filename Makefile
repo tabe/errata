@@ -1,7 +1,7 @@
 YPSILON = ypsilon --sitelib=sitelib
 YPSILON_SITELIB = /home/tabe/lunula/sitelib:/home/tabe/base64:/home/tabe/lcs:/home/tabe/ssax:/home/tabe/uri:/home/tabe/xunit:/home/tabe/ypsilon-foreign-lib/sitelib:/home/tabe/ypsilon-http/sitelib
 
-.PHONY: check migrate fixtures stats test
+.PHONY: check migrate fixtures start image stop stats test
 
 check: test
 
@@ -22,7 +22,7 @@ stop:
 
 stats:
 	find sitelib -type f -name '*.scm' | xargs wc -l
-	wc -l templates/*.scm
+	find tests -type f -name '*.scm' | xargs wc -l
 
 test:
 	env YPSILON_SITELIB=$(YPSILON_SITELIB) $(YPSILON) tests/errata/calendar.scm
