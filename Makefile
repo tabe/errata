@@ -31,4 +31,5 @@ test:
 	env YPSILON_SITELIB=$(YPSILON_SITELIB) $(YPSILON) tests/errata/isbn.scm
 	env YPSILON_SITELIB=$(YPSILON_SITELIB) $(YPSILON) tests/errata/model.scm
 	env YPSILON_SITELIB=$(YPSILON_SITELIB) $(YPSILON) tests/errata/query.scm
+	env YPSILON_SITELIB=$(YPSILON_SITELIB) $(YPSILON) tests/errata/validator.scm
 	env YPSILON_SITELIB=$(YPSILON_SITELIB) $(YPSILON) tests/errata.scm

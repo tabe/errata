@@ -20,54 +20,8 @@
           (lunula validation)
           (only (errata query) query-image)
           (only (errata isbn) valid-isbn?)
-          (errata model))
-
-  (define *password-min-length* 8)
-  (define *nick-max-length* 16)
-  (define *mail-address-max-length* 256)
-
-  (define-validator (validate-password password)
-    (password-too-short)
-    (when (< (string-length password) *password-min-length*)
-      (password-too-short)))
-
-  (define-validator (validate-nick nick)
-    (nick-invalid-char nick-too-long)
-    (unless (pregexp-match "^[A-Za-z_][A-Za-z0-9_]*$" nick)
-      (nick-invalid-char))
-    (when (< *nick-max-length* (string-length nick))
-      (nick-too-long)))
-
-  (define-validator (validate-mail-address mail-address)
-    (mail-address-too-long)
-    (when (< *mail-address-max-length* (string-length mail-address))
-      (mail-address-too-long)))
-
-  (define-composite-validator validate-account
-    (account-nick validate-nick)
-    (account-password validate-password)
-    (account-mail-address validate-mail-address))
-
-  (define-validator (validate-new-nick nick)
-    (nick-already-used)
-    (when (lookup account `((nick ,nick)))
-      (nick-already-used)))
-
-  (define-composite-validator validate-new-account
-    (account-nick validate-nick validate-new-nick)
-    (account-password validate-password)
-    (account-mail-address validate-mail-address))
-
-  (define-validator (existing-account a)
-    (does-not-exist)
-    (or (lookup account `((nick ,(account-nick a))
-                          (password ,(account-password a))))
-        (does-not-exist)))
-
-  (define-composite-validator authenticate-account
-    (account-nick validate-nick)
-    (account-password validate-password)
-    (values existing-account))
+          (errata model)
+          (errata validator))
 
   (define (blank? x)
     (or (not x)
@@ -609,14 +563,20 @@
                             (ja "コメント"))
 
    ;; messages
+   (password-is-blank (en "password is blank.")
+                      (ja "パスワードが空です。"))
    (password-too-short (en "password is too short.")
                        (ja "パスワードが短いです。"))
+   (nick-is-blank (en "nick is blank.")
+                  (ja "ニックネームが空です。"))
+   (nick-too-long (en "nick is too long.")
+                  (ja (format "ニックネームが規定の長さ(~d)を超えています。" *nick-max-length*)))
    (nick-already-used (en "nick is already used.")
                       (ja "ニックネームは既に使用されています。"))
    (nick-invalid-char (en "nick contains invalid characters.")
                       (ja "ニックネームに使えない文字が含まれています。"))
-   (nick-too-long (en "nick is too long.")
-                  (ja (format "ニックネームが規定の長さ(~d)を超えています。" *nick-max-length*)))
+   (mail-address-is-blank (en "mail address is blank.")
+                          (ja "メールアドレスが空です。"))
    (mail-address-too-long (en "mail address is too long.")
                           (ja (format "メールアドレスが規定の長さ(~d)を超えています。" *mail-address-max-length*)))
    (submit (en "submit")
