@@ -8,7 +8,7 @@
           logout
           put-on)
   (import (rnrs)
-          (only (core) lookup-process-environment)
+          (only (core) format lookup-process-environment)
           (pregexp)
           (only (srfi :13) string-null?)
           (srfi :48)
@@ -22,19 +22,31 @@
           (only (errata isbn) valid-isbn?)
           (errata model))
 
+  (define *password-min-length* 8)
+  (define *nick-max-length* 16)
+  (define *mail-address-max-length* 256)
+
   (define-validator (validate-password password)
     (password-too-short)
-    (when (< (string-length password) 8)
+    (when (< (string-length password) *password-min-length*)
       (password-too-short)))
 
   (define-validator (validate-nick nick)
-    (nick-invalid-char)
+    (nick-invalid-char nick-too-long)
     (unless (pregexp-match "^[A-Za-z_][A-Za-z0-9_]*$" nick)
-      (nick-invalid-char)))
+      (nick-invalid-char))
+    (when (< *nick-max-length* (string-length nick))
+      (nick-too-long)))
+
+  (define-validator (validate-mail-address mail-address)
+    (mail-address-too-long)
+    (when (< *mail-address-max-length* (string-length mail-address))
+      (mail-address-too-long)))
 
   (define-composite-validator validate-account
     (account-nick validate-nick)
-    (account-password validate-password))
+    (account-password validate-password)
+    (account-mail-address validate-mail-address))
 
   (define-validator (validate-new-nick nick)
     (nick-already-used)
@@ -43,13 +55,19 @@
 
   (define-composite-validator validate-new-account
     (account-nick validate-nick validate-new-nick)
-    (account-password validate-password))
+    (account-password validate-password)
+    (account-mail-address validate-mail-address))
 
-  (define-validator (authenticate-account a)
+  (define-validator (existing-account a)
     (does-not-exist)
     (or (lookup account `((nick ,(account-nick a))
                           (password ,(account-password a))))
         (does-not-exist)))
+
+  (define-composite-validator authenticate-account
+    (account-nick validate-nick)
+    (account-password validate-password)
+    (values existing-account))
 
   (define (blank? x)
     (or (not x)
@@ -119,14 +137,11 @@
     (without-session
      (io request)
      (let loop ((a (form (io) (account-to-login) public)))
-       (guide (validate-account a)
+       (guide (authenticate-account a)
          (lambda _ (loop (form (io) (account-to-login a) public (__ please-retry))))
-         (lambda _
-           (guide (authenticate-account a)
-             (lambda _ (loop (form (io) (account-to-login a) public (__ please-retry))))
-             (lambda (a)
-               (let ((sess (do-login a)))
-                 (page (io sess) private (__ now-you-have-logged-in))))))))))
+         (lambda (a)
+           (let ((sess (do-login a)))
+             (page (io sess) private (__ now-you-have-logged-in))))))))
 
   (define-scenario (logout io request)
     (with-session
@@ -604,6 +619,10 @@
                       (ja "ニックネームは既に使用されています。"))
    (nick-invalid-char (en "nick contains invalid characters.")
                       (ja "ニックネームに使えない文字が含まれています。"))
+   (nick-too-long (en "nick is too long.")
+                  (ja (format "ニックネームが規定の長さ(~d)を超えています。" *nick-max-length*)))
+   (mail-address-too-long (en "mail address is too long.")
+                          (ja (format "メールアドレスが規定の長さ(~d)を超えています。" *mail-address-max-length*)))
    (submit (en "submit")
            (ja "送信"))
    (hmm-an-error-occurred (en "Hmm ... an error occurred.")
