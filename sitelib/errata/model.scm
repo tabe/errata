@@ -29,6 +29,11 @@
           exlibris-account-id
           exlibris-revision-id
           exlibris-revision-id-set!
+          new-exlibris
+          new-exlibris?
+          make-new-exlibris
+          new-exlibris-title
+          new-exlibris-isbn
           publicity
           publicity?
           make-publicity
@@ -145,6 +150,9 @@
         (lambda (account-id revision-id)
           (p (maybe-id account-id)
              (maybe-id revision-id)))))))
+
+  (define-record-type new-exlibris
+    (fields title isbn))
 
   (define-persistent-record-type publicity
     (fields (mutable exlibris-id))

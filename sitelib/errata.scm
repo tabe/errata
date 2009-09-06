@@ -8,9 +8,10 @@
           (only (srfi :13) string-null?)
           (srfi :48)
           (lunula)
-          (prefix (lunula html) html:)
-          (lunula tree)
           (lunula gettext)
+          (prefix (lunula html) html:)
+          (prefix (lunula log) log:)
+          (lunula tree)
           (only (lunula persistent-record) string->id id-of id-set!)
           (lunula validation)
           (only (errata query) query-image)
@@ -26,7 +27,7 @@
     (cond ((string->number str) => (lambda (page) (and (fixnum? page) (<= 0 page) page)))
           (else #f)))
 
-  (define (yes? c) (pregexp-match "^[yY]" (ok? c)))
+  (define (yes? c) (and (string? (ok? c)) (pregexp-match "^[yY]" (ok? c))))
 
   (define-syntax with-session
     (syntax-rules ()
@@ -108,76 +109,104 @@
      (io request)
      (lambda (sess)
 
-       (define (specify-bib b)
+       (define (specify-bib new-ex)
 
-         (define (confirm-bib isbn13 isbn10 url title)
-           (let ((c (form (io sess) (confirmation) private
-                          (__ is-this-content-ok?)
-                          (tree->string
-                           (if (eof-object? url)
-                               (list (html:br)
-                                     (bib-title b))
-                               (list (html:br)
-                                     title
-                                     (html:br)
-                                     (html:image ((src url)))))))))
+         (define (confirm-bib b)
 
              (define (specify-revision r)
+
+               (define (save-exlibris r)
+                 (let ((ex (make-exlibris (id-of (user-account (session-user sess))) (id-of r))))
+                   (if (save ex)
+                       (page (io sess) private (__ you-are-done))
+                       (page (io sess) private (__ hmm-we-have-failed-to-put-on-your-exlibris)))))
+
                (cond ((valid-revision? r)
-                      (revision-bib-id-set! r (id-of b))
-                      (if (save r)
-                          (let ((ex (make-exlibris (id-of (user-account (session-user sess)))
-                                                   (id-of r))))
-                            (if (save ex)
-                                (page (io sess) private (__ you-are-done))
-                                (page (io sess) private (__ hmm-we-have-failed-to-put-on-your-exlibris))))
-                          (page (io sess) private (__ hmm-we-have-failed-to-put-on-your-exlibris))))
+                      (cond ((lookup revision `((bib-id ,(id-of b))
+                                                (name ,(revision-name r))
+                                                (revised-at ,(revision-revised-at r))))
+                             => save-exlibris)
+                            ((begin (revision-bib-id-set! r (id-of b)) (save r))
+                             (save-exlibris r))
+                            (else
+                             (page (io sess) private (__ hmm-we-have-failed-to-put-on-your-exlibris)))))
                      (else
                       (specify-revision (form (io sess) (revision r) private (__ please-retry))))))
 
-             (cond ((yes? c)
-                    (unless (eof-object? isbn13) (bib-isbn13-set! b isbn13))
-                    (unless (eof-object? isbn10) (bib-isbn10-set! b isbn10))
-                    (unless (eof-object? title) (bib-title-set! b title))
-                    (unless (eof-object? url) (bib-image-set! b url))
-                    (cond ((save b)
-                           (specify-revision
-                            (form (io sess) (revision) private (__ now-new-book-has-been-put-on) (bib-title b))))
-                          (else
-                           (page (io sess) private (__ hmm-we-have-failed-to-put-on-your-exlibris)))))
-                   (else
-                    (specify-bib (form (io sess) (bib b) private (__ please-retry)))))))
+             (if (yes? (form (io sess) (confirmation) private
+                             (__ is-this-content-ok?)
+                             (tree->string
+                              (cons* (html:br)
+                                     (bib-title b)
+                                     (cond ((bib-image b)
+                                            => (lambda (url)
+                                                 (append (html:br) (html:image ((src url))))))
+                                           (else '()))))))
+                 (cond ((id-of b)
+                        => (lambda (id)
 
-         (let ((title (bib-title b))
-               (isbn (bib-isbn13 b)))
+                             (define (show-existing-revisions path)
+                               (lambda (path)
+                                 (append
+                                  (html:p (__ choose-a-revision))
+                                  (map
+                                   (lambda (r)
+                                     (let ((name (html:escape-string (revision-name r)))
+                                           (revised-at (html:escape-string (revision-revised-at r))))
+                                       (html:p
+                                        (html:form ((action path))
+                                                   name "(" revised-at ")"
+                                                   (html:input ((type "hidden") (name "name") (value name)))
+                                                   (html:input ((type "hidden") (name "revised-at") (value revised-at)))
+                                                   (html:input ((type "submit") (value (__ submit))))))))
+                                   (lookup-all revision `((bib-id ,id))))
+                                  (html:p (__ or-specify-revision)))))
+                             
+                             (specify-revision (form (io sess) (revision) private show-existing-revisions))))
+                       ((save b)
+                        (specify-revision
+                         (form (io sess) (revision) private (__ now-new-book-has-been-put-on) (bib-title b))))
+                       (else
+                        (page (io sess) private (__ hmm-we-have-failed-to-put-on-your-exlibris))))
+                 (specify-bib (form (io sess) (new-exlibris new-ex) private (__ please-retry)))))
+
+         (let ((title (new-exlibris-title new-ex))
+               (isbn (new-exlibris-isbn new-ex)))
            (cond ((and (blank? title)
                        (blank? isbn))
-                  (specify-bib (form (io sess) (bib b) private (__ please-input-title-or-isbn))))
+                  (specify-bib (form (io sess) (new-exlibris new-ex) private (__ please-input-title-or-isbn))))
                  ((blank? isbn)
-                  (confirm-bib (eof-object) (eof-object) (eof-object) (eof-object)))
+                  (confirm-bib (make-bib title #f #f #f)))
                  ((valid-isbn? isbn)
-                  (call/cc
-                   (lambda (cont)
-                     (let ((info (guard (e
-                                         ((i/o-error? e)
-                                          (write e)
-                                          (newline)
-                                          (cont (specify-bib (form (io sess) (bib b) private (__ hmm-an-error-occurred))))))
-                                   (query-image isbn))))
-                       (cond ((eof-object? info)
-                              (specify-bib (form (io sess) (bib b) private (__ please-check-isbn))))
-                             (else
-                              (call-with-port (open-string-input-port info)
-                                (lambda (port)
-                                  (let* ((isbn13 (get-line port))
-                                         (isbn10 (get-line port))
-                                         (url    (get-line port))
-                                         (title  (get-line port)))
-                                    (confirm-bib isbn13 isbn10 url title))))))))))
+                  => (lambda (n)
+                       (let ((b (case n
+                                  ((10) (lookup bib `((isbn10 ,isbn))))
+                                  (else (lookup bib `((isbn13 ,isbn)))))))
+                         (if (bib? b)
+                             (confirm-bib b)
+                             (call/cc
+                              (lambda (cont)
+                                (let ((info (guard (e
+                                                    ((i/o-error? e)
+                                                     (log:info "errata> ~s" e)
+                                                     (cont (specify-bib (form (io sess) (new-exlibris new-ex) private (__ hmm-an-error-occurred))))))
+                                              (query-image isbn))))
+                                  (if (eof-object? info)
+                                      (specify-bib (form (io sess) (new-exlibris new-ex) private (__ please-check-isbn)))
+                                      (call-with-port (open-string-input-port info)
+                                        (lambda (port)
+                                          (let* ((isbn13 (get-line port))
+                                                 (isbn10 (get-line port))
+                                                 (url    (get-line port))
+                                                 (title  (get-line port)))
+                                            (confirm-bib (make-bib (and (not (eof-object? title)) title)
+                                                                   (and (not (eof-object? isbn13)) isbn13)
+                                                                   (and (not (eof-object? isbn10)) isbn10)
+                                                                   (and (not (eof-object? url)) url))))))))))))))
                  (else
-                  (specify-bib (form (io sess) (bib b) private (__ please-check-isbn)))))))
+                  (specify-bib (form (io sess) (new-exlibris new-ex) private (__ please-check-isbn)))))))
 
-       (specify-bib (form (io sess) (bib) private)))))
+       (specify-bib (form (io sess) (new-exlibris) private)))))
 
   (define-syntax with-session&id
     (syntax-rules ()
@@ -491,6 +520,7 @@
   (add-input-fields account-to-login (text password))
   (add-input-fields confirmation (text))
   (add-input-fields bib (text text #f #f))
+  (add-input-fields new-exlibris (text text))
   (add-input-fields revision (#f text text))
   (add-input-fields review (#f textarea))
   (add-input-fields quotation (#f #f text text textarea))
@@ -600,6 +630,10 @@
                                  (ja "新しい蔵書があなたの書棚に並びました: "))
    (hmm-we-have-failed-to-put-on-your-exlibris (en "Hmm ... we have failed to put on your exlibris.")
                                                (ja "残念ながら ... 蔵書の追加に失敗しました。"))
+   (choose-a-revision (en "Choose a concerned revision:")
+                      (ja "該当する改訂情報を選んでください:"))
+   (or-specify-revision (en "Or, specify another revision:")
+                        (ja "もしくは、新たな改訂情報を指定してください:"))
 
    (ISBN (en "ISBN")
          (ja "ISBN"))
