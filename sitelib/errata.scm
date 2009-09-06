@@ -56,7 +56,7 @@
          (lambda _
            (if (save a)
                (page (io) public (__ now-you-have-your-own-account))
-               (page (io) public (__ hmm-we-have-failed-to-create-your-account))))))))
+               (page (io) public (__ hmm-an-error-occurred))))))))
 
   (define-scenario (modify-account io request)
     (with-session
@@ -118,8 +118,8 @@
                (define (save-exlibris r)
                  (let ((ex (make-exlibris (id-of (user-account (session-user sess))) (id-of r))))
                    (if (save ex)
-                       (page (io sess) private (__ you-are-done))
-                       (page (io sess) private (__ hmm-we-have-failed-to-put-on-your-exlibris)))))
+                       (page (io sess) desk (id-of ex))
+                       (page (io sess) private (__ hmm-an-error-occurred)))))
 
                (cond ((valid-revision? r)
                       (cond ((lookup revision `((bib-id ,(id-of b))
@@ -129,7 +129,7 @@
                             ((begin (revision-bib-id-set! r (id-of b)) (save r))
                              (save-exlibris r))
                             (else
-                             (page (io sess) private (__ hmm-we-have-failed-to-put-on-your-exlibris)))))
+                             (page (io sess) private (__ hmm-an-error-occurred)))))
                      (else
                       (specify-revision (form (io sess) (revision r) private (__ please-retry))))))
 
@@ -167,7 +167,7 @@
                         (specify-revision
                          (form (io sess) (revision) private (__ now-new-book-has-been-put-on) (bib-title b))))
                        (else
-                        (page (io sess) private (__ hmm-we-have-failed-to-put-on-your-exlibris))))
+                        (page (io sess) private (__ hmm-an-error-occurred))))
                  (specify-bib (form (io sess) (new-exlibris new-ex) private (__ please-retry)))))
 
          (let ((title (new-exlibris-title new-ex))
@@ -255,7 +255,7 @@
          (cond ((yes? c)
                 (if (destroy exlibris id)
                     (page (io sess) private (__ you-have-put-it-off))
-                    (page (io sess) private (__ hmm-we-have-failed-to-put-off-your-exlibris))))
+                    (page (io sess) private (__ hmm-an-error-occurred))))
                (else
                 (redirect (io sess) 'shelf)))))))
 
@@ -612,8 +612,6 @@
                                (ja "既にログインしています。"))
    (now-you-have-your-own-account (en "Now you have your own account!")
                                   (ja "アカウントができました。"))
-   (hmm-we-have-failed-to-create-your-account (en "Hmm ... we have failed to create your account.")
-                                              (ja "残念ながら ... アカウントの作成に失敗しました。"))
    (now-you-have-logged-in (en "Now you have logged in!")
                            (ja "ログインしました。"))
    (now-you-have-logged-out (en "Now you have logged out!")
@@ -628,8 +626,6 @@
                  (ja "入力内容を確認して再度入力してください。"))
    (now-new-book-has-been-put-on (en "Now new book has been put on your bookshelf: ")
                                  (ja "新しい蔵書があなたの書棚に並びました: "))
-   (hmm-we-have-failed-to-put-on-your-exlibris (en "Hmm ... we have failed to put on your exlibris.")
-                                               (ja "残念ながら ... 蔵書の追加に失敗しました。"))
    (choose-a-revision (en "Choose a concerned revision:")
                       (ja "該当する改訂情報を選んでください:"))
    (or-specify-revision (en "Or, specify another revision:")
