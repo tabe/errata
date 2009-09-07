@@ -2,14 +2,16 @@
   (export *password-min-length*
           *nick-max-length*
           *mail-address-max-length*
-          validate-account
+          validate-account-to-modify
           validate-new-account
           authenticate-account)
   (import (rnrs)
           (pregexp)
+          (prefix (only (lunula hmac) sha-256) hmac:)
           (only (lunula mysql) lookup)
           (lunula session)
-          (lunula validation))
+          (lunula validation)
+          (errata model))
 
   (define *password-min-length* 8)
   (define *nick-max-length* 16)
@@ -37,10 +39,10 @@
       (cond ((zero? len) (mail-address-is-blank))
             ((< *mail-address-max-length* len) (mail-address-too-long)))))
 
-  (define-composite-validator validate-account
-    (account-nick validate-nick)
-    (account-password validate-password)
-    (account-mail-address validate-mail-address))
+  (define-composite-validator validate-account-to-modify
+    (account-to-modify-current-password validate-password)
+    (account-to-modify-new-password validate-password)
+    (account-to-modify-mail-address validate-mail-address))
 
   (define-validator (validate-new-nick nick)
     (nick-already-used)
@@ -48,19 +50,27 @@
       (nick-already-used)))
 
   (define-composite-validator validate-new-account
-    (account-nick validate-nick validate-new-nick)
-    (account-password validate-password)
-    (account-mail-address validate-mail-address))
+    (new-account-nick validate-nick validate-new-nick)
+    (new-account-password validate-password)
+    (new-account-mail-address validate-mail-address))
 
   (define-validator (existing-account a)
     (does-not-exist)
-    (or (lookup account `((nick ,(account-nick a))
-                          (password ,(account-password a))))
-        (does-not-exist)))
+    (cond ((lookup account `((nick ,(account-to-login-nick a))))
+           => (lambda (found)
+                (let ((algorithm (account-hash-algorithm found)))
+                  (cond ((string=? "sha-256" algorithm)
+                         (if (string=? (account-password found)
+                                       (hmac:sha-256 (account-hash-key found)
+                                                     (string->utf8 (account-to-login-password a))))
+                             found
+                             (does-not-exist)))
+                        (else (does-not-exist))))))
+          (else (does-not-exist))))
 
   (define-composite-validator authenticate-account
-    (account-nick validate-nick)
-    (account-password validate-password)
+    (account-to-login-nick validate-nick)
+    (account-to-login-password validate-password)
     (values existing-account))
 
 )

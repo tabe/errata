@@ -11,6 +11,7 @@
           (lunula gettext)
           (prefix (lunula html) html:)
           (prefix (lunula log) log:)
+          (lunula session)
           (lunula tree)
           (only (lunula persistent-record) string->id id-of id-set!)
           (lunula validation)
@@ -50,26 +51,32 @@
   (define-scenario (sign-up io request)
     (without-session
      (io request)
-     (let loop ((a (form (io) (account) public)))
+     (let loop ((a (form (io) (new-account) public)))
        (guide (validate-new-account a)
-         (lambda (ht) (loop (form (io) (account a) public (hashtable->messages ht))))
+         (lambda (ht) (loop (form (io) (new-account a) public (hashtable->messages ht))))
          (lambda _
-           (if (save a)
-               (page (io) public (__ now-you-have-your-own-account))
-               (page (io) public (__ hmm-an-error-occurred))))))))
+           (let ((a (new-account->account a)))
+             (if (save a)
+                 (page (io) public (__ now-you-have-your-own-account))
+                 (page (io) public (__ hmm-an-error-occurred)))))))))
 
   (define-scenario (modify-account io request)
     (with-session
      (io request)
      (lambda (sess)
-       (let loop ((a (form (io sess) (account (user-account (session-user sess))) private)))
-         (guide (validate-account a)
-           (lambda (ht) (loop (form (io) (account a) public (hashtable->messages ht))))
-           (lambda _
-             (id-set! a (id-of (user-account (session-user sess))))
-             (if (save a)
-                 (page (io sess) private (__ your-account-has-been-updated))
-                 (page (io sess) private (__ hmm-an-error-occurred)))))))))
+       (let ((current-account (user-account (session-user sess))))
+         (let loop ((a (form (io sess) (account-to-modify (account->account-to-modify current-account)) private)))
+           (guide (validate-account-to-modify a)
+             (lambda (ht) (loop (form (io) (account-to-modify a) private (hashtable->messages ht))))
+             (lambda _
+               (let ((a (account-to-modify->account a current-account)))
+                 (id-set! a (id-of current-account))
+                 (cond ((save a)
+                        (do-logout sess)
+                        (let ((sess (do-login a)))
+                          (page (io sess) private (__ your-account-has-been-updated))))
+                       (else
+                        (page (io sess) private (__ hmm-an-error-occurred))))))))))))
 
   (define-scenario (cancel io request)
     (with-session
@@ -446,22 +453,24 @@
      (io request data)
      (sess (rep-id report string->id #f)
            (ex-id exlibris string->id #f))
-     (let ((rep (lookup report rep-id)))
-       (if rep
-           (let ((q (lookup quotation (report-quotation-id rep)))
-                 (c (lookup correction (report-correction-id rep))))
-             (cond ((and (quotation? q)
-                         (correction? c))
-                    (let loop ((modified (form (io sess) (report-to-modify (prepare-report-to-modify rep q c)) private)))
-                      (cond ((valid-report-to-modify? modified)
-                             (if (update-report rep q c modified)
-                                 (page (io sess) desk ex-id)
-                                 (page (io sess) private (__ hmm-an-error-occurred))))
-                            (else
-                             (loop (form (io sess) (report-to-modify modified) private (__ please-retry)))))))
-                   (else
-                    (redirect (io sess) 'shelf))))
-           (redirect (io sess) 'shelf)))))
+     (if (and rep-id ex-id)
+         (let ((rep (lookup report rep-id)))
+           (if rep
+               (let ((q (lookup quotation (report-quotation-id rep)))
+                     (c (lookup correction (report-correction-id rep))))
+                 (cond ((and (quotation? q)
+                             (correction? c))
+                        (let loop ((modified (form (io sess) (report-to-modify (prepare-report-to-modify rep q c)) private)))
+                          (cond ((valid-report-to-modify? modified)
+                                 (if (update-report rep q c modified)
+                                     (page (io sess) desk ex-id)
+                                     (page (io sess) private (__ hmm-an-error-occurred))))
+                                (else
+                                 (loop (form (io sess) (report-to-modify modified) private (__ please-retry)))))))
+                       (else
+                        (redirect (io sess) 'shelf))))
+               (redirect (io sess) 'shelf)))
+         (redirect (io sess) 'shelf))))
 
   (define-scenario (drop-report io request data)
     (with-session/
@@ -516,12 +525,16 @@
          (redirect (io sess) 'board))))
 
   ;; input fields
-  (add-input-fields account
+  (add-input-fields new-account
     ((text "半角英数字")
      (text)
      (password (format "~d文字以上" *password-min-length*))
-     (text)
-     #f))
+     (text)))
+  (add-input-fields account-to-modify
+    ((text)
+     (password)
+     (password (format "~d文字以上" *password-min-length*))
+     (text)))
   (add-input-fields account-to-login
     ((text)
      (password)))
@@ -573,14 +586,22 @@
   (gettext
 
    ;; fields
-   (account-nick (en "nick")
-                 (ja "ニックネーム"))
-   (account-name (en "name")
-                 (ja "名前"))
-   (account-password (en "password")
-                     (ja "パスワード"))
-   (account-mail-address (en "mail address")
-                         (ja "メールアドレス"))
+   (new-account-nick (en "nick")
+                     (ja "ニックネーム"))
+   (new-account-name (en "name")
+                     (ja "名前"))
+   (new-account-password (en "password")
+                         (ja "パスワード"))
+   (new-account-mail-address (en "mail address")
+                             (ja "メールアドレス"))
+   (account-to-modify-name (en "name")
+                           (ja "名前"))
+   (account-to-modify-current-password (en "current password")
+                                       (ja "現在のパスワード"))
+   (account-to-modify-new-password (en "new password")
+                                   (ja "新しいパスワード"))
+   (account-to-modify-mail-address (en "mail address")
+                                   (ja "メールアドレス"))
    (account-to-login-nick (en "nick")
                           (ja "ニックネーム"))
    (account-to-login-password (en "password")

@@ -18,7 +18,8 @@ create table account (
   password varchar(256) not null,
   mail_address varchar(256) not null,
   url varchar(1024) not null,
-  algorithm varchar(8) not null,
+  hash_algorithm varchar(8) not null,
+  hash_key varchar(64) not null,
   created_at datetime,
   updated_at datetime,
   primary key (id)
@@ -117,6 +118,17 @@ create table agreement (
 ) default charset=utf8;
 create table draft (
   id int not null auto_increment,
+  created_at datetime,
+  updated_at datetime,
+  primary key (id)
+) default charset=utf8;
+
+drop table if exists foobar;
+
+create table foobar (
+  id int not null auto_increment,
+  name varchar(256),
+  memo varchar(256),
   created_at datetime,
   updated_at datetime,
   primary key (id)
