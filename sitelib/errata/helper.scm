@@ -65,7 +65,7 @@
 
   (define (signature a)
     (html:span ((title (html:escape-string (account-name a))))
-               (html:escape-string (account-nick a))))
+               (html:escape-string (account-name a))))
 
   (define-syntax with-uuid
     (syntax-rules ()
@@ -179,16 +179,15 @@
           (c (lookup correction (report-correction-id rep))))
       (cons
        (html:tr
-        (html:td ((style "font-size:small;"))
+        (html:td ((colspan 2) (style "font-size:small;"))
                  "pp." (quotation-page q) "/" (quotation-position q) "&nbsp;"
                  (report-subject rep) "&nbsp;"
                  "("
                  (html:span ((style "font-size:x-small;")) "reported by ")
                  (signature a)
-                 (cond ((created-at-of rep) => (lambda (t) (html:span ((style "text-align:right;")) t)))
+                 (cond ((created-at-of rep) => (lambda (t) (cons "&nbsp;@&nbsp;" (html:span ((style "text-align:right;")) t))))
                        (else '()))
-                 ")")
-        (html:td))
+                 ")"))
        (cond ((and (quotation? q)
                    (correction? c))
               (append (diff-tr uuid rep q c x)

@@ -6,6 +6,11 @@ form {
     display: inline;
 }
 
+form .description {
+    font-size: small;
+    color: #444444;
+}
+
 #public {
     padding: 0.5em;
     background-color: #a7f43d;

@@ -165,7 +165,7 @@
                              (specify-revision (form (io sess) (revision) private show-existing-revisions))))
                        ((save b)
                         (specify-revision
-                         (form (io sess) (revision) private (__ now-new-book-has-been-put-on) (bib-title b))))
+                         (form (io sess) (revision) private (__ specify-revision) (bib-title b))))
                        (else
                         (page (io sess) private (__ hmm-an-error-occurred))))
                  (specify-bib (form (io sess) (new-exlibris new-ex) private (__ please-retry)))))
@@ -516,19 +516,52 @@
          (redirect (io sess) 'board))))
 
   ;; input fields
-  (add-input-fields account (text text password text #f))
-  (add-input-fields account-to-login (text password))
-  (add-input-fields confirmation (text))
-  (add-input-fields bib (text text #f #f))
-  (add-input-fields new-exlibris (text text))
-  (add-input-fields revision (#f text text))
-  (add-input-fields review (#f textarea))
-  (add-input-fields quotation (#f #f text text textarea))
-  (add-input-fields correction (#f #f textarea))
-  (add-input-fields report (#f #f text #f #f #f))
-  (add-input-fields report-to-modify (text text text textarea textarea))
-  (add-input-fields acknowledgement (#f #f text textarea))
-  (add-input-fields agreement (#f #f textarea))
+  (add-input-fields account
+    ((text "半角英数字")
+     (text)
+     (password (format "~d文字以上" *password-min-length*))
+     (text)
+     #f))
+  (add-input-fields account-to-login
+    ((text)
+     (password)))
+  (add-input-fields confirmation
+    ((text)))
+  (add-input-fields new-exlibris
+    ((text)
+     (text "半角英数字で10または13桁(例: \"2222222222\" / \"475614084X\" / \"9784873113487\")")))
+  (add-input-fields revision
+    (#f
+     (text "(例: 「初版第1刷」)")
+     (text)))
+  (add-input-fields review
+    (#f
+     (textarea)))
+  (add-input-fields quotation
+    (#f
+     #f
+     (text "(例: 「7」「vi」)")
+     (text "(例: 「10行目」「末尾」「図A-1内」)")
+     (textarea)))
+  (add-input-fields correction
+    (#f
+     #f
+     (textarea)))
+  (add-input-fields report-to-modify
+    ((text)
+     (text)
+     (text)
+     (textarea)
+     (textarea)))
+  (add-input-fields acknowledgement
+    (#f
+     #f
+     (text)
+     (textarea)))
+  (add-input-fields agreement
+    (#f
+     #f
+     (textarea)))
 
   ;; templates
   (templates (string-append (lookup-process-environment "PWD") "/templates"))
@@ -554,10 +587,10 @@
                               (ja "パスワード"))
    (confirmation-ok (en "OK?")
                     (ja "OK?"))
-   (bib-title (en "title")
-              (ja "タイトル"))
-   (bib-isbn13 (en "ISBN")
-               (ja "ISBN"))
+   (new-exlibris-title (en "title")
+                       (ja "タイトル"))
+   (new-exlibris-isbn (en "ISBN")
+                      (ja "ISBN"))
    (revision-name (en "name")
                   (ja "名前"))
    (revision-revised-at (en "revised at")
@@ -624,8 +657,8 @@
                         (ja "この内容でよろしいですか?"))
    (please-retry (en "Please check your input and retry.")
                  (ja "入力内容を確認して再度入力してください。"))
-   (now-new-book-has-been-put-on (en "Now new book has been put on your bookshelf: ")
-                                 (ja "新しい蔵書があなたの書棚に並びました: "))
+   (specify-revision (en "Specify a concerned revision:")
+                     (ja "該当する改訂情報を指定してください:"))
    (choose-a-revision (en "Choose a concerned revision:")
                       (ja "該当する改訂情報を選んでください:"))
    (or-specify-revision (en "Or, specify another revision:")
