@@ -539,7 +539,7 @@
     ((text)
      (password)))
   (add-input-fields confirmation
-    ((text)))
+    (((radio (yes "はい" #f) (no "いいえ" #t)))))
   (add-input-fields new-exlibris
     ((text)
      (text "半角英数字で10または13桁(例: \"2222222222\" / \"475614084X\" / \"9784873113487\")")))
@@ -670,8 +670,8 @@
                            (ja "ログインしました。"))
    (now-you-have-logged-out (en "Now you have logged out!")
                             (ja "ログアウトしました。"))
-   (now-you-have-left-errata (en "Now you have left errata.fixedpoint.jp. Thanks for your favor.")
-                             (ja "errata.fixedpoint.jp から解除されました。ご利用ありがとうございました。"))
+   (now-you-have-left-errata (en "Now you have left Errata. Thanks for your favor.")
+                             (ja "Errata のアカウントは解除されました。ご利用ありがとうございました。"))
    (please-input-title-or-isbn (en "Please input title or ISBN.")
                                (ja "タイトルまたは ISBN を入力してください。"))
    (is-this-content-ok? (en "Is this content OK?")
