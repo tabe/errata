@@ -13,7 +13,7 @@ fixtures:
 	$(YPSILON) db/fixtures.scm
 
 start:
-	$(YPSILON) script/server 3000 yoursql
+	env YPSILON_SITELIB=$(YPSILON_SITELIB) script/server 3000 yoursql
 
 image:
 	$(YPSILON) script/image-server.scm
