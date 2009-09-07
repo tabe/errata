@@ -49,9 +49,18 @@
     (when (lookup account `((nick ,nick)))
       (nick-already-used)))
 
+  (define-validator (same-password password password-re)
+    (password-differs-from-re)
+    (unless (string=? password password-re)
+      (password-differs-from-re)))
+
   (define-composite-validator validate-new-account
     (new-account-nick validate-nick validate-new-nick)
     (new-account-password validate-password)
+    (new-account-password-re validate-password)
+    ((lambda (x) (values (new-account-password x)
+                         (new-account-password-re x)))
+     same-password)
     (new-account-mail-address validate-mail-address))
 
   (define-validator (existing-account a)

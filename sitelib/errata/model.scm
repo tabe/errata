@@ -5,6 +5,7 @@
           new-account-nick
           new-account-name
           new-account-password
+          new-account-password-re
           new-account-mail-address
           new-account->account
           account-to-modify
@@ -132,7 +133,7 @@
           (lunula session))
 
   (define-record-type new-account
-    (fields nick name password mail-address))
+    (fields nick name password password-re mail-address))
 
   (define (new-account->account a)
     (let ((key (make-uuid)))

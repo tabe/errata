@@ -20,6 +20,16 @@
           (errata model)
           (errata validator))
 
+  (define *domain* "errata.fixedpoint.jp")
+
+  (define *mail-from* "errata@fixedpoint.jp")
+
+  (define (mail-subject subject)
+    (string-append "Errata - " subject))
+
+  (define (mail-body . body)
+    (tree->string `(,@body "\n-- Errata\n")))
+
   (define (blank? x)
     (or (not x)
         (and (string? x) (string-null? x))))
@@ -48,17 +58,45 @@
       ((_ (io request) proc)
        (proc (logged-in? (parameter-of request))))))
 
+  (define (sign-up-confirmation a)
+    (lambda (path)
+      (values
+       (account-mail-address a)
+       *mail-from*
+       (mail-subject (format "Confirmation for New Account '~a'" (account-nick a)))
+       (mail-body
+        (account-nick a) " 様\n"
+        "\n"
+        "アカウント申請ありがとうございます。\n"
+        "下記の URL にアクセスしていただいくとアカウントの作成が完了します。\n"
+        "(このメッセージは安全に無視できます; 何もしなければアカウントは作成はされません。)\n"
+        (format "http://~a~a~%" *domain* path)))))
+
+  (define (sign-up-summary new-a)
+    (tree->string
+     (html:dl
+      (html:dt (__ new-account-nick))
+      (html:dd (new-account-nick new-a))
+      (html:dt (__ new-account-name))
+      (html:dd (new-account-name new-a))
+      (html:dt (__ new-account-mail-address))
+      (html:dd (new-account-mail-address new-a)))))
+
   (define-scenario (sign-up io request)
     (without-session
      (io request)
-     (let loop ((a (form (io) (new-account) public)))
-       (guide (validate-new-account a)
-         (lambda (ht) (loop (form (io) (new-account a) public (hashtable->messages ht))))
+     (let loop ((new-a (form (io) (new-account) public)))
+       (guide (validate-new-account new-a)
+         (lambda (ht) (loop (form (io) (new-account new-a) public (hashtable->messages ht))))
          (lambda _
-           (let ((a (new-account->account a)))
-             (if (save a)
-                 (page (io) public (__ now-you-have-your-own-account))
-                 (page (io) public (__ hmm-an-error-occurred)))))))))
+           (let ((c (form (io) (confirmation) public (__ is-this-content-ok?) (sign-up-summary new-a))))
+             (if (yes? c)
+                 (let ((a (new-account->account new-a)))
+                   (and (mail (io) public (__ we-have-sent-confirmation-message-to-you) (sign-up-confirmation a))
+                        (if (save a)
+                            (page (io) public (__ now-you-have-your-own-account))
+                            (page (io) public (__ hmm-an-error-occurred)))))
+                 (loop (form (io) (new-account new-a) public (__ please-retry))))))))))
 
   (define-scenario (modify-account io request)
     (with-session
@@ -529,6 +567,7 @@
     ((text "半角英数字")
      (text)
      (password (format "~d文字以上" *password-min-length*))
+     (password (format "~d文字以上" *password-min-length*))
      (text)))
   (add-input-fields account-to-modify
     ((text)
@@ -592,6 +631,8 @@
                      (ja "名前"))
    (new-account-password (en "password")
                          (ja "パスワード"))
+   (new-account-password-re (en "password-re")
+                            (ja "パスワード(再入力)"))
    (new-account-mail-address (en "mail address")
                              (ja "メールアドレス"))
    (account-to-modify-name (en "name")
@@ -646,6 +687,8 @@
                       (ja "パスワードが空です。"))
    (password-too-short (en "password is too short.")
                        (ja "パスワードが短いです。"))
+   (password-differs-from-re (en "The first password differs from the second")
+                             (ja "パスワードが再入力したものと異なります。"))
    (nick-is-blank (en "nick is blank.")
                   (ja "ニックネームが空です。"))
    (nick-too-long (en "nick is too long.")
@@ -664,6 +707,8 @@
                           (ja "残念ながら ... エラーが発生しました。"))
    (you-have-already-logged-in (en "You have already logged in!")
                                (ja "既にログインしています。"))
+   (we-have-sent-confirmation-message-to-you (en "We have sent the confirmation message to you.")
+                                             (ja "アカウント作成についての確認のメールを送信しました。作成を完了するにはメールの内容にしたがってください。"))
    (now-you-have-your-own-account (en "Now you have your own account!")
                                   (ja "アカウントができました。"))
    (now-you-have-logged-in (en "Now you have logged in!")
