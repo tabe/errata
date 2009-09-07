@@ -28,6 +28,7 @@ test:
 	env YPSILON_SITELIB=$(YPSILON_SITELIB) $(YPSILON) tests/errata/calendar.scm
 	env YPSILON_SITELIB=$(YPSILON_SITELIB) $(YPSILON) tests/errata/helper/pagination.scm
 	env YPSILON_SITELIB=$(YPSILON_SITELIB) $(YPSILON) tests/errata/helper.scm
+	env YPSILON_SITELIB=$(YPSILON_SITELIB) $(YPSILON) tests/errata/hmac.scm
 	env YPSILON_SITELIB=$(YPSILON_SITELIB) $(YPSILON) tests/errata/isbn.scm
 	env YPSILON_SITELIB=$(YPSILON_SITELIB) $(YPSILON) tests/errata/model.scm
 	env YPSILON_SITELIB=$(YPSILON_SITELIB) $(YPSILON) tests/errata/query.scm
