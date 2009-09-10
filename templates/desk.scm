@@ -12,5 +12,6 @@
   errata-logo
   (div ((id "links")) links)
   (div ((id "private")) exlibris-window)
+  belt
   powered-by-lunula
   ))

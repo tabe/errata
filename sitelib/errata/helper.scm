@@ -1,14 +1,17 @@
 (library (errata helper)
   (export errata-logo
           powered-by-lunula
+          creativecommons-attribution
           preload-script
           menu
           links
+          belt
           public-revisions
           report-window
           revision-window
           shelf-window
-          exlibris-window)
+          exlibris-window
+          build-entry-path)
   (import (except (rnrs) div)
           (only (core) format)
           (match)
@@ -34,6 +37,9 @@
   (define powered-by-lunula
     (html:div ((id "bottom")) "powered by "
               (html:a ((href "http://fixedpoint.jp/lunula/")) 'Lunula)))
+
+  (define creativecommons-attribution
+    (html:a ((href "http://creativecommons.org/licenses/by/2.1/jp/")) "\"CreativeCommons 表示(Attribution)\""))
 
   (define preload-script 
     '("$(document).ready(function() {"
@@ -75,6 +81,20 @@
       (html:div
        ((class "links"))
        (html:div (map p-link *private-links*))))))
+
+  (define (belt uuid . _)
+    (html:div
+     ((id "belt"))
+     (map
+      (lambda (pair)
+        (list
+         (html:a ((href (build-entry-path (car pair)))) (cdr pair))
+         " | "))
+      '((faq . "FAQ")
+        (terms-of-service . "利用規約")
+        (privacy-policy . "プライバシーポリシー")
+        (feedback . "フィードバック")))
+     " &copy; 2009 fixedpoint.jp"))
 
   (define (hidden-field name value)
     (html:input ((type "hidden") (name name) (value value))))

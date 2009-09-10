@@ -58,11 +58,19 @@
       ((_ (io request) proc)
        (proc (logged-in? (parameter-of request))))))
 
-  (define-scenario (index io request)
-    (with-or-without-session
-     (io request)
-     (lambda (sess)
-       (page (io sess) public (__ index)))))
+  (define-syntax define-simple-scenario
+    (syntax-rules ()
+      ((_ name)
+       (define-scenario (name io request)
+         (with-or-without-session
+          (io request)
+          (lambda (sess) (page (io sess) name)))))))
+
+  (define-simple-scenario index)
+  (define-simple-scenario faq)
+  (define-simple-scenario terms-of-service)
+  (define-simple-scenario privacy-policy)
+  (define-simple-scenario feedback)
 
   (define (sign-up-confirmation a)
     (lambda (path)

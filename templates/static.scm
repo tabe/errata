@@ -12,5 +12,6 @@
   errata-logo
   (div ((id "links")) links)
   (div ((id "public")) (lambda _ "Hello, World."))
+  belt
   powered-by-lunula
   ))

@@ -12,5 +12,6 @@
   errata-logo
   (div ((id "links")) links)
   (div ((id "public")) report-window)
+  belt
   powered-by-lunula
   ))

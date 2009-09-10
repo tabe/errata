@@ -11,7 +11,11 @@
   menu
   errata-logo
   (div ((id "links")) links)
-  (div ((id "private")) (lambda (uuid body) body))
+  (div ((id "public"))
+       (h2 "フィードバック")
+       (p "tabe at fixedpoint dot jp までメールにてご連絡ください。")
+       (p "Key fingerprint = 26F7 2FE0 FB2A 64AA EA87 C96A 4B40 171F 8AFE 4953")
+       )
   belt
   powered-by-lunula
   ))
