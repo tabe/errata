@@ -2,12 +2,15 @@ YPSILON_SITELIB = /home/tabe/lunula/sitelib:/home/tabe/base64:/home/tabe/lcs:/ho
 
 YPSILON = env YPSILON_SITELIB=$(YPSILON_SITELIB) ypsilon --sitelib=sitelib --heap-limit=16
 
-.PHONY: check migrate fixtures start image stop stats test
+.PHONY: check migrate dump fixtures start image stop stats test
 
 check: test
 
 migrate:
 	mysql -u root -p errata < db/errata.sql
+
+dump:
+	mysqldump -u root -p errata > db/errata.dump
 
 fixtures:
 	$(YPSILON) db/fixtures.scm
