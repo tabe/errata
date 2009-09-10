@@ -40,9 +40,15 @@
             ((< *mail-address-max-length* len) (mail-address-too-long)))))
 
   (define-composite-validator validate-account-to-modify
-    (account-to-modify-current-password validate-password)
-    (account-to-modify-new-password validate-password)
-    (account-to-modify-mail-address validate-mail-address))
+    ((lambda (a _) (account-to-modify-current-password a)) validate-password)
+    ((lambda (a _) (account-to-modify-new-password a)) validate-password)
+    ((lambda (a c) (make-account-to-login (account-nick c) (account-to-modify-current-password a)))
+     existing-account)
+    ((lambda (a _) (account-to-modify-new-password-re a)) validate-password)
+    ((lambda (a _) (values (account-to-modify-new-password a)
+                           (account-to-modify-new-password-re a)))
+     same-password)
+    ((lambda (a _) (account-to-modify-mail-address a)) validate-mail-address))
 
   (define-validator (validate-new-nick nick)
     (nick-already-used)

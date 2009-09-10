@@ -16,6 +16,7 @@
           account-to-modify-name
           account-to-modify-current-password
           account-to-modify-new-password
+          account-to-modify-new-password-re
           account-to-modify-mail-address
           account-to-login
           account-to-login?
@@ -145,10 +146,11 @@
                     key)))
 
   (define-record-type account-to-modify
-    (fields name current-password new-password mail-address))
+    (fields name current-password new-password new-password-re mail-address))
 
   (define (account->account-to-modify a)
     (make-account-to-modify (account-name a)
+                            #f
                             #f
                             #f
                             (account-mail-address a)))
