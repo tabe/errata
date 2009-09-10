@@ -145,7 +145,7 @@
   (define (public-revisions uuid page)
     (with-pagination
      (board uuid page)
-     (lookup-all revision "EXISTS (SELECT * FROM publicity p, exlibris ex WHERE ex.id = p.exlibris_id and revision.id = ex.revision_id)")
+     (lookup-all revision "EXISTS (SELECT * FROM publicity p, exlibris ex, account a WHERE ex.id = p.exlibris_id AND revision.id = ex.revision_id AND a.id = ex.account_id)")
      (lambda (r)
        (cond ((lookup bib (revision-bib-id r))
               => (lambda (b)
