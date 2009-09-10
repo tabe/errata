@@ -8,6 +8,8 @@
   (script ((type "text/javascript")) preload-script)
   )
  (body
+  menu
+  errata-logo
   (div ((id "links")) links)
   (div ((id "private")) (lambda (uuid body) body))
   powered-by-lunula

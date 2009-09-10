@@ -8,6 +8,8 @@
   (script ((type "text/javascript")) preload-script)
   )
  (body
+  menu
+  errata-logo
   (div ((id "links")) links)
   (div ((id "public")) revision-window)
   powered-by-lunula

@@ -58,6 +58,12 @@
       ((_ (io request) proc)
        (proc (logged-in? (parameter-of request))))))
 
+  (define-scenario (index io request)
+    (with-or-without-session
+     (io request)
+     (lambda (sess)
+       (page (io sess) public (__ index)))))
+
   (define (sign-up-confirmation a)
     (lambda (path)
       (values
@@ -85,7 +91,7 @@
   (define-scenario (sign-up io request)
     (without-session
      (io request)
-     (let loop ((new-a (form (io) (new-account) public)))
+     (let loop ((new-a (form (io) (new-account) public (__ you-can-create-your-own-account))))
        (guide (validate-new-account new-a)
          (lambda (ht) (loop (form (io) (new-account new-a) public (hashtable->messages ht))))
          (lambda _
@@ -120,7 +126,7 @@
     (with-session
      (io request)
      (lambda (sess)
-       (let ((c (form (io sess) (confirmation) private (__ are-you-sure?))))
+       (let ((c (form (io sess) (confirmation) private (__ are-you-sure-to-cancel-account?))))
          (cond ((yes? c)
                 (if (destroy (user-account (session-user sess)))
                     (page (io) private (__ now-you-have-left-errata))
@@ -296,7 +302,7 @@
     (with-session&id
      (io request data)
      (lambda (sess id)
-       (let ((c (form (io sess) (confirmation) private (__ are-you-sure-put-off-this-one?))))
+       (let ((c (form (io sess) (confirmation) private (__ are-you-sure-to-put-off-this-one?))))
          (cond ((yes? c)
                 (if (destroy exlibris id)
                     (page (io sess) private (__ you-have-put-it-off))
@@ -355,7 +361,7 @@
     (with-session&id
      (io request data)
      (lambda (sess id)
-       (let ((c (form (io sess) (confirmation) private (__ are-you-sure-hide-this-one?))))
+       (let ((c (form (io sess) (confirmation) private (__ are-you-sure-to-hide-this-one?))))
          (if (yes? c)
              (if (destroy publicity id)
                  (page (io sess) desk id)
@@ -518,7 +524,7 @@
      (if (and rep-id ex-id)
          (let ((rep (lookup report rep-id)))
            (and (report? rep)
-                (let ((c (form (io sess) (confirmation) private (__ are-you-sure-drop-report?))))
+                (let ((c (form (io sess) (confirmation) private (__ are-you-sure-to-drop-report?))))
                   (yes? c))
                 (destroy rep))
            (page (io sess) desk ex-id))
@@ -585,7 +591,7 @@
   (add-input-fields revision
     (#f
      (text "(例: 「初版第1刷」)")
-     (text)))
+     (text "(例: 「2007-10-23」「2009-09-09 09:09:09」)")))
   (add-input-fields review
     (#f
      (textarea)))
@@ -601,8 +607,8 @@
      (textarea)))
   (add-input-fields report-to-modify
     ((text)
-     (text)
-     (text)
+     (text "(例: 「7」「vi」)")
+     (text "(例: 「10行目」「末尾」「図A-1内」)")
      (textarea)
      (textarea)))
   (add-input-fields acknowledgement
@@ -707,10 +713,16 @@
                           (ja "残念ながら ... エラーが発生しました。"))
    (you-have-already-logged-in (en "You have already logged in!")
                                (ja "既にログインしています。"))
+   (you-can-create-your-own-account (en "You can create your own account:")
+                                    (ja "以下の情報を入力してアカウントを作成できます:"))
    (we-have-sent-confirmation-message-to-you (en "We have sent the confirmation message to you.")
                                              (ja "アカウント作成についての確認のメールを送信しました。作成を完了するにはメールの内容にしたがってください。"))
    (now-you-have-your-own-account (en "Now you have your own account!")
                                   (ja "アカウントができました。"))
+   (your-account-has-been-updated (en "Your account has been updated.")
+                                  (ja "アカウントが更新されました。"))
+   (are-you-sure-to-cancel-account? (en "Are you sure to cancel your account?")
+                                    (ja "アカウントを解除するとこれまでに登録されたデータが利用できなくなります。アカウントを解除しますか?"))
    (now-you-have-logged-in (en "Now you have logged in!")
                            (ja "ログインしました。"))
    (now-you-have-logged-out (en "Now you have logged out!")
@@ -729,6 +741,14 @@
                       (ja "該当する改訂情報を選んでください:"))
    (or-specify-revision (en "Or, specify another revision:")
                         (ja "もしくは、新たな改訂情報を指定してください:"))
+   (are-you-sure-to-put-off-this-one? (en "Are you sure to put off this one?")
+                                      (ja "書棚から外すと報告などの関連するデータも利用できなくなります。この蔵書を書棚から外しますか?"))
+   (you-have-put-it-off (en "You have put it off.")
+                        (ja "この蔵書を書棚から外しました。"))
+   (are-you-sure-to-hide-this-one? (en "Are you sure to hide this one?")
+                                   (ja "隠すと報告などの関連するデータが非公開になります。この蔵書を隠しますか?"))
+   (are-you-sure-to-drop-report? (en "Are you sure to drop report?")
+                                 (ja "報告を削除するとコメントなどの関連するデータも利用できなくなります。この報告を削除しますか?"))
 
    (ISBN (en "ISBN")
          (ja "ISBN"))
@@ -745,13 +765,13 @@
    (Correction (en "Correction")
                (ja "正(訂正)"))
    (to-board (en "To Board")
-             (ja "一覧へ"))
+             (ja "書誌一覧へ"))
    (to-desk (en "To Desk")
             (ja "デスクへ"))
    (to-detail (en "To Detail")
               (ja "詳細へ"))
    (to-shelf (en "To Shelf")
-             (ja "一覧へ"))
+             (ja "書棚へ"))
    (to-table (en "To Table")
              (ja "正誤表へ"))
    (share-exlibris (en "Share Exlibris")

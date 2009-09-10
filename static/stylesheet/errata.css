@@ -11,6 +11,23 @@ form .description {
     color: #444444;
 }
 
+h1 a {
+    text-decoration: none;
+    color: black;
+}
+
+#logo {
+    padding: 0px;
+    margin: 0px;
+}
+
+#menu {
+    padding: 0px;
+    margin: 0px;
+    text-align: right;
+    font-size: small;
+}
+
 #public {
     padding: 0.5em;
     background-color: #a7f43d;
@@ -26,9 +43,16 @@ form .description {
 }
 
 #links {
-    background-color: #dddddd;
     width: 28%;
     float: right;
+}
+
+.links {
+    background-color: #dddddd;
+}
+
+.links p {
+    margin: 1em;
 }
 
 #bottom {

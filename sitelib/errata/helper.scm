@@ -1,6 +1,8 @@
 (library (errata helper)
-  (export powered-by-lunula
+  (export errata-logo
+          powered-by-lunula
           preload-script
+          menu
           links
           public-revisions
           report-window
@@ -24,26 +26,55 @@
           (errata model)
           (errata helper pagination))
 
+  (define (errata-logo uuid . _)
+    (html:h1 ((id "logo") (title "えらった べーた"))
+             (html:a ((href (build-entry-path 'index uuid)))
+                     (cons "Errata" (html:span ((style "color:red;")) "β")))))
+
   (define powered-by-lunula
     (html:div ((id "bottom")) "powered by "
               (html:a ((href "http://fixedpoint.jp/lunula/")) 'Lunula)))
 
   (define preload-script 
     '("$(document).ready(function() {"
-      "$('div#links').corner();"
+      "$('.links').corner();"
       "$('#private').corner();"
       "$('#public').corner();"
       "$('.dog').corner('dog tr 15px');"
       "});"))
 
+  (define (menu uuid . _)
+    (html:p
+     ((id "menu"))
+     (cond ((string? uuid)
+            (html:span (html:a ((href (build-entry-path 'logout uuid))) "ログアウト")))
+           (else
+            (list
+             (html:span (html:a ((href (build-entry-path 'login))) "ログイン"))
+             "&nbsp;"
+             (html:span (html:a ((href (build-entry-path 'sign-up))) "サインアップ")))))))
+
+  (define *public-links* '((board . "書誌一覧")))
+
+  (define *private-links*
+    '((shelf . "書棚の閲覧")
+      (put-on . "蔵書の登録")
+      (modify-account . "アカウントの編集")
+      (cancel . "アカウントの解除")
+      ))
+
   (define (links uuid . _)
-    (html:ul
-     (vector-map
-      (lambda (path)
-        (if (string? uuid)
-            (html:li (html:a ((href (string-append path "?" uuid))) path))
-            (html:li (html:a ((href path)) path))))
-      (entry-paths))))
+    (define (p-link pair)
+      (html:p (html:a ((href (build-entry-path (car pair) uuid))) (cdr pair))))
+    (append
+     (html:div
+      ((class "links"))
+      (html:div (map p-link *public-links*)))
+     (if (string? uuid)
+         (html:div
+          ((class "links"))
+          (html:div (map p-link *private-links*)))
+         '())))
 
   (define (hidden-field name value)
     (html:input ((type "hidden") (name name) (value value))))
