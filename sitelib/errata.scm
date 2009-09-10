@@ -111,7 +111,7 @@
        (let ((current-account (user-account (session-user sess))))
          (let loop ((a (form (io sess) (account-to-modify (account->account-to-modify current-account)) private)))
            (guide (validate-account-to-modify a)
-             (lambda (ht) (loop (form (io) (account-to-modify a) private (hashtable->messages ht))))
+             (lambda (ht) (loop (form (io sess) (account-to-modify a) private (hashtable->messages ht))))
              (lambda _
                (let ((a (account-to-modify->account a current-account)))
                  (id-set! a (id-of current-account))
@@ -363,9 +363,13 @@
      (lambda (sess id)
        (let ((c (form (io sess) (confirmation) private (__ are-you-sure-to-hide-this-one?))))
          (if (yes? c)
-             (if (destroy publicity id)
-                 (page (io sess) desk id)
-                 (page (io sess) private (__ hmm-an-error-occurred)))
+             (cond ((lookup publicity id)
+                    => (lambda (p)
+                         (if (destroy p)
+                             (page (io sess) desk (publicity-exlibris-id p))
+                             (page (io sess) private (__ hmm-an-error-occurred)))))
+                   (else
+                    (page (io sess) private (__ hmm-an-error-occurred))))
              (redirect (io sess) 'shelf))))))
 
   (define (valid-review? r)
