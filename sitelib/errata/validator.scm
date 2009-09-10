@@ -4,7 +4,9 @@
           *mail-address-max-length*
           validate-account-to-modify
           validate-new-account
-          authenticate-account)
+          authenticate-account
+          existing-mail-address
+          validate-password-reset)
   (import (rnrs)
           (pregexp)
           (prefix (only (lunula hmac) sha-256) hmac:)
@@ -87,5 +89,17 @@
     (account-to-login-nick validate-nick)
     (account-to-login-password validate-password)
     (values existing-account))
+
+  (define-validator (existing-mail-address a)
+    (does-not-exist)
+    (or (lookup account `((mail-address ,(forgotten-account-mail-address a))))
+        (does-not-exist)))
+
+  (define-composite-validator validate-password-reset
+    (password-reset-password validate-password)
+    (password-reset-password-re validate-password)
+    ((lambda (x) (values (password-reset-password x)
+                         (password-reset-password-re x)))
+     same-password))
 
 )

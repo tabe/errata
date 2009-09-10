@@ -23,6 +23,16 @@
           make-account-to-login
           account-to-login-nick
           account-to-login-password
+          forgotten-account
+          forgotten-account?
+          make-forgotten-account
+          forgotten-account-mail-address
+          password-reset
+          password-reset?
+          make-password-reset
+          password-reset-password
+          password-reset-password-re
+          password-reset->account
           bib
           bib?
           make-bib
@@ -166,6 +176,23 @@
 
   (define-record-type account-to-login
     (fields nick password))
+
+  (define-record-type forgotten-account
+    (fields mail-address))
+
+  (define-record-type password-reset
+    (fields password password-re))
+
+  (define (password-reset->account p current-account)
+    (let* ((key (make-uuid))
+           (a (make-account #f
+                            #f
+                            (hmac:sha-256 key (string->utf8 (password-reset-password p)))
+                            #f
+                            "sha-256"
+                            key)))
+      (id-set! a (id-of current-account))
+      a))
 
   (define-persistent-record-type bib
     (fields (mutable title) (mutable isbn13) (mutable isbn10) (mutable image))

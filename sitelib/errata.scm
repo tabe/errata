@@ -83,7 +83,7 @@
         "\n"
         "アカウント申請ありがとうございます。\n"
         "下記の URL にアクセスしていただいくとアカウントの作成が完了します。\n"
-        "(このメッセージは安全に無視できます; 何もしなければアカウントは作成はされません。)\n"
+        "(このメールは安全に無視できます; 何もしなければアカウントは作成はされません。)\n"
         (format "http://~a~a~%" *domain* path)))))
 
   (define (sign-up-summary new-a)
@@ -111,6 +111,37 @@
                             (page (io) public (__ now-you-have-your-own-account))
                             (page (io) public (__ hmm-an-error-occurred)))))
                  (loop (form (io) (new-account new-a) public (__ please-retry))))))))))
+
+  (define (password-reset-request a)
+    (lambda (path)
+      (values
+       (account-mail-address a)
+       *mail-from*
+       (mail-subject "Reset Password")
+       (mail-body
+        (account-nick a) " 様\n"
+        "\n"
+        "パスワードのリセットを行います。\n"
+        "下記の URL にアクセスして新しいパスワードを指定してください。\n"
+        "(このメールは安全に無視できます; 何もしなければパスワードはそのままです。)\n"
+        (format "http://~a~a~%" *domain* path)))))
+
+  (define-scenario (forgot-password io request)
+    (without-session
+     (io request)
+     (let loop ((a (form (io) (forgotten-account) public (__ let-me-know-your-mail-address))))
+       (guide (existing-mail-address a)
+         (lambda _ (page (io) public (__ we-have-sent-message-to-you)))
+         (lambda (a)
+           (and (mail (io) public (__ we-have-sent-message-to-you) (password-reset-request a))
+                (let loop ((p (form (io) (password-reset) public (__ specify-new-password))))
+                  (guide (validate-password-reset p)
+                    (lambda _ (loop (form (io) (password-reset p) public (__ please-retry))))
+                    (lambda _
+                      (let ((a (password-reset->account p a)))
+                        (if (save a)
+                            (page (io) public (__ your-password-updated))
+                            (page (io) public (__ hmm-an-error-occurred)))))))))))))
 
   (define-scenario (modify-account io request)
     (with-session
@@ -145,9 +176,9 @@
   (define-scenario (login io request)
     (without-session
      (io request)
-     (let loop ((a (form (io) (account-to-login) public)))
+     (let loop ((a (form (io) (account-to-login) login)))
        (guide (authenticate-account a)
-         (lambda _ (loop (form (io) (account-to-login a) public (__ please-retry))))
+         (lambda _ (loop (form (io) (account-to-login a) login (__ please-retry))))
          (lambda (a)
            (let ((sess (do-login a)))
              (page (io sess) private (__ now-you-have-logged-in))))))))
@@ -415,7 +446,7 @@
      (sess (id id string->id #f))
      (if id
          (page (io sess) table id)
-         (redirect (io sess) 'board))))
+         (redirect (io sess) 'index))))
 
   (define-scenario (detail io request data)
     (with-or-without-session/
@@ -423,7 +454,7 @@
      (sess (id id string->id #f))
      (if id
          (page (io sess) detail id)
-         (redirect (io sess) 'board))))
+         (redirect (io sess) 'index))))
 
   (define (report-to-modify->quotation rep a-id r-id)
     (make-quotation a-id
@@ -577,8 +608,8 @@
                                   (page (io sess) detail r-id)
                                   (page (io sess) private (__ hmm-an-error-occurred))))
                              (else (loop (form (io sess) (agreement a) private (__ please-retry))))))))
-               (else (redirect (io sess) 'board)))
-         (redirect (io sess) 'board))))
+               (else (redirect (io sess) 'index)))
+         (redirect (io sess) 'index))))
 
   ;; input fields
   (add-input-fields new-account
@@ -596,6 +627,11 @@
   (add-input-fields account-to-login
     ((text)
      (password)))
+  (add-input-fields forgotten-account
+    ((text)))
+  (add-input-fields password-reset
+    ((password (format "~d文字以上" *password-min-length*))
+     (password (format "~d文字以上" *password-min-length*))))
   (add-input-fields confirmation
     (((radio (yes "はい" #f) (no "いいえ" #t)))))
   (add-input-fields new-exlibris
@@ -668,6 +704,12 @@
                           (ja "ニックネーム"))
    (account-to-login-password (en "password")
                               (ja "パスワード"))
+   (forgotten-account-mail-address (en "mail address")
+                                   (ja "メールアドレス"))
+   (password-reset-password (en "new password")
+                            (ja "新しいパスワード"))
+   (password-reset-password-re (en "new password-re")
+                               (ja "新しいパスワード(再入力)"))
    (confirmation-ok (en "OK?")
                     (ja "OK?"))
    (new-exlibris-title (en "title")
@@ -738,6 +780,14 @@
                                   (ja "アカウントができました。"))
    (your-account-has-been-updated (en "Your account has been updated.")
                                   (ja "アカウントが更新されました。"))
+   (let-me-know-your-mail-address (en "Let me know your mail address:")
+                                  (ja "アカウントのメールアドレスを入力してください:"))
+   (we-have-sent-message-to-you (ja "We have sent the message to you.")
+                                (ja "メッセージをメールを送信しました。メールの内容にしたがってください。"))
+   (specify-new-password (en "Specify new password:")
+                         (ja "新しいパスワードを指定してください:"))
+   (your-password-updated (en "Your password has been updated.")
+                          (ja "パスワードが更新されました。"))
    (are-you-sure-to-cancel-account? (en "Are you sure to cancel your account?")
                                     (ja "アカウントを解除するとこれまでに登録されたデータが利用できなくなります。アカウントを解除しますか?"))
    (now-you-have-logged-in (en "Now you have logged in!")
