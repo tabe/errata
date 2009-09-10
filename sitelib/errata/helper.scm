@@ -70,11 +70,11 @@
      (html:div
       ((class "links"))
       (html:div (map p-link *public-links*)))
-     (if (string? uuid)
-         (html:div
-          ((class "links"))
-          (html:div (map p-link *private-links*)))
-         '())))
+     (with-uuid
+      uuid
+      (html:div
+       ((class "links"))
+       (html:div (map p-link *private-links*))))))
 
   (define (hidden-field name value)
     (html:input ((type "hidden") (name name) (value value))))
