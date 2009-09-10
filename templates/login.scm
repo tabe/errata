@@ -13,7 +13,7 @@
   (div ((id "links")) links)
   (div ((id "public"))
        (lambda (uuid body) body)
-       (p ((style "text-align:right;font-size:small;")) "または、" (a ((href (build-entry-path 'forgot-password))) "パスワードを忘れた")))
+       (p ((style "font-size:small;")) "または、" (a ((href (build-entry-path 'forgot-password))) "パスワードを忘れた")))
   belt
   powered-by-lunula
   ))
