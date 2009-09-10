@@ -39,7 +39,9 @@
               (html:a ((href "http://fixedpoint.jp/lunula/")) 'Lunula)))
 
   (define creativecommons-attribution
-    (html:a ((href "http://creativecommons.org/licenses/by/2.1/jp/")) "\"CreativeCommons 表示(Attribution)\""))
+    (html:a ((href "http://creativecommons.org/licenses/by/2.1/jp/")
+             (target "_blank"))
+            "\"CreativeCommons 表示(Attribution)\""))
 
   (define preload-script 
     '("$(document).ready(function() {"
