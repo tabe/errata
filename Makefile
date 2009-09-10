@@ -1,6 +1,6 @@
 YPSILON_SITELIB = /home/tabe/lunula/sitelib:/home/tabe/base64:/home/tabe/lcs:/home/tabe/ssax:/home/tabe/uri:/home/tabe/xunit:/home/tabe/ypsilon-foreign-lib/sitelib:/home/tabe/ypsilon-http/sitelib
 
-YPSILON = env YPSILON_SITELIB=$(YPSILON_SITELIB) ypsilon --sitelib=sitelib
+YPSILON = env YPSILON_SITELIB=$(YPSILON_SITELIB) ypsilon --sitelib=sitelib --heap-limit=16
 
 .PHONY: check migrate fixtures start image stop stats test
 
