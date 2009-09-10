@@ -558,7 +558,7 @@
      (io request data)
      (sess (r-id report string->id #f)
            (c-id correction string->id #f))
-     (if c-id
+     (if (and r-id c-id)
          (cond ((lookup correction c-id)
                 => (lambda (c)
                      (let loop ((a (form (io sess) (agreement) private)))
@@ -619,7 +619,7 @@
   (add-input-fields acknowledgement
     (#f
      #f
-     (text)
+     ((select (positive "賛成") (negative "反対")))
      (textarea)))
   (add-input-fields agreement
     (#f
@@ -691,7 +691,7 @@
    (report-to-modify-correction-body (en "Correction's Body")
                                      (ja "訂正本文"))
    (acknowledgement-sign (en "Sign")
-                         (ja "賛成/反対"))
+                         (ja "引用部分が誤りだということに"))
    (acknowledgement-comment (en "Comment")
                             (ja "コメント"))
 

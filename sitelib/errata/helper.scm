@@ -188,11 +188,7 @@
      (html:h4 (__ Detail))
      (diff-table
       (revision-report-tr uuid r rep
-                          (with-uuid
-                           uuid
-                           (html:form ((action (build-entry-path 'disagree uuid)))
-                                      (hidden-field "id" (report-correction-id rep))
-                                      (html:input ((type "submit") (value (__ disagree))))))
+                          '()
                           (lambda (q c) (ack/nak-tr uuid rep q c))))))
 
   (define (diff-table x)
