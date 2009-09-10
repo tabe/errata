@@ -1,6 +1,7 @@
 (library (errata helper)
   (export errata-logo
           powered-by-lunula
+          creativecommons-attribution-logo
           creativecommons-attribution
           preload-script
           menu
@@ -42,6 +43,9 @@
     (html:a ((href "http://creativecommons.org/licenses/by/2.1/jp/")
              (target "_blank"))
             "\"CreativeCommons 表示(Attribution)\""))
+
+  (define creativecommons-attribution-logo
+    "<a rel='license' href='http://creativecommons.org/licenses/by/2.1/jp/'><img alt='Creative Commons License' style='border-width:0' src='http://i.creativecommons.org/l/by/2.1/jp/80x15.png' /></a>")
 
   (define preload-script 
     '("$(document).ready(function() {"
@@ -207,7 +211,7 @@
     (html:div
      (go-to-table uuid r)
      (revision-skeleton b r '() '() '())
-     (html:h4 (__ Detail))
+     (html:h4 (__ Detail) "&nbsp;" creativecommons-attribution-logo)
      (diff-table
       (revision-report-tr uuid r rep
                           '()
@@ -248,7 +252,7 @@
 
   (define (revision-reviews r)
     (html:div
-     (html:h4 (__ Review))
+     (html:h4 (__ Review) "&nbsp;" creativecommons-attribution-logo)
      (let ((ls (lookup-all review (format "EXISTS (SELECT * FROM exlibris ex WHERE ex.id = review.exlibris_id AND ex.revision_id = '~d')" (id-of r)))))
        (if (null? ls)
            "(なし)"
@@ -342,20 +346,19 @@
                 agms)))))))))
 
   (define (revision-reports uuid r proc)
-    (append
-     (html:h4 (__ Table))
-     (diff-table
-      (map
-       (lambda (rep)
-         (revision-report-tr uuid r rep
-                             (proc rep)
-                             (lambda (q c) '())))
-       (lookup-all report `((revision-id ,(id-of r))))))))
+    (diff-table
+     (map
+      (lambda (rep)
+        (revision-report-tr uuid r rep
+                            (proc rep)
+                            (lambda (q c) '())))
+      (lookup-all report `((revision-id ,(id-of r)))))))
 
   (define (revision-frame uuid b r)
     (html:div
      (go-to-board uuid)
      (revision-skeleton b r '() '() '())
+     (html:h4 (__ Table) "&nbsp;" creativecommons-attribution-logo)
      (revision-reports uuid r (lambda (rep)
                                 (html:form ((action (build-entry-path 'detail uuid)))
                                            (hidden-field "id" (id-of rep))
@@ -391,13 +394,13 @@
                           (html:form ((action (build-entry-path 'put-off uuid)))
                                      (hidden-field "id" id)
                                      (html:input ((type "submit") (value (__ put-off))))))
+       (html:h4 (__ Review) "&nbsp;" creativecommons-attribution-logo)
        (html:form ((action (build-entry-path 'edit-review uuid)))
-                  (html:div "レビュー:&nbsp;"
-                            (hidden-field "id" id)
-                            (html:input ((type "submit") (value (__ edit-review))))
-                            (cond ((lookup review `((exlibris-id ,id))) => review-div)
-                                  (else "(なし)"))))
-
+                  (hidden-field "id" id)
+                  (html:input ((type "submit") (value (__ edit-review)))))
+       (cond ((lookup review `((exlibris-id ,id))) => review-div)
+             (else "(なし)"))
+       (html:h4 (__ Table) "&nbsp;" creativecommons-attribution-logo)
        (html:div
         (html:form ((action (build-entry-path 'new-report uuid)))
                    (hidden-field "id" (id-of ex))
