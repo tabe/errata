@@ -672,7 +672,6 @@
 
   ;; templates
   (templates (string-append (lookup-process-environment "PWD") "/templates"))
-  (static-template "static")
   (template-environment (except (rnrs) div)
                         (lunula html)
                         (errata helper))
