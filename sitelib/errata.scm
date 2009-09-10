@@ -746,6 +746,8 @@
                             (ja "ログアウトしました。"))
    (now-you-have-left-errata (en "Now you have left Errata. Thanks for your favor.")
                              (ja "Errata のアカウントは解除されました。ご利用ありがとうございました。"))
+   (of-course-we-know-you-are-kidding (en "Of course we know you are kidding :)")
+                                      (ja "アカウントの解除をキャンセルしました。"))
    (please-input-title-or-isbn (en "Please input title or ISBN.")
                                (ja "タイトルまたは ISBN を入力してください。"))
    (is-this-content-ok? (en "Is this content OK?")
