@@ -743,6 +743,8 @@
                          (ja "引用部分が誤りだということに"))
    (acknowledgement-comment (en "Comment")
                             (ja "コメント"))
+   (agreement-comment (en "Comment")
+                      (ja "コメント"))
 
    ;; messages
    (password-is-blank (en "password is blank.")
