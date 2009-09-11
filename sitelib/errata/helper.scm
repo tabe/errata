@@ -45,7 +45,8 @@
             "\"CreativeCommons 表示(Attribution)\""))
 
   (define creativecommons-attribution-logo
-    "<a rel='license' href='http://creativecommons.org/licenses/by/2.1/jp/'><img alt='Creative Commons License' style='border-width:0' src='http://i.creativecommons.org/l/by/2.1/jp/80x15.png' /></a>")
+    (html:a ((rel "license") (href "http://creativecommons.org/licenses/by/2.1/jp/") (target "_blank"))
+            (html:img ((alt "Creative Commons License") (style "border-width:0;") (src "http://i.creativecommons.org/l/by/2.1/jp/80x15.png")))))
 
   (define preload-script 
     '("$(document).ready(function() {"
@@ -141,7 +142,7 @@
           (html:th
            ((rowspan 4))
            (html:a ((href (isbn10->amazon (bib-isbn10 b))) (target "_blank"))
-                   (html:image ((src (bib-image b)) (alt (html:escape-string (bib-title b)))))))
+                   (html:img ((src (bib-image b)) (alt (html:escape-string (bib-title b)))))))
           (html:th ((rowspan 2) (style "text-align:left;")) (__ ISBN))
           (html:td ((style "color:#555555;")) (bib-isbn13 b)))
          (html:tr

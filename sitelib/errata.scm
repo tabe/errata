@@ -230,7 +230,7 @@
                                      (bib-title b)
                                      (cond ((bib-image b)
                                             => (lambda (url)
-                                                 (append (html:br) (html:image ((src url))))))
+                                                 (append (html:br) (html:img ((src url))))))
                                            (else '()))))))
                  (cond ((id-of b)
                         => (lambda (id)
