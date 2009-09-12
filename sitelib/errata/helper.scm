@@ -25,6 +25,7 @@
           (prefix (lunula html) html:)
           (only (lunula persistent-record) id-of created-at-of)
           (only (lunula session) account account-nick account-name)
+          (only (lunula string) blank?)
           (only (errata calendar) ad->japanese-era)
           (only (errata isbn) isbn10->amazon)
           (errata model)
@@ -132,6 +133,17 @@
            thunk
            '()))))
 
+  (define (bib->image b)
+    (let ((image (bib-image b)))
+      (cond ((blank? image)
+             (html:img ((src "/image/no-image.png") (alt "No Image"))))
+            ((isbn10->amazon (bib-isbn10 b))
+             => (lambda (url)
+                  (html:a ((href url) (target "_blank"))
+                          (html:img ((src image) (alt (html:escape-string (bib-title b))) (style "border-width:0px;"))))))
+            (else
+             (html:img ((src image) (alt (html:escape-string (bib-title b))) (style "border-width:0px;")))))))
+
   (define-syntax revision-skeleton
     (syntax-rules ()
       ((_ b r x y z)
@@ -141,12 +153,11 @@
          (html:tr
           (html:th
            ((rowspan 4))
-           (html:a ((href (isbn10->amazon (bib-isbn10 b))) (target "_blank"))
-                   (html:img ((src (bib-image b)) (alt (html:escape-string (bib-title b)))))))
+           (bib->image b))
           (html:th ((rowspan 2) (style "text-align:left;")) (__ ISBN))
-          (html:td ((style "color:#555555;")) (bib-isbn13 b)))
+          (html:td ((style "color:#555555;")) (or (bib-isbn13 b) "-")))
          (html:tr
-          (html:td ((style "color:#555555;")) (bib-isbn10 b)))
+          (html:td ((style "color:#555555;")) (or (bib-isbn10 b) "-")))
          (html:tr
           (html:th ((style "text-align:left;")) (__ Revision))
           (html:td ((style "color:#555555;"))
