@@ -1,8 +1,9 @@
-YPSILON_SITELIB = /home/tabe/lunula/sitelib:/home/tabe/base64:/home/tabe/lcs:/home/tabe/ssax:/home/tabe/uri:/home/tabe/xunit:/home/tabe/ypsilon-foreign-lib/sitelib:/home/tabe/ypsilon-http/sitelib
+YPSILON_SITELIB=/home/tabe/lunula/sitelib:/home/tabe/base64:/home/tabe/lcs:/home/tabe/ssax:/home/tabe/uri:/home/tabe/xunit:/home/tabe/ypsilon-foreign-lib/sitelib:/home/tabe/ypsilon-http/sitelib
 
-YPSILON = env YPSILON_SITELIB=$(YPSILON_SITELIB) ypsilon --sitelib=sitelib --heap-limit=16
+YPSILON=env YPSILON_SITELIB=$(YPSILON_SITELIB) LUNULA_TEMPLATES=/home/tabe/errata/templates \
+  ypsilon --sitelib=sitelib --heap-limit=16
 
-.PHONY: check migrate dump fixtures start image stop stats test
+.PHONY: check migrate dump fixtures start stop image stop-all stats test
 
 check: test
 
@@ -16,12 +17,18 @@ fixtures:
 	$(YPSILON) db/fixtures.scm
 
 start:
-	env YPSILON_SITELIB=$(YPSILON_SITELIB) script/server 3000 yoursql
+	$(YPSILON) script/server.scm 3000 yoursql
+
+stop:
+	pkill -TERM -f -n 'ypsilon .*script/server'
 
 image:
 	$(YPSILON) script/image-server.scm
 
-stop:
+stop-image:
+	pkill -TERM -f -n 'ypsilon .*script/image'
+
+stop-all:
 	kill -TERM `pidof ypsilon`
 
 stats:
