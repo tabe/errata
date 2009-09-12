@@ -3,7 +3,7 @@
           connect
           close)
   (import (rnrs)
-          (only (core) format lookup-process-environment)
+          (only (core) format)
           (pregexp)
           (only (srfi :13) string-null?)
           (srfi :48)
@@ -668,7 +668,6 @@
      (textarea)))
 
   ;; templates
-  (templates (string-append (lookup-process-environment "PWD") "/templates"))
   (template-environment (except (rnrs) div)
                         (lunula html)
                         (errata helper))
