@@ -96,7 +96,7 @@
      (map
       (lambda (pair)
         (list
-         (html:a ((href (build-entry-path (car pair)))) (cdr pair))
+         (html:a ((href (build-entry-path (car pair) uuid))) (cdr pair))
          " | "))
       '((faq . "FAQ")
         (terms-of-service . "利用規約")
