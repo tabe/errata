@@ -12,6 +12,7 @@
           (prefix (lunula html) html:)
           (prefix (lunula log) log:)
           (lunula session)
+          (only (lunula string) blank?)
           (lunula tree)
           (only (lunula persistent-record) string->id id-of id-set!)
           (lunula validation)
@@ -29,10 +30,6 @@
 
   (define (mail-body . body)
     (tree->string `(,@body "\n-- Errata\n")))
-
-  (define (blank? x)
-    (or (not x)
-        (and (string? x) (string-null? x))))
 
   (define (string->page str)
     (cond ((string->number str) => (lambda (page) (and (fixnum? page) (<= 0 page) page)))
