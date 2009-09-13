@@ -76,7 +76,6 @@
           review-body
           quotation
           quotation?
-          valid-quotation?
           make-quotation
           quotation-account-id
           quotation-account-id-set!
@@ -87,7 +86,6 @@
           quotation-body
           correction
           correction?
-          valid-correction?
           make-correction
           correction-account-id
           correction-account-id-set!
@@ -108,7 +106,6 @@
           report-correction-id-set!
           report-to-modify
           report-to-modify?
-          valid-report-to-modify?
           make-report-to-modify
           report-to-modify-subject
           report-to-modify-page
@@ -117,7 +114,6 @@
           report-to-modify-correction-body
           acknowledgement
           acknowledgement?
-          valid-acknowledgement?
           make-acknowledgement
           acknowledgement-account-id
           acknowledgement-account-id-set!
@@ -129,7 +125,6 @@
           acknowledgement-negative?
           agreement
           agreement?
-          valid-agreement?
           make-agreement
           agreement-account-id
           agreement-account-id-set!
@@ -256,9 +251,6 @@
              position
              body))))))
 
-  (define (valid-quotation? q)
-    (quotation? q))
-
   (define-persistent-record-type correction
     (fields (mutable account-id) (mutable quotation-id) body)
     (protocol
@@ -268,9 +260,6 @@
           (p (maybe-id account-id)
              (maybe-id quotation-id)
              body))))))
-
-  (define (valid-correction? c)
-    (correction? c))
 
   (define-persistent-record-type report
     (fields (mutable account-id) (mutable revision-id) subject (mutable quotation-id) (mutable correction-id))
@@ -287,19 +276,6 @@
   (define-record-type report-to-modify
     (fields subject page position quotation-body correction-body))
 
-  (define (valid-report-to-modify? x)
-    (and (report-to-modify? x)
-         (let ((qb (report-to-modify-quotation-body x))
-               (cb (report-to-modify-correction-body x)))
-           (and (string? qb)
-                (not (string=? qb ""))
-                (string? cb)
-                (not (string=? qb cb))))))
-
-  (define (valid-comment? c)
-    (and (string? c)
-         (< (string-length c) 1024)))
-
   (define-persistent-record-type acknowledgement
     (fields (mutable account-id) (mutable quotation-id) sign comment)
     (protocol
@@ -310,11 +286,6 @@
              (maybe-id quotation-id)
              sign
              comment))))))
-
-  (define (valid-acknowledgement? a)
-    (and (acknowledgement? a)
-         (member (acknowledgement-sign a) '("positive" "negative"))
-         (valid-comment? (acknowledgement-comment a))))
 
   (define (acknowledgement-positive? a)
     (assert (acknowledgement? a))
@@ -333,9 +304,5 @@
           (p (maybe-id account-id)
              (maybe-id correction-id)
              comment))))))
-
-  (define (valid-agreement? a)
-    (and (agreement? a)
-         (valid-comment? (agreement-comment a))))
 
 )

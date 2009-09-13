@@ -1,12 +1,19 @@
 (library (errata validator)
-  (export *password-min-length*
-          *nick-max-length*
-          *mail-address-max-length*
+  (export *account-password-min-length*
+          *account-password-max-length*
+          *account-nick-max-length*
+          *account-mail-address-max-length*
           validate-account-to-modify
           validate-new-account
           authenticate-account
           existing-mail-address
-          validate-password-reset)
+          validate-password-reset
+          validate-bib-title
+          validate-revision
+          validate-review
+          validate-report-to-modify
+          validate-acknowledgement
+          validate-agreement)
   (import (rnrs)
           (pregexp)
           (prefix (only (lunula hmac) sha-256) hmac:)
@@ -15,33 +22,69 @@
           (lunula validation)
           (errata model))
 
-  (define *password-min-length* 8)
-  (define *nick-max-length* 16)
-  (define *mail-address-max-length* 256)
+  (define *account-name-min-length* 1)
+  (define *account-name-max-length* 32)
+  (define *account-nick-min-length* 1)
+  (define *account-nick-max-length* 16)
+  (define *account-password-min-length* 8)
+  (define *account-password-max-length* 32)
+  (define *account-mail-address-min-length* 6)
+  (define *account-mail-address-max-length* 256)
 
-  (define-validator (validate-password password)
-    (password-is-blank password-too-short)
-    (let ((len (string-length password)))
-      (cond ((zero? len) (password-is-blank))
-            ((< len *password-min-length*) (password-too-short)))))
+  (define *bib-title-min-length* 1)
+  (define *bib-title-max-length* 128)
+  (define *bib-image-min-length* 10)
+  (define *bib-image-max-length* 256)
+
+  (define *revision-name-min-length* 1)
+  (define *revision-name-max-length* 32)
+
+  (define *review-body-min-length* 1)
+  (define *review-body-max-length* 1024)
+
+  (define *quotation-page-min-length* 1)
+  (define *quotation-page-max-length* 32)
+  (define *quotation-position-min-length* 1)
+  (define *quotation-position-max-length* 32)
+  (define *quotation-body-min-length* 1)
+  (define *quotation-body-max-length* 256)
+
+  (define *correction-body-min-length* 0)
+  (define *correction-body-max-length* 512)
+
+  (define *report-subject-min-length* 0)
+  (define *report-subject-max-length* 64)
+
+  (define *acknowledgement-comment-min-length* 1)
+  (define *acknowledgement-comment-max-length* 1024)
+
+  (define *agreement-comment-min-length* 1)
+  (define *agreement-comment-max-length* 1024)
+
+  (define-string-length-validator validate-account-name
+    (name-is-blank name-too-long)
+    (*account-name-max-length*))
+
+  (define-string-length-validator validate-password
+    (password-is-blank password-too-short password-too-long)
+    (*account-password-min-length* *account-password-max-length*))
 
   (define-validator (validate-nick nick)
     (nick-is-blank nick-too-long nick-invalid-char)
     (let ((len (string-length nick)))
       (cond ((zero? len) (nick-is-blank))
             (else
-             (when (< *nick-max-length* len)
+             (when (< *account-nick-max-length* len)
                (nick-too-long))
              (unless (pregexp-match "^[A-Za-z_][A-Za-z0-9_]*$" nick)
                (nick-invalid-char))))))
 
-  (define-validator (validate-mail-address mail-address)
-    (mail-address-is-blank mail-address-too-long)
-    (let ((len (string-length mail-address)))
-      (cond ((zero? len) (mail-address-is-blank))
-            ((< *mail-address-max-length* len) (mail-address-too-long)))))
+  (define-string-length-validator validate-mail-address
+    (mail-address-is-blank mail-address-too-short mail-address-too-long)
+    (*account-mail-address-min-length* *account-mail-address-max-length*))
 
   (define-composite-validator validate-account-to-modify
+    ((lambda (a _) (account-to-modify-name a)) validate-account-name)
     ((lambda (a _) (account-to-modify-current-password a)) validate-password)
     ((lambda (a _) (account-to-modify-new-password a)) validate-password)
     ((lambda (a c) (make-account-to-login (account-nick c) (account-to-modify-current-password a)))
@@ -64,6 +107,7 @@
 
   (define-composite-validator validate-new-account
     (new-account-nick validate-nick validate-new-nick)
+    (new-account-name validate-account-name)
     (new-account-password validate-password)
     (new-account-password-re validate-password)
     ((lambda (x) (values (new-account-password x)
@@ -101,5 +145,84 @@
     ((lambda (x) (values (password-reset-password x)
                          (password-reset-password-re x)))
      same-password))
+
+  (define-string-length-validator validate-bib-title
+    (title-is-blank title-too-long)
+    (*bib-title-max-length*))
+
+  (define-composite-validator validate-bib
+    (bib-title validate-bib-title))
+
+  (define-string-length-validator validate-revision-name
+    (name-is-blank name-too-long)
+    (*revision-name-max-length*))
+
+  (define-composite-validator validate-revision
+    (revision-name validate-revision-name))
+
+  (define-string-length-validator validate-review-body
+    (body-is-blank body-too-long)
+    (*review-body-max-length*))
+
+  (define-composite-validator validate-review
+    (review-body validate-review-body))
+
+  (define-string-length-validator validate-quotation-page
+    (page-is-blank page-too-long)
+    (*quotation-page-max-length*))
+
+  (define-string-length-validator validate-quotation-position
+    (position-is-blank position-too-long)
+    (*quotation-position-max-length*))
+
+  (define-string-length-validator validate-quotation-body
+    (body-is-blank body-too-long)
+    (*quotation-body-max-length*))
+
+  (define-composite-validator validate-quotation
+    (quotation-page validate-quotation-page)
+    (quotation-position validate-quotation-position)
+    (quotation-body validate-quotation-body))
+
+  (define-string-length-validator validate-correction-body
+    (body-too-long)
+    (*correction-body-max-length*))
+
+  (define-composite-validator validate-correction
+    (correction-body validate-correction-body))
+
+  (define-string-length-validator validate-report-subject
+    (subject-is-blank subject-too-long)
+    (*report-subject-max-length*))
+
+  (define-composite-validator validate-report
+    (report-subject validate-report-subject))
+
+  (define-composite-validator validate-report-to-modify
+    (report-to-modify-subject validate-report-subject)
+    (report-to-modify-page validate-quotation-page)
+    (report-to-modify-position validate-quotation-position)
+    (report-to-modify-quotation-body validate-quotation-body)
+    (report-to-modify-correction-body validate-correction-body))
+
+  (define-validator (validate-acknowledgement-sign str)
+    (invalid-sign)
+    (unless (member str '("positive" "negative"))
+      (invalid-sign)))
+
+  (define-string-length-validator validate-acknowledgement-comment
+    (comment-is-blank comment-too-long)
+    (*acknowledgement-comment-max-length*))
+
+  (define-composite-validator validate-acknowledgement
+    (acknowledgement-sign validate-acknowledgement-sign)
+    (acknowledgement-comment validate-acknowledgement-comment))
+
+  (define-string-length-validator validate-agreement-comment
+    (comment-is-blank comment-too-long)
+    (*agreement-comment-max-length*))
+
+  (define-composite-validator validate-agreement
+    (agreement-comment validate-agreement-comment))
 
 )
