@@ -40,6 +40,7 @@ test:
 	$(YPSILON) tests/errata/helper/pagination.scm
 	$(YPSILON) tests/errata/helper.scm
 	$(YPSILON) tests/errata/isbn.scm
+	$(YPSILON) tests/errata/message.scm
 	$(YPSILON) tests/errata/model.scm
 	$(YPSILON) tests/errata/query.scm
 	$(YPSILON) tests/errata/validator.scm
