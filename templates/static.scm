@@ -1,6 +1,7 @@
 (doctype transitional)
 (html
-  (head
+ (head
+  errata-keywords
   (title "Errata")
   (link ((href "/stylesheet/errata.css") (rel "stylesheet") (type "text/css")))
   (script ((type "text/javascript") (src "/javascript/jquery-1.3.2.min.js")))

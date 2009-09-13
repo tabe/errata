@@ -1,5 +1,6 @@
 (library (errata helper)
-  (export errata-logo
+  (export errata-keywords
+          errata-logo
           powered-by-lunula
           creativecommons-attribution-logo
           creativecommons-attribution
@@ -30,6 +31,9 @@
           (only (errata isbn) isbn10->amazon)
           (errata model)
           (errata helper pagination))
+
+  (define errata-keywords 
+    (html:meta ((name "keywords") (content "errata,typo,正誤表,誤植,タイポ,共有"))))
 
   (define (errata-logo uuid . _)
     (html:h1 ((id "logo") (title "えらった べーた"))
