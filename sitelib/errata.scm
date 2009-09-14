@@ -376,12 +376,13 @@
                        (lambda (ht) (loop (form (io sess) (revision r-new) private (hashtable->messages ht))))
                        (lambda _
                          (revision-bib-id-set! r-new (revision-bib-id r))
-                         (if (and (save r-new)
-                                  (begin
-                                    (exlibris-revision-id-set! ex (id-of r-new))
-                                    (save ex)))
-                             (page (io sess) desk id)
-                             (page (io sess) private (__ hmm-an-error-occurred)))))
+                         (cond ((and (save r-new)
+                                     (begin
+                                       (exlibris-revision-id-set! ex (id-of r-new))
+                                       (save ex)))
+                                (execute "DELETE FROM revision WHERE NOT EXISTS (SELECT 1 FROM exlibris e WHERE revision.id = e.revision_id)")
+                                (page (io sess) desk id))
+                               (else (page (io sess) private (__ hmm-an-error-occurred))))))
                      (loop (form (io sess) (revision r-new) private (__ please-retry))))))
              (redirect (io sess) 'shelf))))))
 
