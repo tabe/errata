@@ -112,6 +112,9 @@
           report-to-modify-position
           report-to-modify-quotation-body
           report-to-modify-correction-body
+          report-history
+          report-history?
+          report->report-history
           acknowledgement
           acknowledgement?
           make-acknowledgement
@@ -275,6 +278,27 @@
 
   (define-record-type report-to-modify
     (fields subject page position quotation-body correction-body))
+
+  (define-persistent-record-type report-history
+    (fields account-id revision-id subject quotation-id correction-id report-id)
+    (protocol
+     (persistent-protocol
+      (lambda (p)
+        (lambda (account-id revision-id subject quotation-id correction-id report-id)
+          (p (maybe-id account-id)
+             (maybe-id revision-id)
+             subject
+             (maybe-id quotation-id)
+             (maybe-id correction-id)
+             (maybe-id report-id)))))))
+
+  (define (report->report-history r id)
+    (make-report-history (report-account-id r)
+                         (report-revision-id r)
+                         (report-subject r)
+                         (report-quotation-id r)
+                         (report-correction-id r)
+                         id))
 
   (define-persistent-record-type acknowledgement
     (fields (mutable account-id) (mutable quotation-id) sign comment)

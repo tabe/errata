@@ -528,9 +528,11 @@
                                   (report-to-modify-subject modified)
                                   (id-of q-new)
                                   (id-of c-new))))
-                    (and (destroy rep)
-                         (save rep-new)
-                         rep-new)))))))
+                    (and (save rep-new)
+                         (let ((rep-h (report->report-history rep (id-of rep-new))))
+                           (and (save rep-h)
+                                (destroy rep)
+                                rep-new)))))))))
 
   (define-scenario (modify-report io request data)
     (with-session/
