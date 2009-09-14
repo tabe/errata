@@ -128,7 +128,7 @@
 
   (define (signature a)
     (html:span ((title (html:escape-string (account-name a))))
-               (html:escape-string (account-name a))))
+               (account-nick a)))
 
   (define-syntax with-uuid
     (syntax-rules ()
@@ -263,13 +263,18 @@
                       (proc q c)))
              (else '())))))
 
-  (define (review-div rvw)
-    (html:div ((class "dog") (style "background-color:#c7ff6f;")) (html:pre (html:escape-string (review-body rvw)))))
+  (define (review-div tuple)
+    (match tuple
+      ((rvw ex a)
+       (html:div ((class "dog") (style "background-color:#c7ff6f;"))
+                 (signature a) ":"
+                 (html:pre (html:escape-string (review-body rvw)))
+                 ))))
 
   (define (revision-reviews r)
     (html:div
      (html:h4 (__ Review) "&nbsp;" creativecommons-attribution-logo)
-     (let ((ls (lookup-all review (format "EXISTS (SELECT * FROM exlibris ex WHERE ex.id = review.exlibris_id AND ex.revision_id = '~d')" (id-of r)))))
+     (let ((ls (lookup-all (review (exlibris review) (account exlibris)) ((exlibris (revision-id (id-of r)))))))
        (if (null? ls)
            "(なし)"
            (map review-div ls)))))
@@ -414,7 +419,7 @@
        (html:form ((action (build-entry-path 'edit-review uuid)))
                   (hidden-field "id" id)
                   (html:input ((type "submit") (value (__ edit-review)))))
-       (cond ((lookup review `((exlibris-id ,id))) => review-div)
+       (cond ((lookup (review (exlibris review) (account exlibris)) ((exlibris (id id)))) => review-div)
              (else "(なし)"))
        (html:h4 (__ Table) "&nbsp;" creativecommons-attribution-logo)
        (html:div
