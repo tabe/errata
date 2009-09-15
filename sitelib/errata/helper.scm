@@ -210,19 +210,18 @@
 
   (define (report-window uuid id)
     (assert (integer? id))
-    (match (lookup (report (revision report) (bib revision)) ((report (id id))))
-      ((rep r b) (report-frame uuid b r rep))
+    (match (lookup (report (account report) (quotation report) (correction report) (revision report) (bib revision))
+                   ((report (id id))))
+      ((rep a q c r b) (report-frame uuid rep a q c r b))
       (else "?")))
 
-  (define (report-frame uuid b r rep)
+  (define (report-frame uuid rep a q c r b)
     (html:div
      (go-to-table uuid r)
      (revision-skeleton b r '() '() '())
      (html:h4 (__ Detail) "&nbsp;" creativecommons-attribution-logo)
      (diff-table
-      (revision-report-tr uuid r rep
-                          '()
-                          (lambda (q c) (ack/nak-tr uuid rep q c))))))
+      (revision-report-tr uuid rep a q c '() (ack/nak-tr uuid rep q c)))))
 
   (define (diff-table x)
     (html:table
@@ -233,26 +232,20 @@
       (html:td))
      x))
 
-  (define (revision-report-tr uuid r rep x proc)
-    (let ((a (lookup account (report-account-id rep)))
-          (q (lookup quotation (report-quotation-id rep)))
-          (c (lookup correction (report-correction-id rep))))
-      (cons
-       (html:tr
-        (html:td ((colspan 2) (style "font-size:small;"))
-                 "pp." (quotation-page q) "/" (quotation-position q) "&nbsp;"
-                 (report-subject rep) "&nbsp;"
-                 "("
-                 (html:span ((style "font-size:x-small;")) "reported by ")
-                 (signature a)
-                 (cond ((created-at-of rep) => (lambda (t) (cons "&nbsp;@&nbsp;" (html:span ((style "text-align:right;")) t))))
-                       (else '()))
-                 ")"))
-       (cond ((and (quotation? q)
-                   (correction? c))
-              (append (diff-tr uuid rep q c x)
-                      (proc q c)))
-             (else '())))))
+  (define (revision-report-tr uuid rep a q c x y)
+    (append
+     (html:tr
+      (html:td ((colspan 2) (style "font-size:small;"))
+               "pp." (quotation-page q) "/" (quotation-position q) "&nbsp;"
+               (report-subject rep) "&nbsp;"
+               "("
+               (html:span ((style "font-size:x-small;")) "reported by ")
+               (signature a)
+               (cond ((created-at-of rep) => (lambda (t) (cons "&nbsp;@&nbsp;" (html:span ((style "text-align:right;")) t))))
+                     (else '()))
+               ")"))
+     (diff-tr uuid rep q c x)
+     y))
 
   (define (review-div tuple)
     (match tuple
@@ -326,45 +319,56 @@
                    (html:input ((type "submit") (value (__ agree))))))))
      (html:tr
       (html:td
-       (let ((acks (reverse (lookup-all acknowledgement `((quotation-id ,(id-of q)))))))
-         (if (null? acks)
+       (let ((tuples (lookup-all (acknowledgement (account acknowledgement))
+                                 ((acknowledgement (quotation-id (id-of q))))
+                                 ((order-by (acknowledgement (created-at desc)))))))
+         (if (null? tuples)
              '()
              (html:div
               ((class "acknowledgement"))
               (map
-               (lambda (a)
-                 (html:div
-                  (html:span ((class "credit"))
-                             (cond ((lookup account (acknowledgement-account-id a)) => signature)
-                                   (else "?"))
-                             ":&nbsp;")
-                  (html:span ((class (if (acknowledgement-positive? a) "ack" "nak")))
-                             (html:escape-string (acknowledgement-comment a)))))
-               acks))))
+               (lambda (tuple)
+                 (match tuple
+                   ((ack a)
+                    (html:div
+                     (html:span ((class "credit"))
+                                (signature a)
+                                ":&nbsp;")
+                     (html:span ((class (if (acknowledgement-positive? ack) "ack" "nak")))
+                                (html:escape-string (acknowledgement-comment ack)))))
+                   (else "?")))
+               tuples))))
        (html:td
-        (let ((agms (reverse (lookup-all agreement `((correction-id ,(id-of c)))))))
-          (if (null? agms)
+        (let ((tuples (lookup-all (agreement (account agreement))
+                                  ((agreement (correction-id (id-of c))))
+                                  ((order-by (agreement (created-at desc)))))))
+          (if (null? tuples)
               '()
               (html:div
                ((class "agreement"))
                (map
-                (lambda (a)
-                  (html:div
-                   (html:span ((class "credit"))
-                              (cond ((lookup account (agreement-account-id a)) => signature)
-                                    (else "?"))
-                              ":&nbsp;")
-                   (html:span (html:escape-string (agreement-comment a)))))
-                agms)))))))))
+                (lambda (tuple)
+                  (match tuple
+                    ((agr a)
+                     (html:div
+                      (html:span ((class "credit"))
+                                 (signature a)
+                                 ":&nbsp;")
+                      (html:span (html:escape-string (agreement-comment agr)))))
+                    (else "?")))
+                tuples)))))))))
 
   (define (revision-reports uuid r proc)
     (diff-table
      (map
-      (lambda (rep)
-        (revision-report-tr uuid r rep
-                            (proc rep)
-                            (lambda (q c) '())))
-      (lookup-all report `((revision-id ,(id-of r)))))))
+      (lambda (tuple)
+        (match tuple
+          ((rep a q c)
+           (revision-report-tr uuid rep a q c (proc rep) '()))
+          (else "?")))
+      (lookup-all (report (account report) (quotation report) (correction report))
+                  ((report (revision-id (id-of r))))
+                  ((order-by (quotation (page asc))))))))
 
   (define (revision-frame uuid b r)
     (html:div
