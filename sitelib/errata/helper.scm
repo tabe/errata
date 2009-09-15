@@ -42,7 +42,7 @@
 
   (define powered-by-lunula
     (html:div ((id "bottom")) "powered by "
-              (html:a ((href "http://fixedpoint.jp/lunula/")) 'Lunula)))
+              (html:a ((href "http://fixedpoint.jp/lunula/") (target "_blank")) 'Lunula)))
 
   (define creativecommons-attribution
     (html:a ((href "http://creativecommons.org/licenses/by/2.1/jp/")
