@@ -200,20 +200,20 @@
                               '())
            (revision-reviews r)
            (html:hr ((style "color:#999999;")))))
-         (else "?")))))
+         (_ "?")))))
 
   (define (revision-window uuid id)
     (assert (integer? id))
     (match (lookup (revision (bib revision)) ((revision (id id))))
       ((r b) (revision-frame uuid b r))
-      (else "?")))
+      (_ "?")))
 
   (define (report-window uuid id)
     (assert (integer? id))
     (match (lookup (report (account report) (quotation report) (correction report) (revision report) (bib revision))
                    ((report (id id))))
       ((rep a q c r b) (report-frame uuid rep a q c r b))
-      (else "?")))
+      (_ "?")))
 
   (define (report-frame uuid rep a q c r b)
     (html:div
@@ -253,7 +253,8 @@
        (html:div ((class "dog") (style "background-color:#c7ff6f;"))
                  (signature a) ":"
                  (html:pre (html:escape-string (review-body rvw)))
-                 ))))
+                 ))
+      (_ "?")))
 
   (define (revision-reviews r)
     (html:div
@@ -443,7 +444,8 @@
         (lambda (tuple)
           (match tuple
             ((ex r b) (exlibris-panel uuid b r ex))
-            (_ "?")))))))
+            (_ "?")))))
+      (_ "??")))
 
   (define (exlibris-window uuid id)
     (match (lookup (exlibris (revision exlibris) (bib revision)) ((exlibris (id id))))
