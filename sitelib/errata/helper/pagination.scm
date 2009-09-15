@@ -4,17 +4,15 @@
           (only (core) format)
           (prefix (lunula html) html:)
           (only (srfi :1) take)
-          (only (lunula mod_lisp) build-entry-path))
+          (only (lunula mod_lisp) build-entry-path)
+          (only (lunula mysql) lookup-all))
 
   (define *exlibris-per-page* 5)
 
-  (define (pagination-condition page)
-    (format " ORDER BY id DESC LIMIT ~d OFFSET ~d" (+ *exlibris-per-page* 1) (* *exlibris-per-page* page)))
-
-  (define-syntax with-pagination
+  (define-syntax pagination-body
     (syntax-rules ()
-      ((_ (entry-name uuid page) (e0 ...) proc)
-       (let ((ls (e0 ... (pagination-condition page))))
+      ((_ (entry-name uuid page) exp proc)
+       (let ((ls exp))
          (append
           (map
            proc
@@ -31,5 +29,15 @@
                          (html:input ((type "hidden") (name "page") (value (+ page 1))))
                          (html:input ((type "submit") (value (html:escape-string ">>")))))
               '()))))))
+
+  (define-syntax with-pagination
+    (syntax-rules ()
+      ((_ (entry-name uuid page) (record-name (reference foreign) ...) param (e ...) proc)
+       (pagination-body
+        (entry-name uuid page)
+        (lookup-all (record-name (reference foreign) ...)
+                    param
+                    (e ... (offset (* *exlibris-per-page* page)) (limit (+ *exlibris-per-page* 1))))
+        proc))))
 
 )

@@ -187,18 +187,20 @@
   (define (public-revisions uuid page)
     (with-pagination
      (board uuid page)
-     (lookup-all revision "EXISTS (SELECT * FROM publicity p, exlibris ex, account a WHERE ex.id = p.exlibris_id AND revision.id = ex.revision_id AND a.id = ex.account_id AND a.created_at <= ex.created_at)")
-     (lambda (r)
-       (cond ((lookup bib (revision-bib-id r))
-              => (lambda (b)
-                   (append
-                    (revision-skeleton b r
-                                       '()
-                                       (go-to-table uuid r)
-                                       '())
-                    (revision-reviews r)
-                    (html:hr ((style "color:#999999;"))))))
-             (else '())))))
+     (publicity (exlibris publicity) (account exlibris) (revision exlibris) (bib revision))
+     ()
+     ((order-by (publicity (created-at desc))))
+     (lambda (tuple)
+       (match tuple
+         ((pub ex a r b)
+          (append
+           (revision-skeleton b r
+                              '()
+                              (go-to-table uuid r)
+                              '())
+           (revision-reviews r)
+           (html:hr ((style "color:#999999;")))))
+         (else "?")))))
 
   (define (revision-window uuid id)
     (assert (integer? id))
@@ -431,24 +433,17 @@
       ((id page)
        (with-pagination
         (shelf uuid page)
-        (lookup-all exlibris `((account-id ,id)))
-        (lambda (ex)
-          (let ((r (lookup revision (exlibris-revision-id ex))))
-            (if r
-                (let ((b (lookup bib (revision-bib-id r))))
-                  (if b (exlibris-panel uuid b r ex) "??"))
-                "?")))))))
+        (exlibris (revision exlibris) (bib revision))
+        ((exlibris (account-id id)))
+        ((order-by (exlibris (updated-at desc))))
+        (lambda (tuple)
+          (match tuple
+            ((ex r b) (exlibris-panel uuid b r ex))
+            (else "?")))))))
 
   (define (exlibris-window uuid id)
-    (let ((ex (lookup exlibris id)))
-      (if (exlibris? ex)
-          (let ((r (lookup revision (exlibris-revision-id ex))))
-            (if (revision? r)
-                (let ((b (lookup bib (revision-bib-id r))))
-                  (if (bib? b)
-                      (exlibris-frame uuid b r ex)
-                      "???"))
-                "??"))
-          "?")))
+    (match (lookup (exlibris (revision exlibris) (bib revision)) ((exlibris (id id))))
+      ((ex r b) (exlibris-frame uuid b r ex))
+      (else "?")))
 
   )
