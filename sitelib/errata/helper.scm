@@ -406,7 +406,7 @@
                           (cond ((lookup publicity `((exlibris-id ,id)))
                                  => (lambda (pub)
                                       (html:form ((action (build-entry-path 'hide-exlibris uuid)))
-                                                 (hidden-field "id" (id-of pub))
+                                                 (hidden-field "id" id)
                                                  (html:input ((type "submit") (value (__ hide-exlibris)))))))
                                 (else
                                  (html:form ((action (build-entry-path 'share-exlibris uuid)))

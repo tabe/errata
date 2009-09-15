@@ -125,6 +125,8 @@
                      (ja "コメントが規定の長さを超えています。"))
    (submit (en "submit")
            (ja "送信"))
+   (cancel (en "cancel")
+           (ja "キャンセル"))
    (hmm-an-error-occurred (en "Hmm ... an error occurred.")
                           (ja "残念ながら ... エラーが発生しました。"))
    (you-have-already-logged-in (en "You have already logged in!")

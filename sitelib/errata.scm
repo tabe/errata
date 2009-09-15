@@ -36,7 +36,7 @@
     (cond ((string->number str) => (lambda (page) (and (fixnum? page) (<= 0 page) page)))
           (else #f)))
 
-  (define (yes? c) (and (string? (ok? c)) (pregexp-match "^[yY]" (ok? c))))
+  (define (yes? c) (and (confirmation? c) (string? (ok? c)) (pregexp-match "^[yY]" (ok? c))))
 
   (define-syntax with-session
     (syntax-rules ()
@@ -98,17 +98,19 @@
     (without-session
      (io request)
      (let loop ((new-a (form (io) (new-account) public (__ you-can-create-your-own-account))))
-       (guide (validate-new-account new-a)
-         (lambda (ht) (loop (form (io) (new-account new-a) public (hashtable->messages ht))))
-         (lambda _
-           (let ((c (form (io) (confirmation) public (__ is-this-content-ok?) (sign-up-summary new-a))))
-             (if (yes? c)
-                 (let ((a (new-account->account new-a)))
-                   (and (mail (io) public (__ we-have-sent-confirmation-message-to-you) (sign-up-confirmation a))
-                        (if (save a)
-                            (page (io) public (__ now-you-have-your-own-account))
-                            (page (io) public (__ hmm-an-error-occurred)))))
-                 (loop (form (io) (new-account new-a) public (__ please-retry))))))))))
+       (if (new-account? new-a)
+           (guide (validate-new-account new-a)
+             (lambda (ht) (loop (form (io) (new-account new-a) public (hashtable->messages ht))))
+             (lambda _
+               (let ((c (form (io) (confirmation) public (__ is-this-content-ok?) (sign-up-summary new-a))))
+                 (if (yes? c)
+                     (let ((a (new-account->account new-a)))
+                       (and (mail (io) public (__ we-have-sent-confirmation-message-to-you) (sign-up-confirmation a))
+                            (if (save a)
+                                (page (io) public (__ now-you-have-your-own-account))
+                                (page (io) public (__ hmm-an-error-occurred)))))
+                     (loop (form (io) (new-account new-a) public (__ please-retry)))))))
+           (page (io) index)))))
 
   (define (password-reset-request a)
     (lambda (path)
@@ -128,18 +130,20 @@
     (without-session
      (io request)
      (let loop ((a (form (io) (forgotten-account) public (__ let-me-know-your-mail-address))))
-       (guide (existing-mail-address a)
-         (lambda _ (page (io) public (__ we-have-sent-message-to-you)))
-         (lambda (a)
-           (and (mail (io) public (__ we-have-sent-message-to-you) (password-reset-request a))
-                (let loop ((p (form (io) (password-reset) public (__ specify-new-password))))
-                  (guide (validate-password-reset p)
-                    (lambda _ (loop (form (io) (password-reset p) public (__ please-retry))))
-                    (lambda _
-                      (let ((a (password-reset->account p a)))
-                        (if (save a)
-                            (page (io) public (__ your-password-updated))
-                            (page (io) public (__ hmm-an-error-occurred)))))))))))))
+       (if (forgotten-account? a)
+           (guide (existing-mail-address a)
+             (lambda _ (page (io) public (__ we-have-sent-message-to-you)))
+             (lambda (a)
+               (and (mail (io) public (__ we-have-sent-message-to-you) (password-reset-request a))
+                    (let loop ((p (form (io) (password-reset) public (__ specify-new-password))))
+                      (guide (validate-password-reset p)
+                        (lambda _ (loop (form (io) (password-reset p) public (__ please-retry))))
+                        (lambda _
+                          (let ((a (password-reset->account p a)))
+                            (if (save a)
+                                (page (io) public (__ your-password-updated))
+                                (page (io) public (__ hmm-an-error-occurred))))))))))
+           (page (io) index)))))
 
   (define-scenario (modify-account io request)
     (with-session
@@ -147,17 +151,19 @@
      (lambda (sess)
        (let ((current-account (user-account (session-user sess))))
          (let loop ((a (form (io sess) (account-to-modify (account->account-to-modify current-account)) private)))
-           (guide (validate-account-to-modify a current-account)
-             (lambda (ht) (loop (form (io sess) (account-to-modify a) private (hashtable->messages ht))))
-             (lambda _
-               (let ((a (account-to-modify->account a current-account)))
-                 (id-set! a (id-of current-account))
-                 (cond ((save a)
-                        (do-logout sess)
-                        (let ((sess (do-login a)))
-                          (page (io sess) private (__ your-account-has-been-updated))))
-                       (else
-                        (page (io sess) private (__ hmm-an-error-occurred))))))))))))
+           (if (account-to-modify? a)
+               (guide (validate-account-to-modify a current-account)
+                 (lambda (ht) (loop (form (io sess) (account-to-modify a) private (hashtable->messages ht))))
+                 (lambda _
+                   (let ((a (account-to-modify->account a current-account)))
+                     (id-set! a (id-of current-account))
+                     (cond ((save a)
+                            (do-logout sess)
+                            (let ((sess (do-login a)))
+                              (page (io sess) private (__ your-account-has-been-updated))))
+                           (else
+                            (page (io sess) private (__ hmm-an-error-occurred)))))))
+               (page (io sess) index)))))))
 
   (define-scenario (cancel io request)
     (with-session
@@ -175,11 +181,13 @@
     (without-session
      (io request)
      (let loop ((a (form (io) (account-to-login) login)))
-       (guide (authenticate-account a)
-         (lambda _ (loop (form (io) (account-to-login a) login (__ please-retry))))
-         (lambda (a)
-           (let ((sess (do-login a)))
-             (page (io sess) private (__ now-you-have-logged-in))))))))
+       (if (account-to-login? a)
+           (guide (authenticate-account a)
+             (lambda _ (loop (form (io) (account-to-login a) login (__ please-retry))))
+             (lambda (a)
+               (let ((sess (do-login a)))
+                 (page (io sess) private (__ now-you-have-logged-in)))))
+           (page (io) index)))))
 
   (define-scenario (logout io request)
     (with-session
@@ -218,7 +226,7 @@
                                 (else
                                  (page (io sess) private (__ hmm-an-error-occurred)))))))
                      (else
-                      (specify-revision (form (io sess) (revision r) private (__ please-retry))))))
+                      (page (io sess) private))))
 
              (if (yes? (form (io sess) (confirmation) private
                              (__ is-this-content-ok?)
@@ -257,42 +265,44 @@
                         (page (io sess) private (__ hmm-an-error-occurred))))
                  (specify-bib (form (io sess) (new-exlibris new-ex) private (__ please-retry)))))
 
-         (let ((title (new-exlibris-title new-ex))
-               (isbn (new-exlibris-isbn new-ex)))
-           (cond ((and (blank? title) (blank? isbn))
-                  (specify-bib (form (io sess) (new-exlibris new-ex) private (__ please-input-title-or-isbn))))
-                 ((blank? isbn)
-                  (guide (validate-bib-title title)
-                    (lambda (ht) (specify-bib (form (io sess) (new-exlibris new-ex) private (hashtable->messages ht))))
-                    (lambda _ (confirm-bib (make-bib title #f #f #f)))))
-                 ((valid-isbn? isbn)
-                  => (lambda (n)
-                       (let ((b (case n
-                                  ((10) (lookup bib `((isbn10 ,isbn))))
-                                  (else (lookup bib `((isbn13 ,isbn)))))))
-                         (if (bib? b)
-                             (confirm-bib b)
-                             (call/cc
-                              (lambda (cont)
-                                (let ((info (guard (e
-                                                    ((i/o-error? e)
-                                                     (log:info "errata> ~s" e)
-                                                     (cont (specify-bib (form (io sess) (new-exlibris new-ex) private (__ hmm-an-error-occurred))))))
-                                              (query-image isbn))))
-                                  (if (eof-object? info)
-                                      (specify-bib (form (io sess) (new-exlibris new-ex) private (__ please-check-isbn)))
-                                      (call-with-port (open-string-input-port info)
-                                        (lambda (port)
-                                          (let* ((isbn13 (get-line port))
-                                                 (isbn10 (get-line port))
-                                                 (url    (get-line port))
-                                                 (title  (get-line port)))
-                                            (confirm-bib (make-bib (and (not (eof-object? title)) title)
-                                                                   (and (not (eof-object? isbn13)) isbn13)
-                                                                   (and (not (eof-object? isbn10)) isbn10)
-                                                                   (and (not (eof-object? url)) url))))))))))))))
-                 (else
-                  (specify-bib (form (io sess) (new-exlibris new-ex) private (__ please-check-isbn)))))))
+         (if (new-exlibris? new-ex)
+             (let ((title (new-exlibris-title new-ex))
+                   (isbn (new-exlibris-isbn new-ex)))
+               (cond ((and (blank? title) (blank? isbn))
+                      (specify-bib (form (io sess) (new-exlibris new-ex) private (__ please-input-title-or-isbn))))
+                     ((blank? isbn)
+                      (guide (validate-bib-title title)
+                        (lambda (ht) (specify-bib (form (io sess) (new-exlibris new-ex) private (hashtable->messages ht))))
+                        (lambda _ (confirm-bib (make-bib title #f #f #f)))))
+                     ((valid-isbn? isbn)
+                      => (lambda (n)
+                           (let ((b (case n
+                                      ((10) (lookup bib `((isbn10 ,isbn))))
+                                      (else (lookup bib `((isbn13 ,isbn)))))))
+                             (if (bib? b)
+                                 (confirm-bib b)
+                                 (call/cc
+                                  (lambda (cont)
+                                    (let ((info (guard (e
+                                                        ((i/o-error? e)
+                                                         (log:info "errata> ~s" e)
+                                                         (cont (specify-bib (form (io sess) (new-exlibris new-ex) private (__ hmm-an-error-occurred))))))
+                                                  (query-image isbn))))
+                                      (if (eof-object? info)
+                                          (specify-bib (form (io sess) (new-exlibris new-ex) private (__ please-check-isbn)))
+                                          (call-with-port (open-string-input-port info)
+                                            (lambda (port)
+                                              (let* ((isbn13 (get-line port))
+                                                     (isbn10 (get-line port))
+                                                     (url    (get-line port))
+                                                     (title  (get-line port)))
+                                                (confirm-bib (make-bib (and (not (eof-object? title)) title)
+                                                                       (and (not (eof-object? isbn13)) isbn13)
+                                                                       (and (not (eof-object? isbn10)) isbn10)
+                                                                       (and (not (eof-object? url)) url))))))))))))))
+                     (else
+                      (specify-bib (form (io sess) (new-exlibris new-ex) private (__ please-check-isbn))))))
+             (redirect (io sess) 'shelf)))
 
        (specify-bib (form (io sess) (new-exlibris) private)))))
 
@@ -344,8 +354,7 @@
                 (if (destroy exlibris id)
                     (page (io sess) private (__ you-have-put-it-off))
                     (page (io sess) private (__ hmm-an-error-occurred))))
-               (else
-                (redirect (io sess) 'shelf)))))))
+               (else (page (io sess) desk id)))))))
 
   (define-scenario (shelf io request data)
     (with-session/
@@ -383,7 +392,7 @@
                                 (execute "DELETE FROM revision WHERE NOT EXISTS (SELECT 1 FROM exlibris e WHERE revision.id = e.revision_id)")
                                 (page (io sess) desk id))
                                (else (page (io sess) private (__ hmm-an-error-occurred))))))
-                     (loop (form (io sess) (revision r-new) private (__ please-retry))))))
+                     (page (io sess) desk id))))
              (redirect (io sess) 'shelf))))))
 
   (define-scenario (share-exlibris io request data)
@@ -403,14 +412,14 @@
      (lambda (sess id)
        (let ((c (form (io sess) (confirmation) private (__ are-you-sure-to-hide-this-one?))))
          (if (yes? c)
-             (cond ((lookup publicity id)
+             (cond ((lookup publicity `((exlibris-id ,id)))
                     => (lambda (p)
                          (if (destroy p)
-                             (page (io sess) desk (publicity-exlibris-id p))
+                             (page (io sess) desk id)
                              (page (io sess) private (__ hmm-an-error-occurred)))))
                    (else
                     (page (io sess) private (__ hmm-an-error-occurred))))
-             (redirect (io sess) 'shelf))))))
+             (page (io sess) desk id))))))
 
   (define-scenario (edit-review io request data)
     (with-session&id
@@ -427,7 +436,7 @@
                    (if (save r-new)
                        (page (io sess) desk id)
                        (page (io sess) private (__ hmm-an-error-occurred)))))
-               (loop (form (io sess) (review r) private (__ please-retry)))))))))
+               (page (io sess) desk id)))))))
 
   (define-scenario (board io request data)
     (with-or-without-session/
@@ -492,7 +501,7 @@
                                          (page (io sess) private (__ hmm-an-error-occurred))))
                                    (page (io sess) private (__ hmm-an-error-occurred))))
                              (page (io sess) private (__ hmm-an-error-occurred))))))
-                   (loop (form (io sess) (report-to-modify) private (__ please-retry)))))
+                   (page (io sess) desk id)))
              (redirect (io sess) 'shelf))))))
 
   (define (prepare-report-to-modify rep q c)
@@ -555,7 +564,7 @@
                                   (if (update-report rep q c modified)
                                       (page (io sess) desk ex-id)
                                       (page (io sess) private (__ hmm-an-error-occurred)))))
-                              (loop (form (io sess) (report-to-modify modified) private (__ please-retry))))))
+                              (page (io sess) desk ex-id))))
                        (else
                         (redirect (io sess) 'shelf))))
                (redirect (io sess) 'shelf)))
@@ -593,7 +602,7 @@
                          (if (save a)
                              (page (io sess) detail r-id)
                              (page (io sess) private (__ hmm-an-error-occurred)))))
-                     (loop (form (io sess) (acknowledgement a) private (__ please-retry)))))
+                     (page (io sess) detail r-id)))
                (redirect (io sess) 'table)))
          (redirect (io sess) 'table))))
 
@@ -615,7 +624,7 @@
                                (if (save a)
                                    (page (io sess) detail r-id)
                                    (page (io sess) private (__ hmm-an-error-occurred)))))
-                           (loop (form (io sess) (agreement a) private (__ please-retry)))))))
+                           (page (io sess) detail r-id)))))
                (else (redirect (io sess) 'index)))
          (redirect (io sess) 'index))))
 
