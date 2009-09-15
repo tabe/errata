@@ -4,6 +4,7 @@
           close)
   (import (rnrs)
           (only (core) format)
+          (match)
           (pregexp)
           (only (srfi :13) string-null?)
           (srfi :48)
@@ -196,6 +197,32 @@
        (do-logout sess)
        (page (io) public (__ now-you-have-logged-out)))))
 
+  (define (existing-revisions bib-id . last)
+    (let ((revisions (lookup-all revision `((bib-id ,bib-id)))))
+      (cond ((null? revisions) '())
+            ((null? last) revisions)
+            (else (remp (lambda (r) (= (car last) (id-of r))) revisions)))))
+
+  (define (show-existing-revisions bib-id . last)
+    (lambda (path)
+      (let ((revisions (apply existing-revisions bib-id last)))
+        (if (null? revisions)
+            '()
+            (append
+             (html:p (__ choose-a-revision))
+             (map
+              (lambda (r)
+                (let ((name (html:escape-string (revision-name r)))
+                      (revised-at (html:escape-string (revision-revised-at r))))
+                  (html:p
+                   (html:form ((action path))
+                              name "(" revised-at ")"
+                              (html:input ((type "hidden") (name "name") (value name)))
+                              (html:input ((type "hidden") (name "revised-at") (value revised-at)))
+                              (html:input ((type "submit") (name "submit") (value (__ submit))))))))
+              revisions)
+             (html:p (__ or-specify-revision)))))))
+
   (define-scenario (put-on io request)
     (with-session
      (io request)
@@ -208,10 +235,16 @@
              (define (specify-revision r)
 
                (define (save-exlibris r)
-                 (let ((ex (make-exlibris (id-of (user-account (session-user sess))) (id-of r))))
-                   (if (save ex)
-                       (page (io sess) desk (id-of ex))
-                       (page (io sess) private (__ hmm-an-error-occurred)))))
+                 (let ((account-id (id-of (user-account (session-user sess))))
+                       (done (lambda (ex) (page (io sess) desk (id-of ex)))))
+                   (cond ((lookup exlibris `((account-id ,account-id)
+                                             (revision-id ,(id-of r))))
+                          => done)
+                         (else
+                          (let ((ex (make-exlibris account-id (id-of r))))
+                            (if (save ex)
+                                (done ex)
+                                (page (io sess) private (__ hmm-an-error-occurred))))))))
 
                (cond ((revision? r)
                       (guide (validate-revision r)
@@ -237,25 +270,7 @@
                                            (else '()))))))
                  (cond ((id-of b)
                         => (lambda (id)
-
-                             (define (show-existing-revisions path)
-                               (lambda (path)
-                                 (append
-                                  (html:p (__ choose-a-revision))
-                                  (map
-                                   (lambda (r)
-                                     (let ((name (html:escape-string (revision-name r)))
-                                           (revised-at (html:escape-string (revision-revised-at r))))
-                                       (html:p
-                                        (html:form ((action path))
-                                                   name "(" revised-at ")"
-                                                   (html:input ((type "hidden") (name "name") (value name)))
-                                                   (html:input ((type "hidden") (name "revised-at") (value revised-at)))
-                                                   (html:input ((type "submit") (value (__ submit))))))))
-                                   (lookup-all revision `((bib-id ,id))))
-                                  (html:p (__ or-specify-revision)))))
-                             
-                             (specify-revision (form (io sess) (revision) private show-existing-revisions))))
+                             (specify-revision (form (io sess) (revision) private (show-existing-revisions id)))))
                        ((save b)
                         (specify-revision
                          (form (io sess) (revision) private (__ specify-revision) (bib-title b))))
@@ -349,9 +364,10 @@
      (lambda (sess id)
        (let ((c (form (io sess) (confirmation) private (__ are-you-sure-to-put-off-this-one?))))
          (cond ((yes? c)
-                (if (destroy exlibris id)
-                    (page (io sess) private (__ you-have-put-it-off))
-                    (page (io sess) private (__ hmm-an-error-occurred))))
+                (cond ((destroy exlibris id)
+                       (delete-orphan-revisions)
+                       (page (io sess) private (__ you-have-put-it-off)))
+                      (else (page (io sess) private (__ hmm-an-error-occurred)))))
                (else (page (io sess) desk id)))))))
 
   (define-scenario (shelf io request data)
@@ -386,26 +402,45 @@
     (with-session&id
      (io request data)
      (lambda (sess id)
-       (cond ((lookup exlibris id)
-              => (lambda (ex)
-                   (cond ((lookup revision (exlibris-revision-id ex))
-                          => (lambda (r)
-                               (let loop ((r-new (form (io sess) (revision r) private)))
-                                 (if (revision? r-new)
-                                     (guide (validate-revision r-new)
-                                       (lambda (ht) (loop (form (io sess) (revision r-new) private (hashtable->messages ht))))
-                                       (lambda _
+       (cond ((lookup (exlibris (revision exlibris)) ((exlibris (id id))))
+              => (lambda (tuple)
+                   (match tuple
+                     ((ex r)
+                      (let loop ((r-new (form (io sess) (revision r) private (show-existing-revisions (revision-bib-id r) (id-of r)))))
+                        (if (revision? r-new)
+                            (guide (validate-revision r-new)
+                              (lambda (ht) (loop (form (io sess) (revision r-new) private (hashtable->messages ht))))
+                              (lambda _
+                                (cond ((lookup revision `((bib-id ,(revision-bib-id r))
+                                                          (name ,(revision-name r-new))
+                                                          (revised-at ,(revision-revised-at r-new))))
+                                       => (lambda (r-cur)
+                                            (cond ((= (id-of r) (id-of r-cur)) ; nothing changed
+                                                   (page (io sess) desk id))
+                                                  ((lookup exlibris `((account-id ,(exlibris-account-id ex))
+                                                                      (revision-id ,(id-of r-cur))))
+                                                   => (lambda (ex-cur) ; it already exists
+                                                        (page (io sess) desk (id-of ex-cur))))
+                                                  ((begin
+                                                     (exlibris-revision-id-set! ex (id-of r-cur))
+                                                     (save ex))
+                                                   (rewrite-revision-id (exlibris-account-id ex) (id-of r) (id-of r-cur))
+                                                   (delete-orphan-revisions)
+                                                   (page (io sess) desk id))
+                                                  (else
+                                                   (page (io sess) private (__ hmm-an-error-occurred))))))
+                                      ((begin
                                          (revision-bib-id-set! r-new (revision-bib-id r))
-                                         (cond ((and (save r-new)
-                                                     (begin
-                                                       (exlibris-revision-id-set! ex (id-of r-new))
-                                                       (save ex)))
-                                                (rewrite-revision-id (exlibris-account-id ex) (id-of r) (id-of r-new))
-                                                (delete-orphan-revisions)
-                                                (page (io sess) desk id))
-                                               (else (page (io sess) private (__ hmm-an-error-occurred))))))
-                                     (page (io sess) desk id)))))
-                         (else (page (io sess) desk id)))))
+                                         (and (save r-new)
+                                              (begin
+                                                (exlibris-revision-id-set! ex (id-of r-new))
+                                                (save ex))))
+                                       (rewrite-revision-id (exlibris-account-id ex) (id-of r) (id-of r-new))
+                                       (delete-orphan-revisions)
+                                       (page (io sess) desk id))
+                                      (else (page (io sess) private (__ hmm-an-error-occurred))))))
+                            (page (io sess) desk id))))
+                     (else (redirect (io sess) 'shelf)))))
              (else (redirect (io sess) 'shelf))))))
 
   (define-scenario (share-exlibris io request data)
