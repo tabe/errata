@@ -336,7 +336,7 @@
                                 ":&nbsp;")
                      (html:span ((class (if (acknowledgement-positive? ack) "ack" "nak")))
                                 (html:escape-string (acknowledgement-comment ack)))))
-                   (else "?")))
+                   (_ "?")))
                tuples))))
        (html:td
         (let ((tuples (lookup-all (agreement (account agreement))
@@ -355,7 +355,7 @@
                                  (signature a)
                                  ":&nbsp;")
                       (html:span (html:escape-string (agreement-comment agr)))))
-                    (else "?")))
+                    (_ "?")))
                 tuples)))))))))
 
   (define (revision-reports uuid r proc)
@@ -365,7 +365,7 @@
         (match tuple
           ((rep a q c)
            (revision-report-tr uuid rep a q c (proc rep) '()))
-          (else "?")))
+          (_ "?")))
       (lookup-all (report (account report) (quotation report) (correction report))
                   ((report (revision-id (id-of r))))
                   ((order-by (quotation (page asc))))))))
@@ -443,11 +443,11 @@
         (lambda (tuple)
           (match tuple
             ((ex r b) (exlibris-panel uuid b r ex))
-            (else "?")))))))
+            (_ "?")))))))
 
   (define (exlibris-window uuid id)
     (match (lookup (exlibris (revision exlibris) (bib revision)) ((exlibris (id id))))
       ((ex r b) (exlibris-frame uuid b r ex))
-      (else "?")))
+      (_ "?")))
 
   )
