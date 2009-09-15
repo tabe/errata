@@ -223,10 +223,8 @@
                                  => save-exlibris)
                                 ((begin (revision-bib-id-set! r (id-of b)) (save r))
                                  (save-exlibris r))
-                                (else
-                                 (page (io sess) private (__ hmm-an-error-occurred)))))))
-                     (else
-                      (page (io sess) private))))
+                                (else (page (io sess) private (__ hmm-an-error-occurred)))))))
+                     (else (redirect (io sess) 'shelf))))
 
              (if (yes? (form (io sess) (confirmation) private
                              (__ is-this-content-ok?)
@@ -372,28 +370,43 @@
              (page (io sess) desk id)
              (redirect (io sess) 'shelf))))))
 
+  (define (rewrite-revision-id account-id old-id new-id)
+    (execute "BEGIN")
+    (for-each
+     (lambda (table)
+       (let ((template "UPDATE ~a SET revision_id = '~d' WHERE account_id = '~d' AND revision_id = '~d'"))
+         (execute (format template table new-id account-id old-id))))
+     '("quotation" "report" "report_history"))
+    (execute "COMMIT"))
+
+  (define (delete-orphan-revisions)
+    (execute "DELETE FROM revision WHERE NOT EXISTS (SELECT 1 FROM exlibris e WHERE revision.id = e.revision_id)"))
+
   (define-scenario (modify-revision io request data)
     (with-session&id
      (io request data)
      (lambda (sess id)
-       (let ((ex (lookup exlibris id)))
-         (if ex
-             (let ((r (lookup revision (exlibris-revision-id ex))))
-               (let loop ((r-new (form (io sess) (revision r) private)))
-                 (if (revision? r-new)
-                     (guide (validate-revision r-new)
-                       (lambda (ht) (loop (form (io sess) (revision r-new) private (hashtable->messages ht))))
-                       (lambda _
-                         (revision-bib-id-set! r-new (revision-bib-id r))
-                         (cond ((and (save r-new)
-                                     (begin
-                                       (exlibris-revision-id-set! ex (id-of r-new))
-                                       (save ex)))
-                                (execute "DELETE FROM revision WHERE NOT EXISTS (SELECT 1 FROM exlibris e WHERE revision.id = e.revision_id)")
-                                (page (io sess) desk id))
-                               (else (page (io sess) private (__ hmm-an-error-occurred))))))
-                     (page (io sess) desk id))))
-             (redirect (io sess) 'shelf))))))
+       (cond ((lookup exlibris id)
+              => (lambda (ex)
+                   (cond ((lookup revision (exlibris-revision-id ex))
+                          => (lambda (r)
+                               (let loop ((r-new (form (io sess) (revision r) private)))
+                                 (if (revision? r-new)
+                                     (guide (validate-revision r-new)
+                                       (lambda (ht) (loop (form (io sess) (revision r-new) private (hashtable->messages ht))))
+                                       (lambda _
+                                         (revision-bib-id-set! r-new (revision-bib-id r))
+                                         (cond ((and (save r-new)
+                                                     (begin
+                                                       (exlibris-revision-id-set! ex (id-of r-new))
+                                                       (save ex)))
+                                                (rewrite-revision-id (exlibris-account-id ex) (id-of r) (id-of r-new))
+                                                (delete-orphan-revisions)
+                                                (page (io sess) desk id))
+                                               (else (page (io sess) private (__ hmm-an-error-occurred))))))
+                                     (page (io sess) desk id)))))
+                         (else (page (io sess) desk id)))))
+             (else (redirect (io sess) 'shelf))))))
 
   (define-scenario (share-exlibris io request data)
     (with-session&id
