@@ -3,7 +3,7 @@ YPSILON_SITELIB=/home/tabe/lunula/sitelib:/home/tabe/base64:/home/tabe/lcs:/home
 YPSILON=env YPSILON_SITELIB=$(YPSILON_SITELIB) LUNULA_TEMPLATES=/home/tabe/errata/templates \
   ypsilon --sitelib=sitelib --heap-limit=16
 
-.PHONY: check migrate dump fixtures start stop image stop-all stats test
+.PHONY: check migrate dump fixtures restore start stop svc svstat image stop-all stats test
 
 check: test
 
@@ -16,11 +16,22 @@ dump:
 fixtures:
 	$(YPSILON) db/fixtures.scm
 
+restore:
+	zcat /home/tabe/.adel/errata.dump.gz | mysql -u root -p errata
+
 start:
 	$(YPSILON) script/server.scm 3000 yoursql
 
 stop:
 	pkill -TERM -f -n 'ypsilon .*script/server'
+
+svc:
+	sudo svc -t /etc/service/errata
+	sudo svc -t /etc/service/errata-image
+
+svstat:
+	sudo svstat /etc/service/errata
+	sudo svstat /etc/service/errata-image
 
 image:
 	$(YPSILON) script/image-server.scm
