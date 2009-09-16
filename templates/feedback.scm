@@ -14,8 +14,15 @@
   (div ((id "links")) links)
   (div ((id "public"))
        (h2 "フィードバック")
-       (p "tabe at fixedpoint dot jp までメールにてご連絡ください。")
-       (p "Key fingerprint = 26F7 2FE0 FB2A 64AA EA87 C96A 4B40 171F 8AFE 4953")
+       (ul
+        (li
+         (p "開発に関しては、公開されているGoogle グループ "
+            (a ((href "http://groups.google.com/group/errata")) "Errata")
+            " で意見交換できます。"))
+        (li
+         (p "全般に関しては、tabe at fixedpoint dot jp までメールにてご連絡ください。")
+         (p "Key fingerprint = 26F7 2FE0 FB2A 64AA EA87 C96A 4B40 171F 8AFE 4953"))
+        )
        )
   belt
   powered-by-lunula
