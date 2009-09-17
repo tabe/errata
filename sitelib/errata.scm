@@ -197,6 +197,30 @@
        (do-logout sess)
        (page (io) public (__ now-you-have-logged-out)))))
 
+  (define-scenario (find-bib io request data)
+    (with-or-without-session/
+     (io request data)
+     (sess (isbn isbn values #f))
+     (cond ((and (string? isbn) (valid-isbn? isbn))
+            => (lambda (n)
+                 (cond ((case n
+                          ((10) (lookup (publicity
+                                         (exlibris publicity)
+                                         (account exlibris)
+                                         (revision exlibris)
+                                         (bib revision))
+                                        ((bib (isbn10 isbn)))))
+                          (else (lookup (publicity
+                                         (exlibris publicity)
+                                         (account exlibris)
+                                         (revision exlibris)
+                                         (bib revision))
+                                        ((bib (isbn13 isbn))))))
+                        => (lambda (tuple)
+                             (page (io sess) find-bib (id-of (list-ref tuple 4)))))
+                       (else (page (io sess) public (__ bib-not-found))))))
+           (else (page (io sess) public (__ please-retry))))))
+
   (define (existing-revisions bib-id . last)
     (let ((revisions (lookup-all revision `((bib-id ,bib-id)))))
       (cond ((null? revisions) '())
@@ -672,6 +696,20 @@
 
   (define *password-advice*
     (format "~d文字以上~d文字以下" *account-password-min-length* *account-password-max-length*))
+
+  (define-api (r isbn10 name year month day)
+    validate-isbn10/revision-name/year/month/day
+    table
+    (cond ((lookup (publicity
+                    (exlibris publicity)
+                    (account exlibris)
+                    (revision exlibris)
+                    (bib revision))
+                   ((bib (isbn10 isbn10))
+                    (revision (name name)
+                              (revised-at (format "~a-~a-~a" year month day)))))
+           => (lambda (tuple) (id-of (cadddr tuple))))
+          (else #f)))
 
   ;; input fields
   (add-input-fields new-account

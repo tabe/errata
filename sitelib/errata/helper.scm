@@ -9,6 +9,7 @@
           links
           belt
           public-revisions
+          bib-window
           report-window
           revision-window
           shelf-window
@@ -20,8 +21,9 @@
           (only (srfi :13) string-tokenize)
           (only (srfi :19) date->string string->date date-year)
           (only (lcs) lcs-fold)
+          (prefix (only (uri) encode-string) uri:)
           (only (lunula gettext) __)
-          (only (lunula mod_lisp) entry-paths build-entry-path)
+          (only (lunula mod_lisp) entry-paths build-entry-path build-api-path)
           (only (lunula mysql) lookup lookup-all)
           (prefix (lunula html) html:)
           (only (lunula persistent-record) id-of created-at-of)
@@ -86,6 +88,11 @@
       (html:p (html:a ((href (build-entry-path (car pair) uuid))) (cdr pair))))
     (append
      (html:div
+      (html:form ((action (build-entry-path 'find-bib uuid)))
+                 "ISBN:"
+                 (html:input ((type "text") (name "isbn")))
+                 (html:input ((type "submit") (value (__ find-bib))))))
+     (html:div
       ((class "links"))
       (html:div (map p-link *public-links*)))
      (with-uuid
@@ -121,6 +128,9 @@
               (else (date->string date "~Y-~m-~d")))
         (append (html:span ((title (ad->japanese-era year))) year)
                 (date->string date "-~m-~d")))))
+
+  (define (date->y/m/d date)
+    (date->string date "~Y/~m/~d"))
 
   (define (datetime->ymd str)
     (cond ((datetime->date str) => date->ymd)
@@ -201,6 +211,42 @@
            (revision-reviews r)
            (html:hr ((style "color:#999999;")))))
          (_ "?")))))
+
+  (define (bib-window uuid id)
+    (assert (integer? id))
+    (let ((tuples (lookup-all (publicity
+                               (exlibris publicity)
+                               (account exlibris)
+                               (revision exlibris)
+                               (bib revision))
+                              ((bib (id id)))
+                              ((order-by (revision (revised-at desc)))))))
+      (cond ((null? tuples)
+             (__ bib-not-found))
+            (else
+             (let ((title (bib-title (list-ref (car tuples) 4))))
+               (html:div 
+                (html:h3 (html:escape-string title))
+                (html:p (__ following-revisions-found))
+                (html:table
+                 (html:tbody
+                  (map
+                   (lambda (tuple)
+                     (match tuple
+                       ((pub ex a r b)
+                        (html:tr
+                         (html:td (html:escape-string (revision-name r))
+                                  "("
+                                  (datetime->ymd (revision-revised-at r))
+                                  ")")
+                         (html:td (html:a ((href (build-api-path 'r
+                                                                 uuid
+                                                                 (bib-isbn10 b)
+                                                                 (uri:encode-string (revision-name r))
+                                                                 (date->y/m/d (datetime->date (revision-revised-at r))))))
+                                          (__ permanent-link)))))
+                       (_ '())))
+                   tuples)))))))))
 
   (define (revision-window uuid id)
     (assert (integer? id))
