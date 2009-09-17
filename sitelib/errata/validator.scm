@@ -13,13 +13,18 @@
           validate-review
           validate-report-to-modify
           validate-acknowledgement
-          validate-agreement)
+          validate-agreement
+          validate-year
+          validate-month
+          validate-day
+          validate-isbn10/revision-name/year/month/day)
   (import (rnrs)
           (pregexp)
           (prefix (only (lunula hmac) sha-256) hmac:)
           (only (lunula mysql) lookup)
           (lunula session)
           (lunula validation)
+          (only (errata isbn) valid-isbn10?)
           (errata model))
 
   (define *account-name-min-length* 1)
@@ -224,5 +229,27 @@
 
   (define-composite-validator validate-agreement
     (agreement-comment validate-agreement-comment))
+
+  (define-predicate-validator validate-isbn10
+    invalid-isbn10 valid-isbn10?)
+
+  (define-predicate-validator validate-year
+    invalid-year
+    (lambda (s) (pregexp-match "^[12][0-9]{3}$" s)))
+
+  (define-predicate-validator validate-month
+    invalid-month
+    (lambda (s) (pregexp-match "^(?:0[1-9]|1[012])$" s)))
+
+  (define-predicate-validator validate-day
+    invalid-day
+    (lambda (s) (pregexp-match "^(?:0[1-9]|1[0-9]|2[0-9]|3[01])$" s)))
+
+  (define-composite-validator validate-isbn10/revision-name/year/month/day
+    ((0) validate-isbn10)
+    ((1) validate-revision-name)
+    ((2) validate-year)
+    ((3) validate-month)
+    ((4) validate-day))
 
 )
