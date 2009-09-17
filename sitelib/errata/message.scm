@@ -207,7 +207,7 @@
    (to-table (en "To Table")
              (ja "正誤表へ"))
    (find-bib (en "Find Bib")
-             (ja "書誌を検索"))
+             (ja "書誌検索"))
    (share-exlibris (en "Share Exlibris")
                    (ja "共有する"))
    (hide-exlibris (en "Hide Exlibris")
