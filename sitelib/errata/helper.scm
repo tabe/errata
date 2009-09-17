@@ -35,7 +35,7 @@
           (errata helper pagination))
 
   (define errata-keywords 
-    (html:meta ((name "keywords") (content "errata,typo,正誤表,誤植,タイポ,共有"))))
+    (html:meta ((name "keywords") (content "errata,typo,正誤表,共有,誤植,タイポ,誤訳"))))
 
   (define (errata-logo uuid . _)
     (html:h1 ((id "logo") (title "えらった べーた"))
