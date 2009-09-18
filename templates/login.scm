@@ -7,6 +7,7 @@
   (script ((type "text/javascript") (src "/javascript/jquery-1.3.2.min.js")))
   (script ((type "text/javascript") (src "/javascript/jquery.corner.js")))
   (script ((type "text/javascript")) preload-script)
+  (script ((type "text/javascript")) "$(function() {$('input[name=nick]').focus();});")
   )
  (body
   menu
