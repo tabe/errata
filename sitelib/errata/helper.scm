@@ -104,7 +104,7 @@
                                                           isbn10
                                                           (uri:encode-string (revision-name r))
                                                           (datetime->y/m/d (revision-revised-at r)))))
-                           (bib-title b)))))
+                                   (bib-title b)))))
              (else '())))
       (_ "?")))
 
