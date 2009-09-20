@@ -60,6 +60,7 @@
       "$('.links').corner();"
       "$('#private').corner();"
       "$('#public').corner();"
+      "$('.corner').corner();"
       "$('.dog').corner('dog tr 15px');"
       "});"))
 
@@ -125,7 +126,7 @@
        ((class "links"))
        (html:div (map p-link *private-links*))))
      (html:div
-      ((id "recent_public_revisions"))
+      ((id "recent_public_revisions") (class "corner"))
       (html:h3 (__ recent-public-revisions))
       (map
        (lambda (tuple) (recent-public-revision uuid tuple))
