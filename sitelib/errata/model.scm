@@ -33,6 +33,12 @@
           password-reset-password
           password-reset-password-re
           password-reset->account
+          preference
+          preference?
+          make-preference
+          preference-account-id
+          preference-account-id-set!
+          preference-report-format
           bib
           bib?
           make-bib
@@ -104,6 +110,13 @@
           report-quotation-id-set!
           report-correction-id
           report-correction-id-set!
+          report-by-manued
+          report-by-manued?
+          make-report-by-manued
+          report-by-manued-subject
+          report-by-manued-page
+          report-by-manued-position
+          report-by-manued-body
           report-to-modify
           report-to-modify?
           make-report-to-modify
@@ -192,6 +205,15 @@
       (id-set! a (id-of current-account))
       a))
 
+  (define-persistent-record-type preference
+    (fields (mutable account-id) report-format)
+    (protocol
+     (persistent-protocol
+      (lambda (p)
+        (lambda (account-id report-format)
+          (p (maybe-id account-id)
+             report-format))))))
+
   (define-persistent-record-type bib
     (fields (mutable title) (mutable isbn13) (mutable isbn10) (mutable image))
     (protocol
@@ -275,6 +297,9 @@
              subject
              (maybe-id quotation-id)
              (maybe-id correction-id)))))))
+
+  (define-record-type report-by-manued
+    (fields subject page position body))
 
   (define-record-type report-to-modify
     (fields subject page position quotation-body correction-body))

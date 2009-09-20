@@ -1,4 +1,5 @@
 drop table if exists account;
+drop table if exists preference;
 drop table if exists bib;
 drop table if exists revision;
 drop table if exists exlibris;
@@ -21,6 +22,14 @@ create table account (
   url varchar(1024) not null,
   hash_algorithm varchar(8) not null,
   hash_key varchar(64) not null,
+  created_at datetime,
+  updated_at datetime,
+  primary key (id)
+) default charset=utf8;
+create table preference (
+  id int not null auto_increment,
+  account_id int not null,
+  report_format varchar(8) not null,
   created_at datetime,
   updated_at datetime,
   primary key (id)

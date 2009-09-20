@@ -12,6 +12,7 @@
           validate-revision
           validate-review
           validate-report-to-modify
+          validate-report-by-manued
           validate-acknowledgement
           validate-agreement
           validate-year
@@ -21,6 +22,7 @@
   (import (rnrs)
           (pregexp)
           (prefix (only (lunula hmac) sha-256) hmac:)
+          (prefix (manued) manued:)
           (only (lunula mysql) lookup)
           (lunula session)
           (lunula validation)
@@ -209,6 +211,18 @@
     (report-to-modify-position validate-quotation-position)
     (report-to-modify-quotation-body validate-quotation-body)
     (report-to-modify-correction-body validate-correction-body))
+
+  (define-condition-validator validate-report-by-manued-body
+    ((invalid-manued-format manued:manued-condition?))
+    manued:string->before&after
+    validate-quotation-body
+    validate-correction-body)
+
+  (define-composite-validator validate-report-by-manued
+    (report-by-manued-subject validate-report-subject)
+    (report-by-manued-page validate-quotation-page)
+    (report-by-manued-position validate-quotation-position)
+    (report-by-manued-body validate-report-by-manued-body))
 
   (define-validator (validate-acknowledgement-sign str)
     (invalid-sign)

@@ -551,6 +551,10 @@
                  q-id
                  c-id))
 
+  (define (report-format account-id)
+    (cond ((lookup preference `((account-id ,account-id))) => preference-report-format)
+          (else "plain")))
+
   (define-scenario (new-report io request data)
     (with-session&id
      (io request data)
@@ -558,22 +562,39 @@
        (let ((a-id (id-of (user-account (session-user sess))))
              (ex (lookup exlibris id)))
          (if ex
-             (let loop ((rep (form (io sess) (report-to-modify) private)))
-               (if (report-to-modify? rep)
-                   (guide (validate-report-to-modify rep)
-                     (lambda (ht) (loop (form (io sess) (report-to-modify rep) private (hashtable->messages ht))))
-                     (lambda _
-                       (let ((q (report-to-modify->quotation rep a-id (exlibris-revision-id ex))))
-                         (if (save q)
-                             (let ((c (report-to-modify->correction rep a-id (id-of q))))
-                               (if (save c)
-                                   (let ((r (report-to-modify->report rep a-id (exlibris-revision-id ex) (id-of q) (id-of c))))
-                                     (if (save r)
-                                         (page (io sess) desk id)
-                                         (page (io sess) private (__ hmm-an-error-occurred))))
+             (let ((f (report-format a-id)))
+
+               (define (save-new-report rep)
+                 (let ((q (report-to-modify->quotation rep a-id (exlibris-revision-id ex))))
+                   (if (save q)
+                       (let ((c (report-to-modify->correction rep a-id (id-of q))))
+                         (if (save c)
+                             (let ((r (report-to-modify->report rep a-id (exlibris-revision-id ex) (id-of q) (id-of c))))
+                               (if (save r)
+                                   (page (io sess) desk id)
                                    (page (io sess) private (__ hmm-an-error-occurred))))
-                             (page (io sess) private (__ hmm-an-error-occurred))))))
-                   (page (io sess) desk id)))
+                             (page (io sess) private (__ hmm-an-error-occurred))))
+                       (page (io sess) private (__ hmm-an-error-occurred)))))
+
+               (cond ((string=? f "manued")
+                      (let loop ((rbm (form (io sess) (report-by-manued) private)))
+                        (if (report-by-manued? rbm)
+                            (guide (validate-report-by-manued rbm)
+                              (lambda (ht) (loop (form (io sess) (report-by-manued rbm) private (hashtable->messages ht))))
+                              (lambda (q-body c-body)
+                                (save-new-report (make-report-to-modify (report-by-manued-subject rbm)
+                                                                        (report-by-manued-page rbm)
+                                                                        (report-by-manued-position rbm)
+                                                                        q-body
+                                                                        c-body))))
+                            (page (io sess) desk id))))
+                     (else
+                      (let loop ((rep (form (io sess) (report-to-modify) private)))
+                        (if (report-to-modify? rep)
+                            (guide (validate-report-to-modify rep)
+                              (lambda (ht) (loop (form (io sess) (report-to-modify rep) private (hashtable->messages ht))))
+                              (lambda _ (save-new-report rep)))
+                            (page (io sess) desk id))))))
              (redirect (io sess) 'shelf))))))
 
   (define (prepare-report-to-modify rep q c)
@@ -760,6 +781,11 @@
      (text "(例: 「10行目」「末尾」「図A-1内」)")
      (textarea)
      (textarea)))
+  (add-input-fields report-by-manued
+    ((text)
+     (text "(例: 「7」「vi」)")
+     (text "(例: 「10行目」「末尾」「図A-1内」)")
+     (textarea "例: 「あ[あ/い]うえお」「0123[6|5|4]789」")))
   (add-input-fields acknowledgement
     (#f
      #f
