@@ -80,6 +80,7 @@
   (define *private-links*
     '((shelf . "書棚の閲覧")
       (put-on . "蔵書の登録")
+      (edit-preference . "設定の編集")
       (modify-account . "アカウントの編集")
       (cancel . "アカウントの解除")
       ))

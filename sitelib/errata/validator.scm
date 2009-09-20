@@ -8,6 +8,7 @@
           authenticate-account
           existing-mail-address
           validate-password-reset
+          validate-preference-to-edit
           validate-bib-title
           validate-revision
           validate-review
@@ -152,6 +153,14 @@
     ((lambda (x) (values (password-reset-password x)
                          (password-reset-password-re x)))
      same-password))
+
+  (define-validator (validate-preference-report-format str)
+    (invalid-report-format)
+    (unless (member str '("plain" "manued"))
+      (invalid-report-format)))
+
+  (define-composite-validator validate-preference-to-edit
+    (preference-to-edit-report-format validate-preference-report-format))
 
   (define-string-length-validator validate-bib-title
     (title-is-blank title-too-long)

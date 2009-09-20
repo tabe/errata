@@ -39,6 +39,10 @@
           preference-account-id
           preference-account-id-set!
           preference-report-format
+          preference-to-edit
+          preference-to-edit?
+          make-preference-to-edit
+          preference-to-edit-report-format
           bib
           bib?
           make-bib
@@ -213,6 +217,9 @@
         (lambda (account-id report-format)
           (p (maybe-id account-id)
              report-format))))))
+
+  (define-record-type preference-to-edit
+    (fields report-format))
 
   (define-persistent-record-type bib
     (fields (mutable title) (mutable isbn13) (mutable isbn10) (mutable image))

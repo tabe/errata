@@ -197,6 +197,27 @@
        (do-logout sess)
        (page (io) public (__ now-you-have-logged-out)))))
 
+  (define (preference->preference-to-edit pref)
+    (make-preference-to-edit (preference-report-format pref)))
+
+  (define-scenario (edit-preference io request)
+    (with-session
+     (io request)
+     (lambda (sess)
+       (let* ((a-id (id-of (user-account (session-user sess))))
+              (pref (lookup preference `((account-id ,a-id)))))
+         (let loop ((e (form (io sess) (preference-to-edit (if (preference? pref) (preference->preference-to-edit pref) #f)) private)))
+           (cond ((preference-to-edit? e)
+                  (guide (validate-preference-to-edit e)
+                    (lambda (ht) (loop (form (io sess) (preference-to-edit e) private (hashtable->messages ht))))
+                    (lambda _
+                      (let ((p (make-preference (if (preference? pref) #f a-id) (preference-to-edit-report-format e))))
+                        (when (preference? pref) (id-set! p (id-of pref)))
+                        (if (save p)
+                            (page (io sess) private (__ your-preference-has-been-updated))
+                            (page (io sess) private (__ hmm-an-error-occurred)))))))
+                 (else (redirect (io sess) 'shelf))))))))
+  
   (define-scenario (find-bib io request data)
     (with-or-without-session/
      (io request data)
@@ -753,6 +774,8 @@
   (add-input-fields password-reset
     ((password *password-advice*)
      (password *password-advice*)))
+  (add-input-fields preference-to-edit
+    (((radio (plain "標準" #t) (manued "Manued(真鵺道)方式" #f)))))
   (add-input-fields confirmation
     (((radio (yes "はい" #f) (no "いいえ" #t)))))
   (add-input-fields new-exlibris
