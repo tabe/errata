@@ -55,6 +55,10 @@ h1 a {
     margin: 1em;
 }
 
+#recent_public_revisions {
+    font-size: smaller;
+}
+
 #belt {
     clear: both;
     text-align: center;

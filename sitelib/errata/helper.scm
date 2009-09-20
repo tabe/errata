@@ -35,7 +35,7 @@
           (errata helper pagination))
 
   (define errata-keywords 
-    (html:meta ((name "keywords") (content "errata,typo,正誤表,共有,誤植,タイポ,誤訳"))))
+    (html:meta ((name "keywords") (content "errata,typo,proofreading,正誤表,共有,誤植,タイポ,誤訳,校正"))))
 
   (define (errata-logo uuid . _)
     (html:h1 ((id "logo") (title "えらった べーた"))
@@ -83,6 +83,30 @@
       (cancel . "アカウントの解除")
       ))
 
+  (define (recent-public-revisions)
+    (lookup-all (publicity
+                 (exlibris publicity)
+                 (account exlibris)
+                 (revision exlibris)
+                 (bib revision))
+                ((bib (image #t)))
+                ((order-by (publicity (created-at desc)))
+                 (limit 3))))
+
+  (define (recent-public-revision uuid tuple)
+    (match tuple
+      ((pub ex a r b)
+       (cond ((bib-isbn10 b)
+              => (lambda (isbn10)
+                   (html:p (html:a ((href (build-api-path 'r
+                                                          uuid
+                                                          isbn10
+                                                          (uri:encode-string (revision-name r))
+                                                          (datetime->y/m/d (revision-revised-at r)))))
+                           (bib-title b)))))
+             (else '())))
+      (_ "?")))
+
   (define (links uuid . _)
     (define (p-link pair)
       (html:p (html:a ((href (build-entry-path (car pair) uuid))) (cdr pair))))
@@ -99,7 +123,15 @@
       uuid
       (html:div
        ((class "links"))
-       (html:div (map p-link *private-links*))))))
+       (html:div (map p-link *private-links*))))
+     (html:div
+      ((id "recent_public_revisions"))
+      (html:h3 (__ recent-public-revisions))
+      (map
+       (lambda (tuple) (recent-public-revision uuid tuple))
+       (recent-public-revisions))
+      )
+     ))
 
   (define (belt uuid . _)
     (html:div
@@ -135,6 +167,10 @@
 
   (define (datetime->ymd str)
     (cond ((datetime->date str) => date->ymd)
+          (else #f)))
+
+  (define (datetime->y/m/d str)
+    (cond ((datetime->date str) => date->y/m/d)
           (else #f)))
 
   (define (signature a)
