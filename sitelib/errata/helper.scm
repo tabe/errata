@@ -34,7 +34,7 @@
           (errata model)
           (errata helper pagination))
 
-  (define errata-keywords 
+  (define errata-keywords
     (html:meta ((name "keywords") (content "errata,typo,proofreading,正誤表,共有,誤植,タイポ,誤訳,校正"))))
 
   (define (errata-logo uuid . _)
@@ -55,7 +55,7 @@
     (html:a ((rel "license") (href "http://creativecommons.org/licenses/by/2.1/jp/") (target "_blank"))
             (html:img ((alt "Creative Commons License") (style "border-width:0;") (src "http://i.creativecommons.org/l/by/2.1/jp/80x15.png")))))
 
-  (define preload-script 
+  (define preload-script
     '("$(document).ready(function() {"
       "$('.links').corner();"
       "$('#private').corner();"
@@ -264,7 +264,7 @@
              (__ bib-not-found))
             (else
              (let ((title (bib-title (list-ref (car tuples) 4))))
-               (html:div 
+               (html:div
                 (html:h3 (html:escape-string title))
                 (html:p (__ following-revisions-found))
                 (html:table
@@ -393,7 +393,7 @@
      (with-uuid
       uuid
       (html:tr
-       (html:td 
+       (html:td
         (html:form ((action (build-entry-path 'acknowledge uuid)))
                    (hidden-field "report" (id-of rep))
                    (hidden-field "quotation" (id-of q))
