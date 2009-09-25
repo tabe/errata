@@ -349,34 +349,43 @@
            "(なし)"
            (map review-div ls)))))
 
+  (define (lcs-decoration class c rest)
+    (case c
+      ((#\linefeed)
+       (cons (html:br) rest))
+      ((#\space)
+       (cons (html:span ((class class)) "&nbsp;") rest))
+      (else
+       (cons (html:span ((class class)) (html:escape-char c)) rest))))
+
+  (define (lcs-filter-minus x pair)
+    (match pair
+      ((xa . xb)
+       `(,(lcs-decoration "minus" x xa) . ,xb))))
+
+  (define (lcs-filter-plus x pair)
+    (match pair
+      ((xa . xb)
+       `(,xa . ,(lcs-decoration "plus" x xb)))))
+
+  (define (lcs-filter-both x pair)
+    (match pair
+      ((xa . xb)
+       (case x
+         ((#\linefeed)
+          `(,(cons (html:br) xa) . ,(cons (html:br) xb)))
+         ((#\space)
+          `(,(cons "&nbsp;" xa) . ,(cons "&nbsp;" xb)))
+         (else
+          `(,(cons (html:escape-char x) xa) . ,(cons (html:escape-char x) xb)))))))
+
   (define (diff-tr uuid rep q c forms)
     (let ((a (string->list (quotation-body q)))
           (b (string->list (correction-body c))))
       (match (lcs-fold
-              (lambda (x pair)
-                (match pair
-                  ((xa . xb)
-                   (case x
-                     ((#\linefeed)
-                      `(,(cons (html:br) xa) . ,xb))
-                     (else
-                      `(,(cons (html:span ((class "minus")) (html:escape-char x)) xa) . ,xb))))))
-              (lambda (x pair)
-                (match pair
-                  ((xa . xb)
-                   (case x
-                     ((#\linefeed)
-                      `(,(cons (html:br) xa) . ,xb))
-                     (else
-                      `(,xa . ,(cons (html:span ((class "plus")) (html:escape-char x)) xb)))))))
-              (lambda (x pair)
-                (match pair
-                  ((xa . xb)
-                   (case x
-                     ((#\linefeed)
-                      `(,(cons (html:br) xa) . ,(cons (html:br) xb)))
-                     (else
-                      `(,(cons (html:escape-char x) xa) . ,(cons (html:escape-char x) xb)))))))
+              lcs-filter-minus
+              lcs-filter-plus
+              lcs-filter-both
               '(() . ())
               a
               b)
