@@ -230,6 +230,8 @@
                   (ja "隠す"))
    (put-off (en "Put Off")
             (ja "外す"))
+   (put-at-top (en "Put at Top")
+               (ja "先頭に置く"))
    (edit-review (en "Edit")
                 (ja "編集"))
    (new-report (en "New Report")

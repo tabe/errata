@@ -286,8 +286,11 @@
                                              (revision-id ,(id-of r))))
                           => done)
                          (else
-                          (let ((ex (make-exlibris account-id (id-of r))))
-                            (if (save ex)
+                          (let ((ex (make-exlibris account-id (id-of r) 0)))
+                            (if (and (execute "BEGIN")
+                                     (execute "UPDATE exlibris SET position = position + 1")
+                                     (save ex)
+                                     (execute "COMMIT"))
                                 (done ex)
                                 (page (io sess) private (__ hmm-an-error-occurred))))))))
 
@@ -409,10 +412,15 @@
      (lambda (sess id)
        (let ((c (form (io sess) (confirmation) private (__ are-you-sure-to-put-off-this-one?))))
          (cond ((yes? c)
-                (cond ((destroy exlibris id)
-                       (delete-orphan-revisions)
-                       (page (io sess) private (__ you-have-put-it-off)))
-                      (else (page (io sess) private (__ hmm-an-error-occurred)))))
+                (cond ((lookup exlibris id)
+                       => (lambda (ex)
+                            (cond ((destroy ex)
+                                   (execute (format "UPDATE exlibris SET position = position - 1 WHERE position > '~d'" (exlibris-position ex)))
+                                   (delete-orphan-revisions)
+                                   (page (io sess) private (__ you-have-put-it-off)))
+                                  (else
+                                   (page (io sess) private (__ hmm-an-error-occurred))))))
+                      (else (page (io sess) private (__ you-have-put-it-off)))))
                (else (page (io sess) desk id)))))))
 
   (define-scenario (shelf io request data)
@@ -430,6 +438,22 @@
          (if ex
              (page (io sess) desk id)
              (redirect (io sess) 'shelf))))))
+
+  (define-scenario (put-at-top io request data)
+    (with-session&id
+     (io request data)
+     (lambda (sess id)
+       (cond ((lookup exlibris id)
+              => (lambda (ex)
+                   (if (for-all
+                        execute
+                        (list "BEGIN"
+                              (format "UPDATE exlibris SET position = position + 1 WHERE position <= '~d'" (exlibris-position ex))
+                              (format "UPDATE exlibris SET position = 0 WHERE id = '~d'" (id-of ex))
+                              "COMMIT"))
+                       (redirect (io sess) 'shelf)
+                       (page (io sess) private (__ hmm-an-error-occurred)))))
+             (else (redirect (io sess) 'shelf))))))
 
   (define (rewrite-revision-id account-id old-id new-id)
     (execute "BEGIN")

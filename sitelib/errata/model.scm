@@ -68,6 +68,7 @@
           exlibris-account-id
           exlibris-revision-id
           exlibris-revision-id-set!
+          exlibris-position
           new-exlibris
           new-exlibris?
           make-new-exlibris
@@ -243,13 +244,14 @@
              revised-at))))))
 
   (define-persistent-record-type exlibris
-    (fields account-id (mutable revision-id))
+    (fields account-id (mutable revision-id) position)
     (protocol
      (persistent-protocol
       (lambda (p)
-        (lambda (account-id revision-id)
+        (lambda (account-id revision-id position)
           (p (maybe-id account-id)
-             (maybe-id revision-id)))))))
+             (maybe-id revision-id)
+             (maybe-integer position)))))))
 
   (define-record-type new-exlibris
     (fields title isbn))

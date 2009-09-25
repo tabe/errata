@@ -482,7 +482,9 @@
                         (html:form ((action (build-entry-path 'desk uuid)))
                                    (hidden-field "id" (id-of ex))
                                    (html:input ((type "submit") (value (__ to-desk)))))
-                        '())
+                        (html:form ((action (build-entry-path 'put-at-top uuid)))
+                                   (hidden-field "id" (id-of ex))
+                                   (html:input ((type "submit") (value (__ put-at-top))))))
      (html:hr ((style "color:#999999;")))))
 
   (define (exlibris-frame uuid b r ex)
@@ -534,7 +536,7 @@
         (shelf uuid page)
         (exlibris (revision exlibris) (bib revision))
         ((exlibris (account-id id)))
-        ((order-by (exlibris (updated-at desc))))
+        ((order-by (exlibris (position asc) (updated-at desc))))
         (lambda (tuple)
           (match tuple
             ((ex r b) (exlibris-panel uuid b r ex))

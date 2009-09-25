@@ -57,6 +57,7 @@ create table exlibris (
   id int not null auto_increment,
   account_id int not null,
   revision_id int not null,
+  position int not null,
   created_at datetime,
   updated_at datetime,
   primary key (id)
