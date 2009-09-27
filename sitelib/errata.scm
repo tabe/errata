@@ -206,7 +206,7 @@
      (lambda (sess)
        (let* ((a-id (id-of (user-account (session-user sess))))
               (pref (lookup preference `((account-id ,a-id)))))
-         (let loop ((e (form (io sess) (preference-to-edit (if (preference? pref) (preference->preference-to-edit pref) #f)) private)))
+         (let loop ((e (form (io sess) (preference-to-edit (and (preference? pref) (preference->preference-to-edit pref))) private)))
            (cond ((preference-to-edit? e)
                   (guide (validate-preference-to-edit e)
                     (lambda (ht) (loop (form (io sess) (preference-to-edit e) private (hashtable->messages ht))))
