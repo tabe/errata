@@ -37,6 +37,9 @@
     (cond ((string->number str) => (lambda (page) (and (fixnum? page) (<= 0 page) page)))
           (else #f)))
 
+  (define (session->account-id sess)
+    (id-of (user-account (session-user sess))))
+
   (define (yes? c) (and (confirmation? c) (string? (ok? c)) (pregexp-match "^[yY]" (ok? c))))
 
   (define-syntax with-session
@@ -217,7 +220,7 @@
                             (page (io sess) private (__ your-preference-has-been-updated))
                             (page (io sess) private (__ hmm-an-error-occurred)))))))
                  (else (redirect (io sess) 'shelf))))))))
-  
+
   (define-scenario (find-bib io request data)
     (with-or-without-session/
      (io request data)
@@ -414,7 +417,8 @@
          (cond ((yes? c)
                 (cond ((lookup exlibris id)
                        => (lambda (ex)
-                            (cond ((destroy ex)
+                            (cond ((and (= (exlibris-account-id ex) (session->account-id sess)) ; security
+                                        (destroy ex))
                                    (execute (format "UPDATE exlibris SET position = position - 1 WHERE position > '~d'" (exlibris-position ex)))
                                    (delete-orphan-revisions)
                                    (page (io sess) private (__ you-have-put-it-off)))
@@ -435,7 +439,10 @@
      (io request data)
      (lambda (sess id)
        (cond ((lookup exlibris id)
-              => (lambda _ (page (io sess) desk id)))
+              => (lambda (ex)
+                   (if (= (exlibris-account-id ex) (session->account-id sess)) ; security
+                       (page (io sess) desk id)
+                       (page (io sess) private (__ hmm-an-error-occurred)))))
              (else (redirect (io sess) 'shelf))))))
 
   (define-scenario (put-at-top io request data)
@@ -444,12 +451,13 @@
      (lambda (sess id)
        (cond ((lookup exlibris id)
               => (lambda (ex)
-                   (if (for-all
-                        execute
-                        (list "BEGIN"
-                              (format "UPDATE exlibris SET position = position + 1 WHERE position <= '~d'" (exlibris-position ex))
-                              (format "UPDATE exlibris SET position = 0 WHERE id = '~d'" (id-of ex))
-                              "COMMIT"))
+                   (if (and (= (exlibris-account-id ex) (session->account-id sess)) ; security
+                            (for-all
+                             execute
+                             `("BEGIN"
+                               ,(format "UPDATE exlibris SET position = position + 1 WHERE position <= '~d'" (exlibris-position ex))
+                               ,(format "UPDATE exlibris SET position = 0 WHERE id = '~d'" (id-of ex))
+                               "COMMIT")))
                        (redirect (io sess) 'shelf)
                        (page (io sess) private (__ hmm-an-error-occurred)))))
              (else (redirect (io sess) 'shelf))))))
@@ -470,7 +478,10 @@
     (with-session&id
      (io request data)
      (lambda (sess id)
-       (cond ((lookup (exlibris (revision exlibris)) ((exlibris (id id))))
+       (cond ((lookup (exlibris (revision exlibris))
+                      ((exlibris
+                        (account-id (session->account-id sess)) ; security
+                        (id id))))
               => (lambda (tuple)
                    (match tuple
                      ((ex r)
@@ -516,8 +527,9 @@
      (io request data)
      (lambda (sess id)
        (cond ((lookup exlibris id)
-              => (lambda _
-                   (if (save (make-publicity id))
+              => (lambda (ex)
+                   (if (and (= (exlibris-account-id ex) (session->account-id sess)) ; security
+                            (save (make-publicity id)))
                        (page (io sess) desk id)
                        (page (io sess) private (__ hmm-an-error-occurred)))))
              (else (redirect (io sess) 'shelf))))))
@@ -528,11 +540,17 @@
      (lambda (sess id)
        (let ((c (form (io sess) (confirmation) private (__ are-you-sure-to-hide-this-one?))))
          (if (yes? c)
-             (cond ((lookup publicity `((exlibris-id ,id)))
-                    => (lambda (p)
-                         (if (destroy p)
-                             (page (io sess) desk id)
-                             (page (io sess) private (__ hmm-an-error-occurred)))))
+             (cond ((lookup (publicity (exlibris publicity))
+                            ((exlibris
+                              (account-id (session->account-id sess)) ; security
+                              (id id))))
+                    => (lambda (tuple)
+                         (match tuple
+                           ((pub ex)
+                            (if (destroy pub)
+                                (page (io sess) desk id)
+                                (page (io sess) private (__ hmm-an-error-occurred))))
+                           (_ (page (io sess) private (__ hmm-an-error-occurred))))))
                    (else
                     (page (io sess) private (__ hmm-an-error-occurred))))
              (page (io sess) desk id))))))
@@ -541,18 +559,22 @@
     (with-session&id
      (io request data)
      (lambda (sess id)
-       (let ((r (lookup review `((exlibris-id ,id)))))
-         (let loop ((r-new (form (io sess) (review r) private)))
-           (if (review? r-new)
-               (guide (validate-review r-new)
-                 (lambda (ht) (loop (form (io sess) (review r-new) private (hashtable->messages ht))))
-                 (lambda _
-                   (when (review? r) (id-set! r-new (id-of r)))
-                   (review-exlibris-id-set! r-new id)
-                   (if (save r-new)
-                       (page (io sess) desk id)
-                       (page (io sess) private (__ hmm-an-error-occurred)))))
-               (page (io sess) desk id)))))))
+       (cond ((lookup exlibris
+                      `((account-id ,(session->account-id sess)) ; security
+                        (id ,id)))
+              (let ((r (lookup review `((exlibris-id ,id)))))
+                (let loop ((r-new (form (io sess) (review r) private)))
+                  (if (review? r-new)
+                      (guide (validate-review r-new)
+                        (lambda (ht) (loop (form (io sess) (review r-new) private (hashtable->messages ht))))
+                        (lambda _
+                          (when (review? r) (id-set! r-new (id-of r)))
+                          (review-exlibris-id-set! r-new id)
+                          (if (save r-new)
+                              (page (io sess) desk id)
+                              (page (io sess) private (__ hmm-an-error-occurred)))))
+                      (page (io sess) desk id)))))
+             (else (page (io sess) private (__ hmm-an-error-occurred)))))))
 
   (define-scenario (board io request data)
     (with-or-without-session/
@@ -604,7 +626,9 @@
      (io request data)
      (lambda (sess id)
        (let ((a-id (id-of (user-account (session-user sess)))))
-         (cond ((lookup exlibris id)
+         (cond ((lookup exlibris
+                        `((account-id ,a-id) ; security
+                          (id ,id)))
                 => (lambda (ex)
                      (let ((f (report-format a-id)))
 
@@ -686,7 +710,10 @@
      (sess (rep-id report string->id #f)
            (ex-id exlibris string->id #f))
      (if (and rep-id ex-id)
-         (match (lookup (report (quotation report) (correction report)) ((report (id rep-id))))
+         (match (lookup (report (quotation report) (correction report))
+                        ((report
+                          (account-id (session->account-id sess)) ; security
+                          (id rep-id))))
            ((rep q c)
             (let loop ((modified (form (io sess) (report-to-modify (prepare-report-to-modify rep q c)) private)))
               (if (report-to-modify? modified)
@@ -707,7 +734,9 @@
      (sess (rep-id report string->id #f)
            (ex-id exlibris string->id #f))
      (if (and rep-id ex-id)
-         (let ((rep (lookup report rep-id)))
+         (let ((rep (lookup report
+                            `((account-id ,(session->account-id sess)) ; security
+                              (id ,rep-id)))))
            (and (report? rep)
                 (let ((c (form (io sess) (confirmation) private (__ are-you-sure-to-drop-report?))))
                   (yes? c))
