@@ -207,7 +207,7 @@
     (with-session
      (io request)
      (lambda (sess)
-       (let* ((a-id (id-of (user-account (session-user sess))))
+       (let* ((a-id (session->account-id sess))
               (pref (lookup preference `((account-id ,a-id)))))
          (let loop ((e (form (io sess) (preference-to-edit (and (preference? pref) (preference->preference-to-edit pref))) private)))
            (cond ((preference-to-edit? e)
@@ -283,13 +283,13 @@
              (define (specify-revision r)
 
                (define (save-exlibris r)
-                 (let ((account-id (id-of (user-account (session-user sess))))
+                 (let ((a-id (session->account-id sess))
                        (done (lambda (ex) (page (io sess) desk (id-of ex)))))
-                   (cond ((lookup exlibris `((account-id ,account-id)
+                   (cond ((lookup exlibris `((account-id ,a-id)
                                              (revision-id ,(id-of r))))
                           => done)
                          (else
-                          (let ((ex (make-exlibris account-id (id-of r) 0)))
+                          (let ((ex (make-exlibris a-id (id-of r) 0)))
                             (if (and (execute "BEGIN")
                                      (execute "UPDATE exlibris SET position = position + 1")
                                      (save ex)
@@ -431,7 +431,7 @@
     (with-session/
      (io request data)
      (sess (p page string->page 0))
-     (let ((id (id-of (user-account (session-user sess)))))
+     (let ((id (session->account-id sess)))
        (page (io sess) shelf (list id p)))))
 
   (define-scenario (desk io request data)
@@ -625,7 +625,7 @@
     (with-session&id
      (io request data)
      (lambda (sess id)
-       (let ((a-id (id-of (user-account (session-user sess)))))
+       (let ((a-id (session->account-id sess)))
          (cond ((lookup exlibris
                         `((account-id ,a-id) ; security
                           (id ,id)))
@@ -757,7 +757,7 @@
                            (guide (validate-acknowledgement a)
                              (lambda (ht) (loop (form (io sess) (acknowledgement a) private (hashtable->messages ht))))
                              (lambda _
-                               (acknowledgement-account-id-set! a (id-of (user-account (session-user sess))))
+                               (acknowledgement-account-id-set! a (session->account-id sess))
                                (acknowledgement-quotation-id-set! a q-id)
                                (if (save a)
                                    (page (io sess) detail r-id)
@@ -779,7 +779,7 @@
                            (guide (validate-agreement a)
                              (lambda (ht) (loop (form (io sess) (agreement a) private (hashtable->messages ht))))
                              (lambda _
-                               (agreement-account-id-set! a (id-of (user-account (session-user sess))))
+                               (agreement-account-id-set! a (session->account-id sess))
                                (agreement-correction-id-set! a c-id)
                                (if (save a)
                                    (page (io sess) detail r-id)
