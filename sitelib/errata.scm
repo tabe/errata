@@ -733,60 +733,60 @@
      (io request data)
      (sess (rep-id report string->id #f)
            (ex-id exlibris string->id #f))
-     (if (and rep-id ex-id)
-         (let ((rep (lookup report
-                            `((account-id ,(session->account-id sess)) ; security
-                              (id ,rep-id)))))
-           (and (report? rep)
-                (let ((c (form (io sess) (confirmation) private (__ are-you-sure-to-drop-report?))))
-                  (yes? c))
-                (destroy rep))
-           (page (io sess) desk ex-id))
-         (redirect (io sess) 'shelf))))
+     (cond ((and rep-id
+                 ex-id
+                 (lookup report
+                         `((account-id ,(session->account-id sess)) ; security
+                           (id ,rep-id))))
+            => (lambda (rep)
+                 (and (let ((c (form (io sess) (confirmation) private (__ are-you-sure-to-drop-report?))))
+                        (yes? c))
+                      (destroy rep))
+                 (page (io sess) desk ex-id)))
+           (else (redirect (io sess) 'shelf)))))
 
   (define-scenario (acknowledge io request data)
     (with-session/
      (io request data)
      (sess (r-id report string->id #f)
            (q-id quotation string->id #f))
-     (if q-id
-         (cond ((lookup quotation q-id)
-                => (lambda (q)
-                     (let loop ((a (form (io sess) (acknowledgement) private)))
-                       (if (acknowledgement? a)
-                           (guide (validate-acknowledgement a)
-                             (lambda (ht) (loop (form (io sess) (acknowledgement a) private (hashtable->messages ht))))
-                             (lambda _
-                               (acknowledgement-account-id-set! a (session->account-id sess))
-                               (acknowledgement-quotation-id-set! a q-id)
-                               (if (save a)
-                                   (page (io sess) detail r-id)
-                                   (page (io sess) private (__ hmm-an-error-occurred)))))
-                           (page (io sess) detail r-id)))))
-               (else (redirect (io sess) 'table)))
-         (redirect (io sess) 'table))))
+     (cond ((and q-id
+                 (lookup quotation q-id))
+            => (lambda (q)
+                 (let loop ((a (form (io sess) (acknowledgement) private)))
+                   (if (acknowledgement? a)
+                       (guide (validate-acknowledgement a)
+                         (lambda (ht) (loop (form (io sess) (acknowledgement a) private (hashtable->messages ht))))
+                         (lambda _
+                           (acknowledgement-account-id-set! a (session->account-id sess))
+                           (acknowledgement-quotation-id-set! a q-id)
+                           (if (save a)
+                               (page (io sess) detail r-id)
+                               (page (io sess) private (__ hmm-an-error-occurred)))))
+                       (page (io sess) detail r-id)))))
+           (else (redirect (io sess) 'table)))))
 
   (define-scenario (agree io request data)
     (with-session/
      (io request data)
      (sess (r-id report string->id #f)
            (c-id correction string->id #f))
-     (if (and r-id c-id)
-         (cond ((lookup correction c-id)
-                => (lambda (c)
-                     (let loop ((a (form (io sess) (agreement) private)))
-                       (if (agreement? a)
-                           (guide (validate-agreement a)
-                             (lambda (ht) (loop (form (io sess) (agreement a) private (hashtable->messages ht))))
-                             (lambda _
-                               (agreement-account-id-set! a (session->account-id sess))
-                               (agreement-correction-id-set! a c-id)
-                               (if (save a)
-                                   (page (io sess) detail r-id)
-                                   (page (io sess) private (__ hmm-an-error-occurred)))))
-                           (page (io sess) detail r-id)))))
-               (else (redirect (io sess) 'index)))
-         (redirect (io sess) 'index))))
+     (cond ((and r-id
+                 c-id
+                 (lookup correction c-id))
+            => (lambda (c)
+                 (let loop ((a (form (io sess) (agreement) private)))
+                   (if (agreement? a)
+                       (guide (validate-agreement a)
+                         (lambda (ht) (loop (form (io sess) (agreement a) private (hashtable->messages ht))))
+                         (lambda _
+                           (agreement-account-id-set! a (session->account-id sess))
+                           (agreement-correction-id-set! a c-id)
+                           (if (save a)
+                               (page (io sess) detail r-id)
+                               (page (io sess) private (__ hmm-an-error-occurred)))))
+                       (page (io sess) detail r-id)))))
+           (else (redirect (io sess) 'index)))))
 
   (define *password-advice*
     (format "~d文字以上~d文字以下" *account-password-min-length* *account-password-max-length*))
