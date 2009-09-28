@@ -32,7 +32,8 @@
           (only (errata calendar) ad->japanese-era)
           (only (errata isbn) isbn10->amazon)
           (errata model)
-          (errata helper pagination))
+          (errata helper pagination)
+          (errata page))
 
   (define errata-keywords
     (html:meta ((name "keywords") (content "errata,typo,proofreading,正誤表,共有,誤植,タイポ,誤訳,校正"))))
@@ -458,12 +459,13 @@
      (map
       (lambda (tuple)
         (match tuple
-          ((rep a q c)
-           (revision-report-tr uuid rep a q c (proc rep) '()))
-          (_ "?")))
-      (lookup-all (report (account report) (quotation report) (correction report))
-                  ((report (revision-id (id-of r))))
-                  ((order-by (quotation (page asc))))))))
+          ((rep a q c) (revision-report-tr uuid rep a q c (proc rep) '()))))
+      (list-sort
+       (lambda (t0 t1)
+         (page<? (quotation-page (caddr t0))
+                 (quotation-page (caddr t1))))
+       (lookup-all (report (account report) (quotation report) (correction report))
+                   ((report (revision-id (id-of r)))))))))
 
   (define (revision-frame uuid b r)
     (html:div
