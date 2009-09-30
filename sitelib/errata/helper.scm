@@ -19,7 +19,7 @@
           (only (core) format)
           (match)
           (only (srfi :13) string-tokenize)
-          (only (srfi :19) date->string string->date date-year)
+          (only (srfi :19) date->string date-year)
           (only (lcs) lcs-fold)
           (prefix (only (uri) encode-string) uri:)
           (only (lunula gettext) __)
@@ -29,7 +29,7 @@
           (only (lunula persistent-record) id-of created-at-of)
           (only (lunula session) account account-nick account-name)
           (only (lunula string) blank?)
-          (only (errata calendar) ad->japanese-era)
+          (only (errata calendar) ad->japanese-era datetime->date datetime->y/m/d)
           (only (errata isbn) isbn10->amazon)
           (errata model)
           (errata helper pagination)
@@ -154,10 +154,6 @@
   (define (hidden-field name value)
     (html:input ((type "hidden") (name name) (value value))))
 
-  (define (datetime->date str)
-    (guard (e (else #f))
-      (string->date str "~Y-~m-~d ~H:~M:~S")))
-
   (define (date->ymd date)
     (let ((year (date-year date)))
       (guard (e
@@ -165,15 +161,8 @@
         (append (html:span ((title (ad->japanese-era year))) year)
                 (date->string date "-~m-~d")))))
 
-  (define (date->y/m/d date)
-    (date->string date "~Y/~m/~d"))
-
   (define (datetime->ymd str)
     (cond ((datetime->date str) => date->ymd)
-          (else #f)))
-
-  (define (datetime->y/m/d str)
-    (cond ((datetime->date str) => date->y/m/d)
           (else #f)))
 
   (define (signature a)
@@ -283,7 +272,7 @@
                                                                  uuid
                                                                  (bib-isbn10 b)
                                                                  (uri:encode-string (revision-name r))
-                                                                 (date->y/m/d (datetime->date (revision-revised-at r))))))
+                                                                 (datetime->y/m/d (revision-revised-at r)))))
                                           (__ permanent-link)))))
                        (_ '())))
                    tuples)))))))))

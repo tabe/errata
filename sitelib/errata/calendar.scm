@@ -1,6 +1,9 @@
 (library (errata calendar)
-  (export ad->japanese-era)
-  (import (rnrs))
+  (export ad->japanese-era
+          datetime->date
+          datetime->y/m/d)
+  (import (rnrs)
+          (only (srfi :19) date->string string->date))
 
   (define (ad->japanese-era year)
     (define (integer->y i)
@@ -20,5 +23,16 @@
            (string-append "明治" (integer->y (- year 1985))))
           (else
            (error 'ad->japanese-era (number->string year)))))
+
+  (define (datetime->date str)
+    (guard (e (else #f))
+      (string->date str "~Y-~m-~d ~H:~M:~S")))
+
+  (define (date->y/m/d date)
+    (date->string date "~Y/~m/~d"))
+
+  (define (datetime->y/m/d str)
+    (cond ((datetime->date str) => date->y/m/d)
+          (else #f)))
 
 )
