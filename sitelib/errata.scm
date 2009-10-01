@@ -21,6 +21,7 @@
           (only (errata isbn) valid-isbn?)
           (errata message)
           (errata model)
+          (prefix (only (errata rss) query) rss:)
           (errata validator))
 
   (define *domain* "errata.fixedpoint.jp")
@@ -528,10 +529,11 @@
      (lambda (sess id)
        (cond ((lookup exlibris id)
               => (lambda (ex)
-                   (if (and (= (exlibris-account-id ex) (session->account-id sess)) ; security
-                            (save (make-publicity id)))
-                       (page (io sess) desk id)
-                       (page (io sess) private (__ hmm-an-error-occurred)))))
+                   (cond ((and (= (exlibris-account-id ex) (session->account-id sess)) ; security
+                               (save (make-publicity id)))
+                          (rss:query "recent-public-revisions")
+                          (page (io sess) desk id))
+                         (else (page (io sess) private (__ hmm-an-error-occurred))))))
              (else (redirect (io sess) 'shelf))))))
 
   (define-scenario (hide-exlibris io request data)
@@ -547,9 +549,10 @@
                     => (lambda (tuple)
                          (match tuple
                            ((pub ex)
-                            (if (destroy pub)
-                                (page (io sess) desk id)
-                                (page (io sess) private (__ hmm-an-error-occurred))))
+                            (cond ((destroy pub)
+                                   (rss:query "recent-public-revisions")
+                                   (page (io sess) desk id))
+                                  (else (page (io sess) private (__ hmm-an-error-occurred)))))
                            (_ (page (io sess) private (__ hmm-an-error-occurred))))))
                    (else
                     (page (io sess) private (__ hmm-an-error-occurred))))

@@ -28,10 +28,12 @@ stop:
 svc:
 	sudo svc -t /etc/service/errata
 	sudo svc -t /etc/service/errata-image
+	sudo svc -t /etc/service/errata-rss
 
 svstat:
 	sudo svstat /etc/service/errata
 	sudo svstat /etc/service/errata-image
+	sudo svstat /etc/service/errata-rss
 
 image:
 	$(YPSILON) script/image-server.scm
@@ -55,5 +57,7 @@ test:
 	$(YPSILON) tests/errata/model.scm
 	$(YPSILON) tests/errata/page.scm
 	$(YPSILON) tests/errata/query.scm
+	$(YPSILON) tests/errata/rss/recent-public-revisions.scm
+	$(YPSILON) tests/errata/rss.scm
 	$(YPSILON) tests/errata/validator.scm
 	$(YPSILON) tests/errata.scm
