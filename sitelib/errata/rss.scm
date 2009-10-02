@@ -5,6 +5,7 @@
   (import (only (core) format lookup-process-environment system)
           (rnrs)
           (only (rnrs eval) eval environment)
+          (only (srfi :27) random-integer)
           (match)
           (ypsilon socket)
           (only (ypsilon ffi) on-freebsd)
@@ -45,7 +46,7 @@
   (define (emit user password database category)
     (case (string->symbol category)
       (else
-       (let ((tmp (format "~a/~a.~a.tmp" *temporary-directory* category *extension*))
+       (let ((tmp (format "~a/~a.~a.~d" *temporary-directory* category *extension* (random-integer 100)))
              (dst (format "~a/~a.~a" *output-directory* category *extension*)))
          (call-with-output-file tmp
            (lambda (port)
