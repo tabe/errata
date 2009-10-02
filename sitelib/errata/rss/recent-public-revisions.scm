@@ -10,7 +10,7 @@
           (only (lunula persistent-record) created-at-of)
           (only (lunula xml) escape-string)
           (lunula rss)
-          (lunula session)
+          (only (lunula session) account)
           (only (errata calendar) datetime->y/m/d)
           (errata model))
 
