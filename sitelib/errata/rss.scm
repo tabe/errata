@@ -44,17 +44,15 @@
        (eval 'feed-item env))))
 
   (define (emit user password database category)
-    (case (string->symbol category)
-      (else
-       (let ((tmp (format "~a/~a.~a.~d" *temporary-directory* category *extension* (random-integer 100)))
-             (dst (format "~a/~a.~a" *output-directory* category *extension*)))
-         (call-with-output-file tmp
-           (lambda (port)
-             (put-tree
-              port
-              (rss-tree user password database category))))
-         (system (format "/usr/bin/install -m 644 ~a ~a" tmp dst))
-         (delete-file tmp)))))
+    (let ((tmp (format "~a/~a.~a.~d" *temporary-directory* category *extension* (random-integer 100)))
+          (dst (format "~a/~a.~a" *output-directory* category *extension*)))
+      (call-with-output-file tmp
+        (lambda (port)
+          (put-tree
+           port
+           (rss-tree user password database category))))
+      (system (format "/usr/bin/install -m 644 ~a ~a" tmp dst))
+      (delete-file tmp)))
 
   (define (start port-number user password database)
     (let ((socket (make-server-socket port-number)))
