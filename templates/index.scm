@@ -4,7 +4,7 @@
   errata-keywords
   (title "Errata")
   (link ((href "/stylesheet/errata.css") (rel "stylesheet") (type "text/css")))
-  (link ((href "/recent-public-revisions.rss") (rel "alternate") (type "application/rss+xml") (title "RSS")))
+  errata-rss-links
   (script ((type "text/javascript") (src "/javascript/jquery-1.3.2.min.js")))
   (script ((type "text/javascript") (src "/javascript/jquery.corner.js")))
   (script ((type "text/javascript")) preload-script)

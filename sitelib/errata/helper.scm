@@ -1,6 +1,7 @@
 (library (errata helper)
   (export errata-keywords
           errata-logo
+          errata-rss-links
           powered-by-lunula
           creativecommons-attribution-logo
           creativecommons-attribution
@@ -11,6 +12,7 @@
           public-revisions
           bib-window
           report-window
+          revision-report-tr
           revision-window
           shelf-window
           exlibris-window
@@ -42,6 +44,15 @@
     (html:h1 ((id "logo") (title "えらった べーた"))
              (html:a ((href (build-entry-path 'index uuid)))
                      (cons "Errata" (html:span ((style "color:red;")) "β")))))
+
+  (define errata-rss-links
+    (map
+     (lambda (name title)
+       (html:link ((href (format "/~a.rss" name)) (rel "alternate") (type "application/rss+xml") (title title))))
+     '(recent-public-revisions
+       recent-reports)
+     '("Recent public revisions"
+       "Recent reports")))
 
   (define powered-by-lunula
     (html:div ((id "bottom")) "powered by "
@@ -311,8 +322,8 @@
     (append
      (html:tr
       (html:td ((colspan 2) (style "font-size:small;"))
-               "pp." (quotation-page q) "/" (quotation-position q) "&nbsp;"
-               (report-subject rep) "&nbsp;"
+               (html:span ((class "pp")) "pp." (quotation-page q) "/" (quotation-position q)) "&nbsp;"
+               (html:a ((name (format "report~d" (id-of rep))) (class "subject")) (report-subject rep)) "&nbsp;"
                "("
                (html:span ((style "font-size:x-small;")) "reported by ")
                (signature a)
