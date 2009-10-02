@@ -7,8 +7,10 @@
           (only (rnrs eval) eval environment)
           (only (srfi :27) random-integer)
           (match)
+          (only (ypsilon concurrent) make-mailbox recv send shutdown-mailbox spawn*)
           (ypsilon socket)
           (only (ypsilon ffi) on-freebsd)
+          (prefix (lunula log) log:)
           (only (lunula tree) put-tree)
           (only (lunula xml) declaration)
           (lunula rss))
@@ -20,6 +22,8 @@
   (define *temporary-directory* (lookup-process-environment "ERRATA_RSS_TEMPORARY_DIRECTORY"))
 
   (define *output-directory* (lookup-process-environment "ERRATA_RSS_OUTPUT_DIRECTORY"))
+
+  (define *mailbox* (make-mailbox))
 
   (define (make-rss category set entry-proc item-proc)
     (list
@@ -54,7 +58,7 @@
       (system (format "/usr/bin/install -m 644 ~a ~a" tmp dst))
       (delete-file tmp)))
 
-  (define (start port-number user password database)
+  (define (server port-number)
     (let ((socket (make-server-socket port-number)))
       (let loop ((client (socket-accept socket)))
         (call-with-port (socket-port client)
@@ -64,15 +68,27 @@
                      (shutdown-output-port port))
                     (else
                      (let ((category (utf8->string bv)))
+                       (guard (e
+                               (else (log:info "~a" e)))
+                         (send *mailbox* category 1000))
                        (call-with-port (transcoded-port port (make-transcoder (utf-8-codec) (eol-style none)))
                          (lambda (tport)
                            (put-string tport category)
                            (newline tport)
                            (shutdown-output-port tport)))
-                       ;;
-                       (emit user password database category)
                        ))))))
         (loop (socket-accept socket)))))
+
+  (define (start port-number user password database)
+    (spawn*
+     (lambda () (server port-number))
+     (lambda (x)
+       (log:info "rss> ~a" x)
+       (shutdown-mailbox *mailbox*)))
+    (let loop ((category (recv *mailbox*)))
+      (log:info "rss> emit ~a" category)
+      (emit user password database category)
+      (loop (recv *mailbox*))))
 
   (define (query category)
     (call-with-socket (make-client-socket "localhost" "3002" AF_INET SOCK_STREAM (if on-freebsd AI_ADDRCONFIG (+ AI_V4MAPPED AI_ADDRCONFIG))) ; workaround for FreeBSD 7.x, cf. http://lists.freebsd.org/pipermail/freebsd-bugs/2008-February/028260.html
