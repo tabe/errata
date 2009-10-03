@@ -5,6 +5,7 @@
   (import (rnrs)
           (match)
           (prefix (only (uri) encode-string) uri:)
+          (prefix (only (lunula html) table tbody) html:)
           (only (lunula mod_lisp) build-api-path)
           (only (lunula mysql) close connect lookup-all)
           (only (lunula persistent-record) id-of created-at-of)
@@ -75,7 +76,9 @@
                       (description
                        (escape-string
                         (tree->string
-                         (revision-report-tr #f rep a q c '() '()))))))))
+                         (html:table
+                          (html:tbody
+                           (revision-report-tr #f rep a q c '() '()))))))))))
              (else '())))
       (_ '())))
 
