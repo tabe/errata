@@ -573,9 +573,10 @@
                         (lambda _
                           (when (review? r) (id-set! r-new (id-of r)))
                           (review-exlibris-id-set! r-new id)
-                          (if (save r-new)
-                              (page (io sess) desk id)
-                              (page (io sess) private (__ hmm-an-error-occurred)))))
+                          (cond  ((save r-new)
+                                  (rss:query "recent-reviews")
+                                  (page (io sess) desk id))
+                                 (else (page (io sess) private (__ hmm-an-error-occurred))))))
                       (page (io sess) desk id)))))
              (else (page (io sess) private (__ hmm-an-error-occurred)))))))
 

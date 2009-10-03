@@ -59,6 +59,7 @@ test:
 	$(YPSILON) tests/errata/query.scm
 	$(YPSILON) tests/errata/rss/recent-public-revisions.scm
 	$(YPSILON) tests/errata/rss/recent-reports.scm
+	$(YPSILON) tests/errata/rss/recent-reviews.scm
 	$(YPSILON) tests/errata/rss.scm
 	$(YPSILON) tests/errata/validator.scm
 	$(YPSILON) tests/errata.scm

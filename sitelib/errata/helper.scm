@@ -12,6 +12,7 @@
           public-revisions
           bib-window
           report-window
+          review-div
           revision-report-tr
           revision-window
           shelf-window
@@ -50,9 +51,11 @@
      (lambda (name title)
        (html:link ((href (format "/~a.rss" name)) (rel "alternate") (type "application/rss+xml") (title title))))
      '(recent-public-revisions
-       recent-reports)
+       recent-reports
+       recent-reviews)
      '("Recent public revisions"
-       "Recent reports")))
+       "Recent reports"
+       "Recent reviews")))
 
   (define powered-by-lunula
     (html:div ((id "bottom")) "powered by "
@@ -337,7 +340,7 @@
     (match tuple
       ((rvw ex a)
        (html:div ((class "dog") (style "background-color:#c7ff6f;"))
-                 (signature a) ":"
+                 (html:a ((name (format "review~d" (id-of rvw)))) (signature a) ":")
                  (html:pre (html:escape-string (review-body rvw)))
                  ))
       (_ "?")))
