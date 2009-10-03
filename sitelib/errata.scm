@@ -531,7 +531,7 @@
               => (lambda (ex)
                    (cond ((and (= (exlibris-account-id ex) (session->account-id sess)) ; security
                                (save (make-publicity id)))
-                          (rss:query "recent-public-revisions")
+                          (rss:query recent-public-revisions recent-reports recent-reviews)
                           (page (io sess) desk id))
                          (else (page (io sess) private (__ hmm-an-error-occurred))))))
              (else (redirect (io sess) 'shelf))))))
@@ -550,7 +550,7 @@
                          (match tuple
                            ((pub ex)
                             (cond ((destroy pub)
-                                   (rss:query "recent-public-revisions")
+                                   (rss:query recent-public-revisions recent-reports recent-reviews)
                                    (page (io sess) desk id))
                                   (else (page (io sess) private (__ hmm-an-error-occurred)))))
                            (_ (page (io sess) private (__ hmm-an-error-occurred))))))
@@ -574,7 +574,7 @@
                           (when (review? r) (id-set! r-new (id-of r)))
                           (review-exlibris-id-set! r-new id)
                           (cond  ((save r-new)
-                                  (rss:query "recent-reviews")
+                                  (rss:query recent-reviews)
                                   (page (io sess) desk id))
                                  (else (page (io sess) private (__ hmm-an-error-occurred))))))
                       (page (io sess) desk id)))))
@@ -643,7 +643,7 @@
                                  (if (save c)
                                      (let ((r (report-to-modify->report rep a-id (exlibris-revision-id ex) (id-of q) (id-of c))))
                                        (cond ((save r)
-                                              (rss:query "recent-reports")
+                                              (rss:query recent-reports)
                                               (page (io sess) desk id))
                                              (else (page (io sess) private (__ hmm-an-error-occurred)))))
                                      (page (io sess) private (__ hmm-an-error-occurred))))
@@ -727,7 +727,7 @@
                       (loop (form (io sess) (report-to-modify modified) private (hashtable->messages ht))))
                     (lambda _
                       (cond ((update-report rep q c modified)
-                             (rss:query "recent-reports")
+                             (rss:query recent-reports)
                              (page (io sess) desk ex-id))
                             (else (page (io sess) private (__ hmm-an-error-occurred))))))
                   (page (io sess) desk ex-id))))
@@ -748,7 +748,7 @@
                  (and (let ((c (form (io sess) (confirmation) private (__ are-you-sure-to-drop-report?))))
                         (yes? c))
                       (destroy rep)
-                      (rss:query "recent-reports"))
+                      (rss:query recent-reports))
                  (page (io sess) desk ex-id)))
            (else (redirect (io sess) 'shelf)))))
 

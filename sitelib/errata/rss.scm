@@ -5,6 +5,7 @@
   (import (only (core) format lookup-process-environment system)
           (rnrs)
           (only (rnrs eval) eval environment)
+          (only (srfi :13) string-tokenize)
           (only (srfi :27) random-integer)
           (match)
           (only (ypsilon concurrent) make-mailbox recv send shutdown-mailbox spawn*)
@@ -67,13 +68,19 @@
               (cond ((eof-object? bv)
                      (shutdown-output-port port))
                     (else
-                     (let ((category (utf8->string bv)))
-                       (guard (e
-                               (else (log:info "~a" e)))
-                         (send *mailbox* category 1000))
+                     (let* ((str (utf8->string bv))
+                            (categories (string-tokenize str)))
+                       (for-each
+                        (lambda (category)
+                          (spawn*
+                           (lambda () (send *mailbox* category 3000))
+                           (lambda (x)
+                             (when (condition? x)
+                               (log:info "rss> ~a" x)))))
+                        categories)
                        (call-with-port (transcoded-port port (make-transcoder (utf-8-codec) (eol-style none)))
                          (lambda (tport)
-                           (put-string tport category)
+                           (put-string tport str)
                            (newline tport)
                            (shutdown-output-port tport)))
                        ))))))
@@ -90,13 +97,19 @@
       (emit user password database category)
       (loop (recv *mailbox*))))
 
-  (define (query category)
-    (call-with-socket (make-client-socket "localhost" "3002" AF_INET SOCK_STREAM (if on-freebsd AI_ADDRCONFIG (+ AI_V4MAPPED AI_ADDRCONFIG))) ; workaround for FreeBSD 7.x, cf. http://lists.freebsd.org/pipermail/freebsd-bugs/2008-February/028260.html
-      (lambda (socket)
-        (call-with-port (transcoded-port (socket-port socket) (make-transcoder (utf-8-codec) (eol-style none)))
-          (lambda (port)
-            (put-string port category)
-            (shutdown-output-port port)
-            (get-string-all port))))))
+  (define-syntax query
+    (syntax-rules ()
+      ((_ category0 category1 ...)
+       (let ((str (fold-left
+                   (lambda (s x) (format "~a ~a" s x))
+                   (symbol->string 'category0)
+                   '(category1 ...))))
+         (call-with-socket (make-client-socket "localhost" "3002" AF_INET SOCK_STREAM (if on-freebsd AI_ADDRCONFIG (+ AI_V4MAPPED AI_ADDRCONFIG))) ; workaround for FreeBSD 7.x, cf. http://lists.freebsd.org/pipermail/freebsd-bugs/2008-February/028260.html
+           (lambda (socket)
+             (call-with-port (transcoded-port (socket-port socket) (make-transcoder (utf-8-codec) (eol-style none)))
+               (lambda (port)
+                 (put-string port str)
+                 (shutdown-output-port port)
+                 (get-string-all port)))))))))
 
 )
