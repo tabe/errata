@@ -1,4 +1,4 @@
-(library (errata rss recent-public-revisions)
+(library (errata rss recent-revisions)
   (export feed-set
           feed-entry
           feed-item)

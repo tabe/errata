@@ -50,10 +50,10 @@
     (map
      (lambda (name title)
        (html:link ((href (format "/~a.rss" name)) (rel "alternate") (type "application/rss+xml") (title title))))
-     '(recent-public-revisions
+     '(recent-revisions
        recent-reports
        recent-reviews)
-     '("Recent public revisions"
+     '("Recent revisions"
        "Recent reports"
        "Recent reviews")))
 
@@ -100,7 +100,7 @@
       (cancel . "アカウントの解除")
       ))
 
-  (define (recent-public-revision uuid tuple)
+  (define (recent-revision uuid tuple)
     (match tuple
       ((pub ex a r b)
        (cond ((bib-isbn10 b)
@@ -133,9 +133,9 @@
        (html:div (map p-link *private-links*))))
      (html:div
       ((id "recent_public_revisions") (class "corner"))
-      (html:h3 (__ recent-public-revisions))
+      (html:h3 (__ recent-revisions))
       (map
-       (lambda (tuple) (recent-public-revision uuid tuple))
+       (lambda (tuple) (recent-revision uuid tuple))
        (recent-revisions 3))
       )
      ))

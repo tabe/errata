@@ -248,8 +248,8 @@
           (ja "訂正に同意"))
    (disagree (en "Disagree")
              (ja "訂正に反対"))
-   (recent-public-revisions (en "Recent public revisions")
-                            (ja "新たに公開された改訂情報"))
+   (recent-revisions (en "Recent revisions")
+                     (ja "新たに公開された改訂情報"))
    )
 
   (locale ja)

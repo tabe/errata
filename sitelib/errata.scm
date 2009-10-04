@@ -531,7 +531,7 @@
               => (lambda (ex)
                    (cond ((and (= (exlibris-account-id ex) (session->account-id sess)) ; security
                                (save (make-publicity id)))
-                          (rss:query recent-public-revisions recent-reports recent-reviews)
+                          (rss:query recent-revisions recent-reports recent-reviews)
                           (page (io sess) desk id))
                          (else (page (io sess) private (__ hmm-an-error-occurred))))))
              (else (redirect (io sess) 'shelf))))))
@@ -550,7 +550,7 @@
                          (match tuple
                            ((pub ex)
                             (cond ((destroy pub)
-                                   (rss:query recent-public-revisions recent-reports recent-reviews)
+                                   (rss:query recent-revisions recent-reports recent-reviews)
                                    (page (io sess) desk id))
                                   (else (page (io sess) private (__ hmm-an-error-occurred)))))
                            (_ (page (io sess) private (__ hmm-an-error-occurred))))))
