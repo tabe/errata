@@ -152,7 +152,7 @@
           agreement-correction-id
           agreement-correction-id-set!
           agreement-comment
-          recent-public-revisions
+          recent-revisions
           )
   (import (rnrs)
           (only (core) make-uuid)
@@ -365,7 +365,7 @@
              (maybe-id correction-id)
              comment))))))
 
-  (define (recent-public-revisions n)
+  (define (recent-revisions n)
     (lookup-all (publicity
                  (exlibris publicity)
                  (account exlibris)

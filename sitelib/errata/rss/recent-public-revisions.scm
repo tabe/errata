@@ -33,7 +33,7 @@
              (let ((r (connect "localhost" user password database)))
                (when (string? r)
                  (cont '()))))
-           (lambda () (recent-public-revisions *limit*))
+           (lambda () (recent-revisions *limit*))
            close))))
 
   (define (feed-entry tuple)

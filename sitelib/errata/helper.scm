@@ -136,7 +136,7 @@
       (html:h3 (__ recent-public-revisions))
       (map
        (lambda (tuple) (recent-public-revision uuid tuple))
-       (recent-public-revisions 3))
+       (recent-revisions 3))
       )
      ))
 
