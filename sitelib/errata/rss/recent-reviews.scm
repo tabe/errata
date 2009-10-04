@@ -16,6 +16,8 @@
           (only (errata helper) review-div)
           (errata model))
 
+  (define *limit* 10)
+
   (define (review&revision->url rvw r isbn10)
     (string-append
      "http://errata.fixedpoint.jp"
@@ -35,16 +37,7 @@
              (let ((r (connect "localhost" user password database)))
                (when (string? r)
                  (cont '()))))
-           (lambda ()
-             (lookup-all (review
-                          (exlibris review)
-                          (account exlibris)
-                          (revision exlibris)
-                          (bib revision))
-                         ((exists (publicity)
-                                  ((publicity (exlibris)))))
-                         ((order-by (review (updated-at desc)))
-                          (limit 10))))
+           (lambda () (recent-reviews *limit*))
            close))))
 
   (define (feed-entry tuple)

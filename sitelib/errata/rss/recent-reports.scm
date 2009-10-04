@@ -17,6 +17,8 @@
           (only (errata helper) revision-report-tr)
           (errata model))
 
+  (define *limit* 10)
+
   (define (report&revision->url rep r isbn10)
     (string-append
      "http://errata.fixedpoint.jp"
@@ -36,18 +38,7 @@
              (let ((r (connect "localhost" user password database)))
                (when (string? r)
                  (cont '()))))
-           (lambda ()
-             (lookup-all (report
-                          (account report)
-                          (revision report)
-                          (bib revision)
-                          (quotation report)
-                          (correction report))
-                         ((exists (publicity (exlibris publicity))
-                                  ((exlibris (revision))
-                                   (exlibris (account)))))
-                         ((order-by (report (created-at desc)))
-                          (limit 10))))
+           (lambda () (recent-reports *limit*))
            close))))
 
   (define (feed-entry tuple)

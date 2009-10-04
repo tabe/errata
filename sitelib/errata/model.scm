@@ -153,6 +153,8 @@
           agreement-correction-id-set!
           agreement-comment
           recent-revisions
+          recent-reviews
+          recent-reports
           )
   (import (rnrs)
           (only (core) make-uuid)
@@ -373,6 +375,30 @@
                  (bib revision))
                 ((bib (image #t)))
                 ((order-by (publicity (created-at desc)))
+                 (limit n))))
+
+  (define (recent-reviews n)
+    (lookup-all (review
+                 (exlibris review)
+                 (account exlibris)
+                 (revision exlibris)
+                 (bib revision))
+                ((exists (publicity)
+                         ((publicity (exlibris)))))
+                ((order-by (review (updated-at desc)))
+                 (limit n))))
+
+  (define (recent-reports n)
+    (lookup-all (report
+                 (account report)
+                 (revision report)
+                 (bib revision)
+                 (quotation report)
+                 (correction report))
+                ((exists (publicity (exlibris publicity))
+                         ((exlibris (revision))
+                          (exlibris (account)))))
+                ((order-by (report (created-at desc)))
                  (limit n))))
 
 )
