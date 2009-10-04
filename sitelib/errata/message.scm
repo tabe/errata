@@ -252,8 +252,8 @@
                      (ja "新たに公開された改訂情報"))
    (recent-reviews (en "Recent reviews")
                    (ja "新たに公開されたレビュー"))
-   (recent-reports (en "Recent revisions")
-                   (ja "新たに公開されたレポート"))
+   (recent-reports (en "Recent reports")
+                   (ja "新たに公開された報告"))
    )
 
   (locale ja)
