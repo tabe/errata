@@ -56,7 +56,17 @@ h1 a {
     margin: 1em;
 }
 
-#recent_public_revisions {
+#recent-revisions {
+    background-color: #ffffaa;
+    font-size: smaller;
+}
+
+#recent-reviews {
+    background-color: #ffffaa;
+    font-size: smaller;
+}
+
+#recent-reports {
     background-color: #ffffaa;
     font-size: smaller;
 }

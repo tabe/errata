@@ -250,6 +250,10 @@
              (ja "訂正に反対"))
    (recent-revisions (en "Recent revisions")
                      (ja "新たに公開された改訂情報"))
+   (recent-reviews (en "Recent reviews")
+                   (ja "新たに公開されたレビュー"))
+   (recent-reports (en "Recent revisions")
+                   (ja "新たに公開されたレポート"))
    )
 
   (locale ja)

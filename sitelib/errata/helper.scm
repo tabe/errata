@@ -31,7 +31,7 @@
           (prefix (lunula html) html:)
           (only (lunula persistent-record) id-of created-at-of)
           (only (lunula session) account account-nick account-name)
-          (only (lunula string) blank?)
+          (only (lunula string) blank? string-truncate)
           (only (errata calendar) ad->japanese-era datetime->date datetime->y/m/d)
           (only (errata isbn) isbn10->amazon)
           (errata model)
@@ -114,6 +114,48 @@
              (else '())))
       (_ "?")))
 
+  (define (recent-review uuid tuple)
+    (match tuple
+      ((rvw ex a r b)
+       (cond ((bib-isbn10 b)
+              => (lambda (isbn10)
+                   (html:p
+                    (html:a ((href (string-append
+                                    (build-api-path 'r
+                                                    uuid
+                                                    isbn10
+                                                    (uri:encode-string (revision-name r))
+                                                    (datetime->y/m/d (revision-revised-at r)))
+                                    "#review"
+                                    (number->string (id-of rvw)))))
+                            (html:escape-string
+                             (string-truncate
+                              (review-body rvw)
+                              32))))))
+             (else '())))
+      (_ "?")))
+
+  (define (recent-report uuid tuple)
+    (match tuple
+      ((rep a r b q c)
+       (cond ((bib-isbn10 b)
+              => (lambda (isbn10)
+                   (html:p
+                    (html:a ((href (string-append
+                                    (build-api-path 'r
+                                                    uuid
+                                                    isbn10
+                                                    (uri:encode-string (revision-name r))
+                                                    (datetime->y/m/d (revision-revised-at r)))
+                                    "#report"
+                                    (number->string (id-of rep)))))
+                            (html:escape-string
+                             (string-truncate
+                              (report-subject rep)
+                              32))))))
+             (else '())))
+      (_ "?")))
+
   (define (links uuid . _)
     (define (p-link pair)
       (html:p (html:a ((href (build-entry-path (car pair) uuid))) (cdr pair))))
@@ -132,12 +174,23 @@
        ((class "links"))
        (html:div (map p-link *private-links*))))
      (html:div
-      ((id "recent_public_revisions") (class "corner"))
+      ((id "recent-revisions") (class "corner"))
       (html:h3 (__ recent-revisions))
       (map
        (lambda (tuple) (recent-revision uuid tuple))
-       (recent-revisions 3))
-      )
+       (recent-revisions 3)))
+     (html:div
+      ((id "recent-reviews") (class "corner"))
+      (html:h3 (__ recent-reviews))
+      (map
+       (lambda (tuple) (recent-review uuid tuple))
+       (recent-reviews 3)))
+     (html:div
+      ((id "recent-reports") (class "corner"))
+      (html:h3 (__ recent-reports))
+      (map
+       (lambda (tuple) (recent-report uuid tuple))
+       (recent-reports 3)))
      ))
 
   (define (belt uuid . _)
