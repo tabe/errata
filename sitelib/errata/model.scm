@@ -152,10 +152,12 @@
           agreement-correction-id
           agreement-correction-id-set!
           agreement-comment
+          recent-public-revisions
           )
   (import (rnrs)
           (only (core) make-uuid)
           (prefix (lunula hmac) hmac:)
+          (only (lunula mysql) lookup-all)
           (lunula persistent-record)
           (lunula session))
 
@@ -362,5 +364,15 @@
           (p (maybe-id account-id)
              (maybe-id correction-id)
              comment))))))
+
+  (define (recent-public-revisions n)
+    (lookup-all (publicity
+                 (exlibris publicity)
+                 (account exlibris)
+                 (revision exlibris)
+                 (bib revision))
+                ((bib (image #t)))
+                ((order-by (publicity (created-at desc)))
+                 (limit n))))
 
 )

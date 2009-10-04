@@ -100,16 +100,6 @@
       (cancel . "アカウントの解除")
       ))
 
-  (define (recent-public-revisions)
-    (lookup-all (publicity
-                 (exlibris publicity)
-                 (account exlibris)
-                 (revision exlibris)
-                 (bib revision))
-                ((bib (image #t)))
-                ((order-by (publicity (created-at desc)))
-                 (limit 3))))
-
   (define (recent-public-revision uuid tuple)
     (match tuple
       ((pub ex a r b)
@@ -146,7 +136,7 @@
       (html:h3 (__ recent-public-revisions))
       (map
        (lambda (tuple) (recent-public-revision uuid tuple))
-       (recent-public-revisions))
+       (recent-public-revisions 3))
       )
      ))
 

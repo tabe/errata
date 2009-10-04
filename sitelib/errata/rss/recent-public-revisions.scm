@@ -14,6 +14,8 @@
           (only (errata calendar) datetime->y/m/d)
           (errata model))
 
+  (define *limit* 10)
+
   (define (revision->url r isbn10)
     (string-append
      "http://errata.fixedpoint.jp"
@@ -31,15 +33,7 @@
              (let ((r (connect "localhost" user password database)))
                (when (string? r)
                  (cont '()))))
-           (lambda ()
-             (lookup-all (publicity
-                          (exlibris publicity)
-                          (account exlibris)
-                          (revision exlibris)
-                          (bib revision))
-                         ()
-                         ((order-by (publicity (created-at desc)))
-                          (limit 10))))
+           (lambda () (recent-public-revisions *limit*))
            close))))
 
   (define (feed-entry tuple)
