@@ -77,6 +77,7 @@
       "$('#public').corner();"
       "$('.corner').corner();"
       "$('.dog').corner('dog tr 15px');"
+      "$('.parmalink').focus(function() {$(this).select();});"
       "});"))
 
   (define (menu uuid . _)
@@ -264,7 +265,7 @@
                    (cons* (html:escape-string (revision-name r))
                           "(" (datetime->ymd (revision-revised-at r)) ")" x)))
          (html:tr
-          (html:td y)
+          (html:th y)
           (html:td z)))))))
 
   (define (go-to-board uuid)
@@ -516,7 +517,24 @@
   (define (revision-frame uuid b r)
     (html:div
      (go-to-board uuid)
-     (revision-skeleton b r '() '() '())
+     (revision-skeleton b r
+                        '()
+                        (__ parmalink)
+                        (cond ((bib-isbn10 b)
+                               => (lambda (isbn10)
+                                    (html:input ((class "parmalink")
+                                                 (type "text")
+                                                 (readonly #t)
+                                                 (size 64)
+                                                 (value
+                                                  (string-append
+                                                   "http://errata.fixedpoint.jp"
+                                                   (build-api-path 'r
+                                                                   #f
+                                                                   isbn10
+                                                                   (uri:encode-string (revision-name r))
+                                                                   (datetime->y/m/d (revision-revised-at r)))))))))
+                              (else '())))
      (html:h4 (__ Table) "&nbsp;" creativecommons-attribution-logo)
      (revision-reports uuid r (lambda (rep)
                                 (html:form ((action (build-entry-path 'detail uuid)))
