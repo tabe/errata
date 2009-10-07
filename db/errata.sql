@@ -145,14 +145,3 @@ create table draft (
   updated_at datetime,
   primary key (id)
 ) default charset=utf8;
-
-drop table if exists foobar;
-
-create table foobar (
-  id int not null auto_increment,
-  name varchar(256),
-  memo varchar(256),
-  created_at datetime,
-  updated_at datetime,
-  primary key (id)
-) default charset=utf8;
