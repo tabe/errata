@@ -14,15 +14,10 @@
           (prefix (lunula log) log:)
           (only (lunula tree) put-tree)
           (only (lunula xml) declaration)
-          (lunula rss))
-
-  (define *base-url* "http://errata.fixedpoint.jp")
+          (lunula rss)
+          (only (errata configuration) rss-port-number rss-output-directory rss-temporary-directory url-base))
 
   (define *extension* "rss")
-
-  (define *temporary-directory* (lookup-process-environment "ERRATA_RSS_TEMPORARY_DIRECTORY"))
-
-  (define *output-directory* (lookup-process-environment "ERRATA_RSS_OUTPUT_DIRECTORY"))
 
   (define *mailbox* (make-mailbox))
 
@@ -31,9 +26,9 @@
      (declaration 1.0 "UTF-8")
      (rdf:RDF
       (channel
-       ((rdf:about (format "~a/~a.~a" *base-url* category *extension*)))
+       ((rdf:about (format "~a/~a.~a" url-base category *extension*)))
        (title category)
-       (link (string-append *base-url* "/"))
+       (link (string-append url-base "/"))
        (description (format "Errata: ~a" category))
        (items
         (rdf:Seq
@@ -49,8 +44,8 @@
        (eval 'feed-item env))))
 
   (define (emit user password database category)
-    (let ((tmp (format "~a/~a.~a.~d" *temporary-directory* category *extension* (random-integer 100)))
-          (dst (format "~a/~a.~a" *output-directory* category *extension*)))
+    (let ((tmp (format "~a/~a.~a.~d" rss-temporary-directory category *extension* (random-integer 100)))
+          (dst (format "~a/~a.~a" rss-output-directory category *extension*)))
       (call-with-output-file tmp
         (lambda (port)
           (put-tree
@@ -104,7 +99,11 @@
                    (lambda (s x) (format "~a ~a" s x))
                    (symbol->string 'category0)
                    '(category1 ...))))
-         (call-with-socket (make-client-socket "localhost" "3002" AF_INET SOCK_STREAM (if on-freebsd AI_ADDRCONFIG (+ AI_V4MAPPED AI_ADDRCONFIG))) ; workaround for FreeBSD 7.x, cf. http://lists.freebsd.org/pipermail/freebsd-bugs/2008-February/028260.html
+         (call-with-socket (make-client-socket "localhost"
+                                               (number->string rss-port-number)
+                                               AF_INET
+                                               SOCK_STREAM
+                                               (if on-freebsd AI_ADDRCONFIG (+ AI_V4MAPPED AI_ADDRCONFIG))) ; workaround for FreeBSD 7.x, cf. http://lists.freebsd.org/pipermail/freebsd-bugs/2008-February/028260.html
            (lambda (socket)
              (call-with-port (transcoded-port (socket-port socket) (make-transcoder (utf-8-codec) (eol-style none)))
                (lambda (port)

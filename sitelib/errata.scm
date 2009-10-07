@@ -17,16 +17,13 @@
           (lunula tree)
           (only (lunula persistent-record) string->id id-of id-set!)
           (lunula validation)
+          (prefix (only (errata configuration) url-base mail-address) errata:)
           (only (errata query) query-image)
           (only (errata isbn) valid-isbn?)
           (errata message)
           (errata model)
           (prefix (only (errata rss) query) rss:)
           (errata validator))
-
-  (define *domain* "errata.fixedpoint.jp")
-
-  (define *mail-from* "errata@fixedpoint.jp")
 
   (define (mail-subject subject)
     (string-append "Errata - " subject))
@@ -79,7 +76,7 @@
     (lambda (path)
       (values
        (account-mail-address a)
-       *mail-from*
+       errata:mail-address
        (mail-subject (format "Confirmation for New Account '~a'" (account-nick a)))
        (mail-body
         (account-nick a) " 様\n"
@@ -87,7 +84,7 @@
         "アカウント申請ありがとうございます。\n"
         "下記の URL にアクセスしていただいくとアカウントの作成が完了します。\n"
         "(このメールは安全に無視できます; 何もしなければアカウントは作成はされません。)\n"
-        (format "http://~a~a~%" *domain* path)))))
+        (format "~a~a~%" errata:url-base path)))))
 
   (define (sign-up-summary new-a)
     (tree->string
@@ -121,7 +118,7 @@
     (lambda (path)
       (values
        (account-mail-address a)
-       *mail-from*
+       errata:mail-address
        (mail-subject "Reset Password")
        (mail-body
         (account-nick a) " 様\n"
@@ -129,7 +126,7 @@
         "パスワードのリセットを行います。\n"
         "下記の URL にアクセスして新しいパスワードを指定してください。\n"
         "(このメールは安全に無視できます; 何もしなければパスワードはそのままです。)\n"
-        (format "http://~a~a~%" *domain* path)))))
+        (format "~a~a~%" errata:url-base path)))))
 
   (define-scenario (forgot-password io request)
     (without-session

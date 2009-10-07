@@ -33,6 +33,7 @@
           (only (lunula session) account account-nick account-name)
           (only (lunula string) blank? string-truncate)
           (only (errata calendar) ad->japanese-era datetime->date datetime->y/m/d)
+          (only (errata configuration) url-base)
           (only (errata isbn) isbn10->amazon)
           (errata model)
           (errata helper pagination)
@@ -528,7 +529,7 @@
                                                  (size 64)
                                                  (value
                                                   (string-append
-                                                   "http://errata.fixedpoint.jp"
+                                                   url-base
                                                    (build-api-path 'r
                                                                    #f
                                                                    isbn10

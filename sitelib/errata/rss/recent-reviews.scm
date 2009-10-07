@@ -13,6 +13,7 @@
           (lunula rss)
           (only (lunula session) account)
           (only (errata calendar) datetime->y/m/d)
+          (only (errata configuration) url-base)
           (only (errata helper) review-div)
           (errata model))
 
@@ -20,7 +21,7 @@
 
   (define (review&revision->url rvw r isbn10)
     (string-append
-     "http://errata.fixedpoint.jp"
+     url-base
      (build-api-path 'r
                      #f
                      isbn10
