@@ -1,9 +1,6 @@
 #!/usr/bin/env ypsilon
 #!r6rs
 
-(import (rnrs)
-        (errata query))
+(import (only (errata query) start))
 
-(define *port-number* 3001)
-
-(start (number->string *port-number*))
+(start)

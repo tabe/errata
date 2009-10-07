@@ -15,7 +15,10 @@
           (only (lunula tree) put-tree)
           (only (lunula xml) declaration)
           (lunula rss)
-          (only (errata configuration) rss-port-number rss-output-directory rss-temporary-directory url-base))
+          (only (errata configuration)
+                rss-port-number rss-output-directory rss-temporary-directory
+                mysql-user mysql-password mysql-database
+                url-base))
 
   (define *extension* "rss")
 
@@ -43,19 +46,19 @@
        (eval 'feed-entry env)
        (eval 'feed-item env))))
 
-  (define (emit user password database category)
+  (define (emit category)
     (let ((tmp (format "~a/~a.~a.~d" rss-temporary-directory category *extension* (random-integer 100)))
           (dst (format "~a/~a.~a" rss-output-directory category *extension*)))
       (call-with-output-file tmp
         (lambda (port)
           (put-tree
            port
-           (rss-tree user password database category))))
+           (rss-tree mysql-user mysql-password mysql-database category))))
       (system (format "/usr/bin/install -m 644 ~a ~a" tmp dst))
       (delete-file tmp)))
 
-  (define (server port-number)
-    (let ((socket (make-server-socket port-number)))
+  (define (server)
+    (let ((socket (make-server-socket (number->string rss-port-number))))
       (let loop ((client (socket-accept socket)))
         (call-with-port (socket-port client)
           (lambda (port)
@@ -81,15 +84,15 @@
                        ))))))
         (loop (socket-accept socket)))))
 
-  (define (start port-number user password database)
+  (define (start)
     (spawn*
-     (lambda () (server port-number))
+     server
      (lambda (x)
        (log:info "rss> ~a" x)
        (shutdown-mailbox *mailbox*)))
     (let loop ((category (recv *mailbox*)))
       (log:info "rss> emit ~a" category)
-      (emit user password database category)
+      (emit category)
       (loop (recv *mailbox*))))
 
   (define-syntax query

@@ -2,6 +2,10 @@
   (export domain
           mail-address
           url-base
+          port-number
+          mysql-user
+          mysql-password
+          mysql-database
           aws-access-key-id
           aws-secret-access-key
           query-port-number
@@ -14,6 +18,12 @@
   (define-configuration domain "errata.fixedpoint.jp")
   (define-configuration mail-address "errata@fixedpoint.jp")
   (define-configuration url-base (string-append "http://" domain))
+
+  (define-configuration port-number)
+
+  (define-configuration mysql-user)
+  (define-configuration mysql-password)
+  (define-configuration mysql-database)
 
   (define-configuration aws-access-key-id)
   (define-configuration aws-secret-access-key)
