@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-
-ypsilon --sitelib=sitelib script/server.scm $1 $2
