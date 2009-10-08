@@ -3,10 +3,11 @@
 
 (import (lunula session)
         (lunula mysql)
+        (only (errata configuration) mysql-user mysql-password mysql-database)
         (errata))
 
-(connect "localhost" "root" "yoursql" "errata")
+(connect "localhost" mysql-user mysql-password mysql-database)
 
-(save (make-account 1 "x" "X" "xxxxxxxx" "x@example.com" "http://www.example.com/"))
+;; FIXME
 
 (close)
