@@ -12,6 +12,7 @@
           (lunula gettext)
           (prefix (lunula html) html:)
           (prefix (lunula log) log:)
+          (lunula mysql)
           (lunula session)
           (only (lunula string) blank?)
           (lunula tree)
@@ -288,10 +289,12 @@
                           => done)
                          (else
                           (let ((ex (make-exlibris a-id (id-of r) 0)))
-                            (if (and (execute "BEGIN")
-                                     (execute "UPDATE exlibris SET position = position + 1")
-                                     (save ex)
-                                     (execute "COMMIT"))
+                            (if (call-with-mysql
+                                 (lambda (mysql)
+                                   (and (execute mysql "BEGIN")
+                                        (execute mysql "UPDATE exlibris SET position = position + 1")
+                                        (save mysql ex)
+                                        (execute mysql "COMMIT"))))
                                 (done ex)
                                 (page (io sess) private (__ hmm-an-error-occurred))))))))
 
@@ -450,24 +453,28 @@
        (cond ((lookup exlibris id)
               => (lambda (ex)
                    (if (and (= (exlibris-account-id ex) (session->account-id sess)) ; security
-                            (for-all
-                             execute
-                             `("BEGIN"
-                               ,(format "UPDATE exlibris SET position = position + 1 WHERE position <= '~d'" (exlibris-position ex))
-                               ,(format "UPDATE exlibris SET position = 0 WHERE id = '~d'" (id-of ex))
-                               "COMMIT")))
+                            (call-with-mysql
+                             (lambda (mysql)
+                               (for-all
+                                (lambda (query) (execute mysql query))
+                                `("BEGIN"
+                                  ,(format "UPDATE exlibris SET position = position + 1 WHERE position <= '~d'" (exlibris-position ex))
+                                  ,(format "UPDATE exlibris SET position = 0 WHERE id = '~d'" (id-of ex))
+                                  "COMMIT")))))
                        (redirect (io sess) 'shelf)
                        (page (io sess) private (__ hmm-an-error-occurred)))))
              (else (redirect (io sess) 'shelf))))))
 
   (define (rewrite-revision-id account-id old-id new-id)
-    (execute "BEGIN")
-    (for-each
-     (lambda (table)
-       (let ((template "UPDATE ~a SET revision_id = '~d' WHERE account_id = '~d' AND revision_id = '~d'"))
-         (execute (format template table new-id account-id old-id))))
-     '("quotation" "report" "report_history"))
-    (execute "COMMIT"))
+    (call-with-mysql
+     (lambda (mysql)
+       (execute mysql "BEGIN")
+       (for-each
+        (lambda (table)
+          (let ((template "UPDATE ~a SET revision_id = '~d' WHERE account_id = '~d' AND revision_id = '~d'"))
+            (execute mysql (format template table new-id account-id old-id))))
+        '("quotation" "report" "report_history"))
+       (execute mysql "COMMIT"))))
 
   (define (delete-orphan-revisions)
     (execute "DELETE FROM revision WHERE NOT EXISTS (SELECT 1 FROM exlibris e WHERE revision.id = e.revision_id)"))
