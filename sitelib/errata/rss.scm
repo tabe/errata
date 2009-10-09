@@ -2,7 +2,7 @@
   (export emit
           start
           query)
-  (import (only (core) format lookup-process-environment system)
+  (import (only (core) format system)
           (rnrs)
           (only (rnrs eval) eval environment)
           (only (srfi :13) string-tokenize)

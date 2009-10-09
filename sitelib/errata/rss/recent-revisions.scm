@@ -6,7 +6,7 @@
           (match)
           (prefix (only (uri) encode-string) uri:)
           (only (lunula mod_lisp) build-api-path)
-          (only (lunula mysql) close connect lookup-all)
+          (only (lunula mysql) close connect)
           (only (lunula persistent-record) created-at-of)
           (only (lunula xml) escape-string)
           (lunula rss)
