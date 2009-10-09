@@ -206,7 +206,7 @@
      (io request)
      (lambda (sess)
        (let* ((a-id (session->account-id sess))
-              (pref (lookup preference `((account-id ,a-id)))))
+              (pref (lookup preference ((account-id a-id)))))
          (let loop ((e (form (io sess) (preference-to-edit (and (preference? pref) (preference->preference-to-edit pref))) private)))
            (cond ((preference-to-edit? e)
                   (guide (validate-preference-to-edit e)
@@ -244,7 +244,7 @@
            (else (page (io sess) public (__ please-retry))))))
 
   (define (existing-revisions bib-id . last)
-    (let ((revisions (lookup-all revision `((bib-id ,bib-id)))))
+    (let ((revisions (lookup-all revision ((bib-id bib-id)))))
       (cond ((null? revisions) '())
             ((null? last) revisions)
             (else (remp (lambda (r) (= (car last) (id-of r))) revisions)))))
@@ -283,8 +283,8 @@
                (define (save-exlibris r)
                  (let ((a-id (session->account-id sess))
                        (done (lambda (ex) (page (io sess) desk (id-of ex)))))
-                   (cond ((lookup exlibris `((account-id ,a-id)
-                                             (revision-id ,(id-of r))))
+                   (cond ((lookup exlibris ((account-id a-id)
+                                            (revision-id (id-of r))))
                           => done)
                          (else
                           (let ((ex (make-exlibris a-id (id-of r) 0)))
@@ -299,9 +299,9 @@
                       (guide (validate-revision r)
                         (lambda (ht) (specify-revision (form (io sess) (revision r) private (hashtable->messages ht))))
                         (lambda _
-                          (cond ((lookup revision `((bib-id ,(id-of b))
-                                                    (name ,(revision-name r))
-                                                    (revised-at ,(revision-revised-at r))))
+                          (cond ((lookup revision ((bib-id (id-of b))
+                                                   (name (revision-name r))
+                                                   (revised-at (revision-revised-at r))))
                                  => save-exlibris)
                                 ((begin (revision-bib-id-set! r (id-of b)) (save r))
                                  (save-exlibris r))
@@ -339,8 +339,8 @@
                      ((valid-isbn? isbn)
                       => (lambda (n)
                            (let ((b (case n
-                                      ((10) (lookup bib `((isbn10 ,isbn))))
-                                      (else (lookup bib `((isbn13 ,isbn)))))))
+                                      ((10) (lookup bib ((isbn10 isbn))))
+                                      (else (lookup bib ((isbn13 isbn)))))))
                              (if (bib? b)
                                  (confirm-bib b)
                                  (call/cc
@@ -488,14 +488,14 @@
                             (guide (validate-revision r-new)
                               (lambda (ht) (loop (form (io sess) (revision r-new) private (hashtable->messages ht))))
                               (lambda _
-                                (cond ((lookup revision `((bib-id ,(revision-bib-id r))
-                                                          (name ,(revision-name r-new))
-                                                          (revised-at ,(revision-revised-at r-new))))
+                                (cond ((lookup revision ((bib-id (revision-bib-id r))
+                                                         (name (revision-name r-new))
+                                                         (revised-at (revision-revised-at r-new))))
                                        => (lambda (r-cur)
                                             (cond ((= (id-of r) (id-of r-cur)) ; nothing changed
                                                    (page (io sess) desk id))
-                                                  ((lookup exlibris `((account-id ,(exlibris-account-id ex))
-                                                                      (revision-id ,(id-of r-cur))))
+                                                  ((lookup exlibris ((account-id (exlibris-account-id ex))
+                                                                     (revision-id (id-of r-cur))))
                                                    => (lambda (ex-cur) ; it already exists
                                                         (page (io sess) desk (id-of ex-cur))))
                                                   ((begin
@@ -560,9 +560,9 @@
      (io request data)
      (lambda (sess id)
        (cond ((lookup exlibris
-                      `((account-id ,(session->account-id sess)) ; security
-                        (id ,id)))
-              (let ((r (lookup review `((exlibris-id ,id)))))
+                      ((account-id (session->account-id sess)) ; security
+                       (id id)))
+              (let ((r (lookup review ((exlibris-id id)))))
                 (let loop ((r-new (form (io sess) (review r) private)))
                   (if (review? r-new)
                       (guide (validate-review r-new)
@@ -619,7 +619,7 @@
                  c-id))
 
   (define (report-format account-id)
-    (cond ((lookup preference `((account-id ,account-id))) => preference-report-format)
+    (cond ((lookup preference ((account-id account-id))) => preference-report-format)
           (else "plain")))
 
   (define-scenario (new-report io request data)
@@ -628,8 +628,8 @@
      (lambda (sess id)
        (let ((a-id (session->account-id sess)))
          (cond ((lookup exlibris
-                        `((account-id ,a-id) ; security
-                          (id ,id)))
+                        ((account-id a-id) ; security
+                         (id id)))
                 => (lambda (ex)
                      (let ((f (report-format a-id)))
 
@@ -739,8 +739,8 @@
      (cond ((and rep-id
                  ex-id
                  (lookup report
-                         `((account-id ,(session->account-id sess)) ; security
-                           (id ,rep-id))))
+                         ((account-id (session->account-id sess)) ; security
+                          (id rep-id))))
             => (lambda (rep)
                  (and (let ((c (form (io sess) (confirmation) private (__ are-you-sure-to-drop-report?))))
                         (yes? c))

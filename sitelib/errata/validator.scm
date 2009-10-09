@@ -105,7 +105,7 @@
 
   (define-validator (validate-new-nick nick)
     (nick-already-used)
-    (when (lookup account `((nick ,nick)))
+    (when (lookup account ((nick nick)))
       (nick-already-used)))
 
   (define-validator (same-password password password-re)
@@ -125,7 +125,7 @@
 
   (define-validator (existing-account a)
     (does-not-exist)
-    (cond ((lookup account `((nick ,(account-to-login-nick a))))
+    (cond ((lookup account ((nick (account-to-login-nick a))))
            => (lambda (found)
                 (let ((algorithm (account-hash-algorithm found)))
                   (cond ((string=? "sha-256" algorithm)
@@ -144,7 +144,7 @@
 
   (define-validator (existing-mail-address a)
     (does-not-exist)
-    (or (lookup account `((mail-address ,(forgotten-account-mail-address a))))
+    (or (lookup account ((mail-address (forgotten-account-mail-address a))))
         (does-not-exist)))
 
   (define-composite-validator validate-password-reset
