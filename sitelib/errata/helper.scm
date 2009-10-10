@@ -45,7 +45,7 @@
   (define (errata-logo uuid . _)
     (html:h1 ((id "logo") (title "えらった べーた"))
              (html:a ((href (build-entry-path 'index uuid)))
-                     (cons "Errata" (html:span ((style "color:red;")) "β")))))
+                     (cons "Errata" (html:span ((style "color:red;")) "&#x03B2;")))))
 
   (define errata-rss-links
     (map
