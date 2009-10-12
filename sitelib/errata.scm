@@ -17,6 +17,7 @@
           (only (lunula string) blank?)
           (lunula tree)
           (only (lunula persistent-record) string->id id-of id-set!)
+          (only (lunula template) template-environment)
           (lunula validation)
           (prefix (only (errata configuration) url-base mail-address) errata:)
           (only (errata query) query-image)
