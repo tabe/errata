@@ -1,5 +1,6 @@
 (library (errata helper)
-  (export errata-keywords
+  (export errata-description
+          errata-keywords
           errata-logo
           errata-rss-links
           powered-by-lunula
@@ -38,6 +39,9 @@
           (errata model)
           (errata helper pagination)
           (errata page))
+
+  (define errata-description
+    (html:meta ((name "description") (content "書籍などの正誤表を共有するためのサービス。"))))
 
   (define errata-keywords
     (html:meta ((name "keywords") (content "errata,typo,proofreading,正誤表,共有,誤植,タイポ,誤訳,校正"))))

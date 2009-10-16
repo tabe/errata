@@ -1,6 +1,7 @@
 (doctype transitional)
 (html
  (head
+  errata-description
   errata-keywords
   (title "Errata")
   (link ((href "/stylesheet/errata.css") (rel "stylesheet") (type "text/css")))
