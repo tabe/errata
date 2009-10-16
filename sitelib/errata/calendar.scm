@@ -20,7 +20,7 @@
           ((<= 1912 year)
            (string-append "大正" (integer->y (- year 1911))))
           ((<= 1868 year)
-           (string-append "明治" (integer->y (- year 1985))))
+           (string-append "明治" (integer->y (- year 1867))))
           (else
            (error 'ad->japanese-era (number->string year)))))
 
