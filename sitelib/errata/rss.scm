@@ -49,13 +49,17 @@
   (define (emit category)
     (let ((tmp (format "~a/~a.~a.~d" rss-temporary-directory category *extension* (random-integer 100)))
           (dst (format "~a/~a.~a" rss-output-directory category *extension*)))
-      (call-with-output-file tmp
-        (lambda (port)
-          (put-tree
-           port
-           (rss-tree mysql-user mysql-password mysql-database category))))
-      (system (format "/usr/bin/install -m 644 ~a ~a" tmp dst))
-      (delete-file tmp)))
+      (dynamic-wind
+          (lambda ()
+            (call-with-output-file tmp
+              (lambda (port)
+                (put-tree
+                 port
+                 (rss-tree mysql-user mysql-password mysql-database category)))))
+          (lambda ()
+            (system (format "/usr/bin/install -m 644 ~a ~a" tmp dst)))
+          (lambda ()
+            (delete-file tmp)))))
 
   (define (server)
     (let ((socket (make-server-socket (number->string rss-port-number))))
