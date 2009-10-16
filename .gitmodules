@@ -1,0 +1,9 @@
+[submodule "submodules/lunula"]
+	path = submodules/lunula
+	url = git@github.com:tabe/lunula.git
+[submodule "submodules/manued"]
+	path = submodules/manued
+	url = git@github.com:tabe/manued.git
+[submodule "submodules/lcs"]
+	path = submodules/lcs
+	url = git@github.com:tabe/lcs.git

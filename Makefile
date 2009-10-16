@@ -1,8 +1,8 @@
-YPSILON_SITELIB=/home/tabe/lunula/sitelib:/home/tabe/base64:/home/tabe/lcs:/home/tabe/manued:/home/tabe/ssax:/home/tabe/uri:/home/tabe/xunit:/home/tabe/ypsilon-foreign-lib/sitelib:/home/tabe/ypsilon-http/sitelib
+YPSILON_SITELIB=submodules/lunula/sitelib:submodules/lunula/submodules/base64:submodules/lcs:submodules/manued:/home/tabe/ssax:submodules/lunula/submodules/uri:submodules/lunula/submodules/xunit:submodules/lunula/submodules/ypsilon-foreign-lib/sitelib:/home/tabe/ypsilon-http/sitelib
 
 YPSILON=env YPSILON_SITELIB=$(YPSILON_SITELIB) \
-  LUNULA_CONFIGURATION_DIRECTORY=./config \
-  LUNULA_TEMPLATES=/home/tabe/errata/templates \
+  LUNULA_CONFIGURATION_DIRECTORY=config \
+  LUNULA_TEMPLATES=templates \
   ypsilon --sitelib=sitelib --heap-limit=16
 
 .PHONY: check migrate dump fixtures restore svc svstat stats test
