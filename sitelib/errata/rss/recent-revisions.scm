@@ -5,7 +5,7 @@
   (import (rnrs)
           (match)
           (prefix (only (uri) encode-string) uri:)
-          (only (lunula mod_lisp) build-api-path)
+          (only (lunula controller) build-api-path)
           (only (lunula mysql) close connect)
           (only (lunula persistent-record) created-at-of)
           (only (lunula xml) escape-string)

@@ -27,7 +27,7 @@
           (only (lcs) lcs-fold)
           (prefix (only (uri) encode-string) uri:)
           (only (lunula gettext) __)
-          (only (lunula mod_lisp) entry-paths build-entry-path build-api-path)
+          (only (lunula controller) entry-paths build-entry-path build-api-path)
           (only (lunula mysql) lookup lookup-all)
           (prefix (lunula html) html:)
           (only (lunula persistent-record) id-of created-at-of)
