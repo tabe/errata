@@ -17,8 +17,7 @@
           revision-report-tr
           revision-window
           shelf-window
-          exlibris-window
-          build-entry-path)
+          exlibris-window)
   (import (except (rnrs) div)
           (only (core) format)
           (match)
@@ -27,9 +26,9 @@
           (only (lcs) lcs-fold)
           (prefix (only (uri) encode-string) uri:)
           (only (lunula gettext) __)
-          (only (lunula controller) entry-paths build-entry-path build-api-path)
           (only (lunula mysql) lookup lookup-all)
           (prefix (lunula html) html:)
+          (only (lunula path) build-entry-path build-api-path)
           (only (lunula persistent-record) id-of created-at-of)
           (only (lunula session) account account-nick account-name)
           (only (lunula string) blank? string-truncate)

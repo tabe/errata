@@ -4,8 +4,8 @@
           (only (core) format)
           (prefix (lunula html) html:)
           (only (srfi :1) take)
-          (only (lunula controller) build-entry-path)
-          (only (lunula mysql) lookup-all))
+          (only (lunula mysql) lookup-all)
+          (only (lunula path) build-entry-path))
 
   (define *exlibris-per-page* 5)
 
