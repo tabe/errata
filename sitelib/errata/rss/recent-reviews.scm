@@ -4,31 +4,17 @@
           feed-item)
   (import (rnrs)
           (match)
-          (prefix (only (uri) encode-string) uri:)
           (only (lunula mysql) close connect)
-          (only (lunula path) build-api-path)
-          (only (lunula persistent-record) id-of updated-at-of)
+          (only (lunula persistent-record) updated-at-of)
           (only (lunula tree) tree->string)
           (only (lunula xml) escape-string)
-          (lunula rss)
-          (only (lunula session) account)
-          (only (errata calendar) datetime->y/m/d)
+          (only (lunula rss) dc:date dc:subject description item link title rdf:li)
           (only (errata configuration) url-base)
           (only (errata helper) review-div)
-          (errata model))
+          (only (errata model) bib-title recent-reviews)
+          (only (errata url) bib&revision->url))
 
   (define *limit* 10)
-
-  (define (review&revision->url rvw r isbn10)
-    (string-append
-     url-base
-     (build-api-path 'r
-                     #f
-                     isbn10
-                     (uri:encode-string (revision-name r))
-                     (datetime->y/m/d (revision-revised-at r)))
-     "#review"
-     (number->string (id-of rvw))))
 
   (define (feed-set user password database)
     (call/cc
@@ -44,31 +30,24 @@
   (define (feed-entry tuple)
     (match tuple
       ((rvw ex a r b)
-       (cond ((bib-isbn10 b)
-              => (lambda (isbn10)
-                   (rdf:li ((rdf:resource (review&revision->url rvw r isbn10))))))
-             (else '())))
+       (rdf:li ((rdf:resource (string-append url-base (bib&revision->url b r #f rvw))))))
       (_ '())))
 
   (define (feed-item tuple)
     (match tuple
       ((rvw ex a r b)
-       (cond ((bib-isbn10 b)
-              => (lambda (isbn10)
-                   (let* ((url (review&revision->url rvw r isbn10))
-                          (t (bib-title b))
-                          (et (escape-string t)))
-                     (item
-                      ((rdf:about url))
-                      (title et)
-                      (link url)
-                      (dc:subject et)
-                      (dc:date (updated-at-of rvw))
-                      (description
-                       (escape-string
-                        (tree->string
-                         (review-div (list rvw ex a)))))))))
-             (else '())))
+       (let ((url (string-append url-base (bib&revision->url b r #f rvw)))
+             (et (escape-string (bib-title b))))
+         (item
+          ((rdf:about url))
+          (title et)
+          (link url)
+          (dc:subject et)
+          (dc:date (updated-at-of rvw))
+          (description
+           (escape-string
+            (tree->string
+             (review-div (list rvw ex a))))))))
       (_ '())))
 
 )
