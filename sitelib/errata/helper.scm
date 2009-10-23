@@ -27,7 +27,7 @@
           (only (srfi :19) date->string date-year)
           (only (lcs) lcs-fold)
           (prefix (only (uri) encode-string) uri:)
-          (only (lunula gettext) __)
+          (only (lunula gettext) __ ___)
           (only (lunula mysql) lookup lookup-all)
           (prefix (lunula html) html:)
           (only (lunula path) build-entry-path build-api-path)
@@ -55,18 +55,13 @@
 
   (define errata-rss-links
     (map
-     (lambda (name title)
-       (html:link ((href (format "/~a.rss" name)) (rel "alternate") (type "application/rss+xml") (title title))))
+     (lambda (name)
+       (html:link ((href (format "/~a.rss" name)) (rel "alternate") (type "application/rss+xml") (title (___ name)))))
      '(recent-revisions
        recent-reports
        recent-reviews
        recent-acknowledgements
-       recent-agreements)
-     '("Recent revisions"
-       "Recent reports"
-       "Recent reviews"
-       "Recent acknowledgements"
-       "Recent agreements")))
+       recent-agreements)))
 
   (define powered-by-lunula
     (html:div ((id "bottom")) "powered by "
