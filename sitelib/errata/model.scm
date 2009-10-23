@@ -391,8 +391,7 @@
                  (report (quotation))
                  (revision quotation)
                  (bib revision))
-                ((bib (image #t))
-                 (exists (publicity
+                ((exists (publicity
                           (exlibris publicity))
                          ((exlibris (revision)))))
                 ((order-by (acknowledgement (updated-at desc)))
@@ -406,8 +405,7 @@
                  (report (quotation))
                  (revision quotation)
                  (bib revision))
-                ((bib (image #t))
-                 (exists (publicity
+                ((exists (publicity
                           (exlibris publicity))
                          ((exlibris (revision)))))
                 ((order-by (agreement (updated-at desc)))
@@ -419,7 +417,7 @@
                  (account exlibris)
                  (revision exlibris)
                  (bib revision))
-                ((bib (image #t)))
+                ()
                 ((order-by (publicity (created-at desc)))
                  (limit n))))
 
