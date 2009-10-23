@@ -46,6 +46,7 @@
           bib
           bib?
           make-bib
+          bib-uuid
           bib-title
           bib-title-set!
           bib-isbn10
@@ -233,12 +234,13 @@
     (fields report-format))
 
   (define-persistent-record-type bib
-    (fields (mutable title) (mutable isbn13) (mutable isbn10) (mutable image))
+    (fields uuid (mutable title) (mutable isbn13) (mutable isbn10) (mutable image))
     (protocol
      (persistent-protocol
       (lambda (p)
-        (lambda (title isbn13 isbn10 image)
-          (p title
+        (lambda (uuid title isbn13 isbn10 image)
+          (p uuid
+             title
              isbn13
              isbn10
              image))))))

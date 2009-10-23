@@ -342,7 +342,7 @@
                      ((blank? isbn)
                       (guide (validate-bib-title title)
                         (lambda (ht) (specify-bib (form (io sess) (new-exlibris new-ex) private (hashtable->messages ht))))
-                        (lambda _ (confirm-bib (make-bib title #f #f #f)))))
+                        (lambda _ (confirm-bib (make-bib (make-uuid) title #f #f #f)))))
                      ((valid-isbn? isbn)
                       => (lambda (n)
                            (let ((b (case n
@@ -365,7 +365,8 @@
                                                      (isbn10 (get-line port))
                                                      (url    (get-line port))
                                                      (title  (get-line port)))
-                                                (confirm-bib (make-bib (and (not (eof-object? title)) title)
+                                                (confirm-bib (make-bib (make-uuid)
+                                                                       (and (not (eof-object? title)) title)
                                                                        (and (not (eof-object? isbn13)) isbn13)
                                                                        (and (not (eof-object? isbn10)) isbn10)
                                                                        (and (not (eof-object? url)) url))))))))))))))
@@ -844,6 +845,20 @@
                              (revision exlibris))
                             ((report (revision))))))
            => (lambda (tuple) (id-of (car tuple))))
+          (else #f)))
+
+  (define-api (revision uuid name year month day)
+    validate-/uuid/revision-name/year/month/day
+    table
+    (cond ((lookup (publicity
+                    (exlibris publicity)
+                    (account exlibris)
+                    (revision exlibris)
+                    (bib revision))
+                   ((bib (uuid uuid))
+                    (revision (name name)
+                              (revised-at (format "~a-~a-~a" year month day)))))
+           => (lambda (tuple) (id-of (cadddr tuple))))
           (else #f)))
 
   ;; input fields

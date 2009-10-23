@@ -36,6 +36,7 @@ create table preference (
 ) default charset=utf8;
 create table bib (
   id int not null auto_increment,
+  uuid varchar(256) not null unique,
   title text not null,
   isbn13 varchar(13),
   isbn10 varchar(10),

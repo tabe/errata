@@ -20,7 +20,8 @@
           validate-month
           validate-day
           validate-isbn10/revision-name/year/month/day
-          validate-/uuid)
+          validate-/uuid
+          validate-/uuid/revision-name/year/month/day)
   (import (rnrs)
           (pregexp)
           (prefix (only (lunula hmac) sha-256) hmac:)
@@ -290,5 +291,12 @@
 
   (define-composite-validator validate-/uuid
     ((0) validate-uuid))
+
+  (define-composite-validator validate-/uuid/revision-name/year/month/day
+    ((0) validate-uuid)
+    ((1) validate-revision-name)
+    ((2) validate-year)
+    ((3) validate-month)
+    ((4) validate-day))
 
 )

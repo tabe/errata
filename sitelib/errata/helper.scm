@@ -40,7 +40,7 @@
           (errata model)
           (errata helper pagination)
           (errata page)
-          (only (errata url) record-fragment report->url))
+          (only (errata url) bib&revision->url record-fragment report->url))
 
   (define errata-description
     (html:meta ((name "description") (content "書籍などの正誤表を共有するためのサービス。"))))
@@ -126,57 +126,27 @@
   (define (recent-revision uuid tuple)
     (match tuple
       ((pub ex a r b)
-       (cond ((bib-isbn10 b)
-              => (lambda (isbn10)
-                   (html:p (html:a ((href (build-api-path 'r
-                                                          uuid
-                                                          isbn10
-                                                          (uri:encode-string (revision-name r))
-                                                          (datetime->y/m/d (revision-revised-at r)))))
-                                   (bib-title b)))))
-             (else '())))
+       (html:p (html:a ((href (bib&revision->url b r uuid))) (bib-title b))))
       (_ "?")))
 
   (define (recent-review uuid tuple)
     (match tuple
       ((rvw ex a r b)
-       (cond ((bib-isbn10 b)
-              => (lambda (isbn10)
-                   (html:p
-                    (html:a ((href (string-append
-                                    (build-api-path 'r
-                                                    uuid
-                                                    isbn10
-                                                    (uri:encode-string (revision-name r))
-                                                    (datetime->y/m/d (revision-revised-at r)))
-                                    "#review"
-                                    (number->string (id-of rvw)))))
-                            (html:escape-string
-                             (string-truncate
-                              (review-body rvw)
-                              32))))))
-             (else '())))
+       (html:p (html:a ((href (bib&revision->url b r uuid rvw)))
+                       (html:escape-string
+                        (string-truncate
+                         (review-body rvw)
+                         32)))))
       (_ "?")))
 
   (define (recent-report uuid tuple)
     (match tuple
       ((rep a r b q c)
-       (cond ((bib-isbn10 b)
-              => (lambda (isbn10)
-                   (html:p
-                    (html:a ((href (string-append
-                                    (build-api-path 'r
-                                                    uuid
-                                                    isbn10
-                                                    (uri:encode-string (revision-name r))
-                                                    (datetime->y/m/d (revision-revised-at r)))
-                                    "#report"
-                                    (number->string (id-of rep)))))
-                            (html:escape-string
-                             (string-truncate
-                              (report-subject rep)
-                              32))))))
-             (else '())))
+       (html:p (html:a ((href (bib&revision->url b r uuid rep)))
+                       (html:escape-string
+                        (string-truncate
+                         (report-subject rep)
+                         32)))))
       (_ "?")))
 
   (define (links uuid . _)
@@ -360,11 +330,7 @@
                                   "("
                                   (datetime->ymd (revision-revised-at r))
                                   ")")
-                         (html:td (html:a ((href (build-api-path 'r
-                                                                 uuid
-                                                                 (bib-isbn10 b)
-                                                                 (uri:encode-string (revision-name r))
-                                                                 (datetime->y/m/d (revision-revised-at r)))))
+                         (html:td (html:a ((href (bib&revision->url b r uuid)))
                                           (__ permanent-link)))))
                        (_ '())))
                    tuples)))))))))
@@ -561,21 +527,14 @@
      (revision-skeleton b r
                         '()
                         (__ parmalink)
-                        (cond ((bib-isbn10 b)
-                               => (lambda (isbn10)
-                                    (html:input ((class "parmalink")
-                                                 (type "text")
-                                                 (readonly #t)
-                                                 (size 64)
-                                                 (value
-                                                  (string-append
-                                                   url-base
-                                                   (build-api-path 'r
-                                                                   #f
-                                                                   isbn10
-                                                                   (uri:encode-string (revision-name r))
-                                                                   (datetime->y/m/d (revision-revised-at r)))))))))
-                              (else '())))
+                        (html:input ((class "parmalink")
+                                     (type "text")
+                                     (readonly #t)
+                                     (size 64)
+                                     (value
+                                      (string-append
+                                       url-base
+                                       (bib&revision->url b r))))))
      (html:h4 (__ Table) "&nbsp;" creativecommons-attribution-logo)
      (revision-reports uuid r (lambda (rep)
                                 (html:form ((action (build-entry-path 'detail uuid)))
