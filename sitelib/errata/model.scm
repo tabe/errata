@@ -106,6 +106,7 @@
           report
           report?
           make-report
+          report-uuid
           report-account-id
           report-account-id-set!
           report-revision-id
@@ -144,6 +145,7 @@
           acknowledgement-comment
           acknowledgement-positive?
           acknowledgement-negative?
+          acknowledgement->caption
           agreement
           agreement?
           make-agreement
@@ -152,6 +154,9 @@
           agreement-correction-id
           agreement-correction-id-set!
           agreement-comment
+          agreement->caption
+          recent-acknowledgements
+          recent-agreements
           recent-revisions
           recent-reviews
           recent-reports
@@ -161,7 +166,8 @@
           (prefix (lunula hmac) hmac:)
           (only (lunula mysql) lookup-all)
           (lunula persistent-record)
-          (lunula session))
+          (lunula session)
+          (only (lunula string) string-truncate))
 
   (define-record-type new-account
     (fields nick name password password-re mail-address))
@@ -300,12 +306,13 @@
              body))))))
 
   (define-persistent-record-type report
-    (fields (mutable account-id) (mutable revision-id) subject (mutable quotation-id) (mutable correction-id))
+    (fields uuid (mutable account-id) (mutable revision-id) subject (mutable quotation-id) (mutable correction-id))
     (protocol
      (persistent-protocol
       (lambda (p)
-        (lambda (account-id revision-id subject quotation-id correction-id)
-          (p (maybe-id account-id)
+        (lambda (uuid account-id revision-id subject quotation-id correction-id)
+          (p uuid
+             (maybe-id account-id)
              (maybe-id revision-id)
              subject
              (maybe-id quotation-id)
@@ -357,6 +364,10 @@
     (assert (acknowledgement? a))
     (string=? (acknowledgement-sign a) "negative"))
 
+  (define (acknowledgement->caption a)
+    (assert (acknowledgement? a))
+    (string-truncate (acknowledgement-comment a) 32))
+
   (define-persistent-record-type agreement
     (fields (mutable account-id) (mutable correction-id) comment)
     (protocol
@@ -366,6 +377,39 @@
           (p (maybe-id account-id)
              (maybe-id correction-id)
              comment))))))
+
+  (define (agreement->caption a)
+    (assert (agreement? a))
+    (string-truncate (agreement-comment a) 32))
+
+  (define (recent-acknowledgements n)
+    (lookup-all (acknowledgement
+                 (account acknowledgement)
+                 (quotation acknowledgement)
+                 (report (quotation))
+                 (revision quotation)
+                 (bib revision))
+                ((bib (image #t))
+                 (exists (publicity
+                          (exlibris publicity))
+                         ((exlibris (revision)))))
+                ((order-by (acknowledgement (updated-at desc)))
+                 (limit n))))
+
+  (define (recent-agreements n)
+    (lookup-all (agreement
+                 (account agreement)
+                 (correction agreement)
+                 (quotation correction)
+                 (report (quotation))
+                 (revision quotation)
+                 (bib revision))
+                ((bib (image #t))
+                 (exists (publicity
+                          (exlibris publicity))
+                         ((exlibris (revision)))))
+                ((order-by (agreement (updated-at desc)))
+                 (limit n))))
 
   (define (recent-revisions n)
     (lookup-all (publicity

@@ -71,6 +71,16 @@ h1 a {
     font-size: smaller;
 }
 
+#recent-acknowledgements {
+    background-color: #ffffaa;
+    font-size: smaller;
+}
+
+#recent-agreements {
+    background-color: #ffffaa;
+    font-size: smaller;
+}
+
 #belt {
     clear: both;
     text-align: center;

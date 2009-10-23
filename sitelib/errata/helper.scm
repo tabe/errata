@@ -12,6 +12,8 @@
           belt
           public-revisions
           bib-window
+          acknowledgement-view
+          agreement-view
           report-window
           review-div
           revision-report-tr
@@ -37,7 +39,8 @@
           (only (errata isbn) isbn10->amazon)
           (errata model)
           (errata helper pagination)
-          (errata page))
+          (errata page)
+          (only (errata url) record-fragment report->url))
 
   (define errata-description
     (html:meta ((name "description") (content "書籍などの正誤表を共有するためのサービス。"))))
@@ -56,10 +59,14 @@
        (html:link ((href (format "/~a.rss" name)) (rel "alternate") (type "application/rss+xml") (title title))))
      '(recent-revisions
        recent-reports
-       recent-reviews)
+       recent-reviews
+       recent-acknowledgements
+       recent-agreements)
      '("Recent revisions"
        "Recent reports"
-       "Recent reviews")))
+       "Recent reviews"
+       "Recent acknowledgements"
+       "Recent agreements")))
 
   (define powered-by-lunula
     (html:div ((id "bottom")) "powered by "
@@ -104,6 +111,22 @@
       (modify-account . "アカウントの編集")
       (cancel . "アカウントの解除")
       ))
+
+  (define (recent-acknowledgement uuid tuple)
+    (match tuple
+      ((ack a q rep r b)
+       (html:p
+        (html:a ((href (report->url rep uuid ack)))
+                (html:escape-string (acknowledgement->caption ack)))))
+      (_ "?")))
+
+  (define (recent-agreement uuid tuple)
+    (match tuple
+      ((agr a c q rep r b)
+       (html:p
+        (html:a ((href (report->url rep uuid agr)))
+                (html:escape-string (agreement->caption agr)))))
+      (_ "?")))
 
   (define (recent-revision uuid tuple)
     (match tuple
@@ -196,6 +219,18 @@
       (map
        (lambda (tuple) (recent-report uuid tuple))
        (recent-reports 3)))
+     (html:div
+      ((id "recent-acknowledgements") (class "corner"))
+      (html:h3 (__ recent-acknowledgements))
+      (map
+       (lambda (tuple) (recent-acknowledgement uuid tuple))
+       (recent-acknowledgements 3)))
+     (html:div
+      ((id "recent-agreements") (class "corner"))
+      (html:h3 (__ recent-agreements))
+      (map
+       (lambda (tuple) (recent-agreement uuid tuple))
+       (recent-agreements 3)))
      ))
 
   (define (belt uuid . _)
@@ -369,12 +404,19 @@
       (html:td))
      x))
 
+  (define-syntax anchor
+    (syntax-rules ()
+      ((_ (record a0 ...) e0 ...)
+       (html:a ((name (record-fragment record))
+                a0 ...)
+               e0 ...))))
+
   (define (revision-report-tr uuid rep a q c x y)
     (append
      (html:tr
       (html:td ((colspan 2) (style "font-size:small;"))
                (html:span ((class "pp")) "pp." (quotation-page q) "/" (quotation-position q)) "&nbsp;"
-               (html:a ((name (format "report~d" (id-of rep))) (class "subject")) (report-subject rep)) "&nbsp;"
+               (anchor (rep (class "subject")) (report-subject rep)) "&nbsp;"
                "("
                (html:span ((style "font-size:x-small;")) "reported by ")
                (signature a)
@@ -388,7 +430,7 @@
     (match tuple
       ((rvw ex a)
        (html:div ((class "dog") (style "background-color:#c7ff6f;"))
-                 (html:a ((name (format "review~d" (id-of rvw)))) (signature a) ":")
+                 (anchor (rvw) (signature a) ":")
                  (html:pre (html:escape-string (review-body rvw)))
                  ))
       (_ "?")))
@@ -449,6 +491,17 @@
                    (html:div ((class "dog")) (html:blockquote (reverse xb))))
           (html:td forms))))))
 
+  (define (acknowledgement-view ack a)
+    (html:div
+     (anchor (ack (class "credit")) (signature a) ":&nbsp;")
+     (html:span ((class (if (acknowledgement-positive? ack) "ack" "nak")))
+                (html:escape-string (acknowledgement-comment ack)))))
+
+  (define (agreement-view agr a)
+    (html:div
+     (anchor (agr (class "credit")) (signature a) ":&nbsp;")
+     (html:span (html:escape-string (agreement-comment agr)))))    
+
   (define (ack/nak-tr uuid rep q c)
     (append
      (with-uuid
@@ -476,13 +529,7 @@
               (map
                (lambda (tuple)
                  (match tuple
-                   ((ack a)
-                    (html:div
-                     (html:span ((class "credit"))
-                                (signature a)
-                                ":&nbsp;")
-                     (html:span ((class (if (acknowledgement-positive? ack) "ack" "nak")))
-                                (html:escape-string (acknowledgement-comment ack)))))
+                   ((ack a) (acknowledgement-view ack a))
                    (_ "?")))
                tuples))))
        (html:td
@@ -496,12 +543,7 @@
                (map
                 (lambda (tuple)
                   (match tuple
-                    ((agr a)
-                     (html:div
-                      (html:span ((class "credit"))
-                                 (signature a)
-                                 ":&nbsp;")
-                      (html:span (html:escape-string (agreement-comment agr)))))
+                    ((agr a) (agreement-view agr a))
                     (_ "?")))
                 tuples)))))))))
 

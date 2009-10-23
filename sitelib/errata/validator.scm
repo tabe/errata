@@ -19,7 +19,8 @@
           validate-year
           validate-month
           validate-day
-          validate-isbn10/revision-name/year/month/day)
+          validate-isbn10/revision-name/year/month/day
+          validate-/uuid)
   (import (rnrs)
           (pregexp)
           (prefix (only (lunula hmac) sha-256) hmac:)
@@ -69,6 +70,8 @@
   (define *agreement-comment-min-length* 1)
   (define *agreement-comment-max-length* 1024)
 
+  (define *uuid-max-length* 36)
+
   (define-string-length-validator validate-account-name
     (name-is-blank name-too-long)
     (*account-name-max-length*))
@@ -86,6 +89,16 @@
                (nick-too-long))
              (unless (pregexp-match "^[A-Za-z_][A-Za-z0-9_]*$" nick)
                (nick-invalid-char))))))
+
+  (define-validator (validate-uuid uuid)
+    (uuid-is-blank uuid-too-long uuid-invalid-char)
+    (let ((len (string-length uuid)))
+      (cond ((zero? len) (uuid-is-blank))
+            (else
+             (when (< *uuid-max-length* len)
+               (uuid-too-long))
+             (unless (pregexp-match "^[A-Za-z0-9-]+$" uuid)
+               (uuid-invalid-char))))))
 
   (define-string-length-validator validate-mail-address
     (mail-address-is-blank mail-address-too-short mail-address-too-long)
@@ -274,5 +287,8 @@
     ((2) validate-year)
     ((3) validate-month)
     ((4) validate-day))
+
+  (define-composite-validator validate-/uuid
+    ((0) validate-uuid))
 
 )

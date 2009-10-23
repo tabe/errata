@@ -254,6 +254,10 @@
                    (ja "新たに公開されたレビュー"))
    (recent-reports (en "Recent reports")
                    (ja "新たに公開された報告"))
+   (recent-acknowledgements (en "Recent acknowledgements")
+                            (ja "新たに公開されたコメント"))
+   (recent-agreements (en "Recent agreements")
+                      (ja "新たに公開された同意"))
    )
 
   (locale ja)

@@ -120,4 +120,13 @@
                   ((("489471274" "初版第15刷" "200" "06" "1")) invalid-isbn10 invalid-year invalid-day)
                   )
 
+(assert-validator validate-/uuid
+                  ((("1")))
+                  ((("f9a7b492-b33f-438d-8a5a-0208d885e2a5")))
+                  ((("")) uuid-is-blank)
+                  ((("f9a7b492-b33f-438d-8a5a-0208d885e2a%")) uuid-invalid-char)
+                  ((("f9a7b492-b33f-438d-8a5a-0208d885e2a5-")) uuid-too-long)
+                  ((("f9a7b492-b33f-438d-8a5a-0208d885e2a%-")) uuid-invalid-char uuid-too-long)
+                  )
+
 (report)

@@ -8,6 +8,7 @@
           (pregexp)
           (only (srfi :13) string-null?)
           (srfi :48)
+          (only (ypsilon concurrent) make-uuid)
           (only (lunula controller) add-input-fields define-api define-scenario form mail page redirect)
           (lunula gettext)
           (prefix (lunula html) html:)
@@ -538,7 +539,12 @@
               => (lambda (ex)
                    (cond ((and (= (exlibris-account-id ex) (session->account-id sess)) ; security
                                (save (make-publicity id)))
-                          (rss:query recent-revisions recent-reports recent-reviews)
+                          (rss:query
+                           recent-revisions
+                           recent-reports
+                           recent-reviews
+                           recent-acknowledgements
+                           recent-agreements)
                           (page (io sess) desk id))
                          (else (page (io sess) private (__ hmm-an-error-occurred))))))
              (else (redirect (io sess) 'shelf))))))
@@ -557,7 +563,12 @@
                          (match tuple
                            ((pub ex)
                             (cond ((destroy pub)
-                                   (rss:query recent-revisions recent-reports recent-reviews)
+                                   (rss:query
+                                    recent-revisions
+                                    recent-reports
+                                    recent-reviews
+                                    recent-acknowledgements
+                                    recent-agreements)
                                    (page (io sess) desk id))
                                   (else (page (io sess) private (__ hmm-an-error-occurred)))))
                            (_ (page (io sess) private (__ hmm-an-error-occurred))))))
@@ -622,7 +633,8 @@
                      (report-to-modify-correction-body rep)))
 
   (define (report-to-modify->report rep a-id r-id q-id c-id)
-    (make-report a-id
+    (make-report (make-uuid)
+                 a-id
                  r-id
                  (report-to-modify-subject rep)
                  q-id
@@ -705,6 +717,7 @@
            (let ((c-new (update-correction c q-new modified)))
              (and (save c-new)
                   (let ((rep-new (make-report
+                                  (make-uuid)
                                   (report-account-id rep)
                                   (report-revision-id rep)
                                   (report-to-modify-subject modified)
@@ -774,9 +787,10 @@
                          (lambda _
                            (acknowledgement-account-id-set! a (session->account-id sess))
                            (acknowledgement-quotation-id-set! a q-id)
-                           (if (save a)
-                               (page (io sess) detail r-id)
-                               (page (io sess) private (__ hmm-an-error-occurred)))))
+                           (cond ((save a)
+                                  (rss:query recent-acknowledgements)
+                                  (page (io sess) detail r-id))
+                                 (else (page (io sess) private (__ hmm-an-error-occurred))))))
                        (page (io sess) detail r-id)))))
            (else (redirect (io sess) 'table)))))
 
@@ -796,9 +810,10 @@
                          (lambda _
                            (agreement-account-id-set! a (session->account-id sess))
                            (agreement-correction-id-set! a c-id)
-                           (if (save a)
-                               (page (io sess) detail r-id)
-                               (page (io sess) private (__ hmm-an-error-occurred)))))
+                           (cond ((save a)
+                                  (rss:query recent-agreements)
+                                  (page (io sess) detail r-id))
+                                 (else (page (io sess) private (__ hmm-an-error-occurred))))))
                        (page (io sess) detail r-id)))))
            (else (redirect (io sess) 'index)))))
 
@@ -817,6 +832,18 @@
                     (revision (name name)
                               (revised-at (format "~a-~a-~a" year month day)))))
            => (lambda (tuple) (id-of (cadddr tuple))))
+          (else #f)))
+
+  (define-api (report uuid)
+    validate-/uuid
+    detail
+    (cond ((lookup (report)
+                   ((report (uuid uuid))
+                    (exists (publicity
+                             (exlibris publicity)
+                             (revision exlibris))
+                            ((report (revision))))))
+           => (lambda (tuple) (id-of (car tuple))))
           (else #f)))
 
   ;; input fields

@@ -99,6 +99,7 @@ create table correction (
 ) default charset=utf8;
 create table report (
   id int not null auto_increment,
+  uuid varchar(256) not null unique,
   account_id int not null,
   revision_id int not null,
   subject varchar(256) not null,

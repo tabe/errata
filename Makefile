@@ -45,9 +45,12 @@ test:
 	$(YPSILON) tests/errata/model.scm
 	$(YPSILON) tests/errata/page.scm
 	$(YPSILON) tests/errata/query.scm
+	$(YPSILON) tests/errata/rss/recent-acknowledgements.scm
+	$(YPSILON) tests/errata/rss/recent-agreements.scm
 	$(YPSILON) tests/errata/rss/recent-reports.scm
 	$(YPSILON) tests/errata/rss/recent-reviews.scm
 	$(YPSILON) tests/errata/rss/recent-revisions.scm
 	$(YPSILON) tests/errata/rss.scm
+	$(YPSILON) tests/errata/url.scm
 	$(YPSILON) tests/errata/validator.scm
 	$(YPSILON) tests/errata.scm

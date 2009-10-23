@@ -11,12 +11,18 @@
           (only (lunula persistent-record) id-of created-at-of)
           (only (lunula tree) tree->string)
           (only (lunula xml) escape-string)
-          (lunula rss)
+          (only (lunula rss) dc:date dc:subject description item link title rdf:li)
           (only (lunula session) account)
           (only (errata calendar) datetime->y/m/d)
           (only (errata configuration) url-base)
           (only (errata helper) revision-report-tr)
-          (errata model))
+          (only (errata model)
+                bib-isbn10
+                bib-title
+                recent-reports
+                report-subject
+                revision-name
+                revision-revised-at))
 
   (define *limit* 10)
 
