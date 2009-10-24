@@ -13,6 +13,12 @@
 (let ((agr (make-agreement #f #f "これはコメントです。")))
   (assert-string=? "これはコメントです。" (agreement->caption agr)))
 
+(let ((rvw (make-review #f "これはテストが含まれている。")))
+  (assert-string=? "これはテストが含まれている。" (review->caption rvw)))
+
+(let ((rep (make-report #f #f #f "レポートの題名" #f #f)))
+  (assert-string=? "レポートの題名" (report->caption rep)))
+
 (define-syntax assert-recent-stuff
   (syntax-rules ()
     ((_ name)

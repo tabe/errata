@@ -12,7 +12,7 @@
           (only (lunula rss) dc:date dc:subject description item link title rdf:li)
           (only (errata configuration) url-base)
           (only (errata helper) revision-report-tr)
-          (only (errata model) bib-title recent-reports report-subject)
+          (only (errata model) bib-title recent-reports report->caption)
           (only (errata url) bib&revision->url))
 
   (define *limit* 10)
@@ -38,7 +38,7 @@
     (match tuple
       ((rep a r b q c)
        (let* ((url (string-append url-base (bib&revision->url b r #f rep)))
-              (t (string-append (report-subject rep) " -- " (bib-title b)))
+              (t (string-append (report->caption rep) " -- " (bib-title b)))
               (et (escape-string t)))
          (item
           ((rdf:about url))

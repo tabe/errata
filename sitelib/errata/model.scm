@@ -86,6 +86,7 @@
           review-exlibris-id
           review-exlibris-id-set!
           review-body
+          review->caption
           quotation
           quotation?
           make-quotation
@@ -117,6 +118,7 @@
           report-quotation-id-set!
           report-correction-id
           report-correction-id-set!
+          report->caption
           report-by-manued
           report-by-manued?
           make-report-by-manued
@@ -285,6 +287,9 @@
           (p (maybe-id exlibris-id)
              body))))))
 
+  (define (review->caption rvw)
+    (string-truncate (review-body rvw) 32))
+
   (define-persistent-record-type quotation
     (fields (mutable account-id) (mutable revision-id) page position body)
     (protocol
@@ -319,6 +324,9 @@
              subject
              (maybe-id quotation-id)
              (maybe-id correction-id)))))))
+
+  (define (report->caption r)
+    (string-truncate (report-subject r) 32))
 
   (define-record-type report-by-manued
     (fields subject page position body))

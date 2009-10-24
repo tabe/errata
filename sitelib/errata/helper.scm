@@ -133,20 +133,14 @@
     (match tuple
       ((rvw ex a r b)
        (html:p (html:a ((href (bib&revision->url b r uuid rvw)))
-                       (html:escape-string
-                        (string-truncate
-                         (review-body rvw)
-                         32)))))
+                       (html:escape-string (review->caption rvw)))))
       (_ "?")))
 
   (define (recent-report uuid tuple)
     (match tuple
       ((rep a r b q c)
        (html:p (html:a ((href (bib&revision->url b r uuid rep)))
-                       (html:escape-string
-                        (string-truncate
-                         (report-subject rep)
-                         32)))))
+                       (html:escape-string (report->caption rep)))))
       (_ "?")))
 
   (define (links uuid . _)
