@@ -7,6 +7,8 @@
         (xunit))
 
 (skip-unless (and rss-temporary-directory rss-output-directory)
+  (assert-zero? (emit "recent-acknowledgements"))
+  (assert-zero? (emit "recent-agreements"))
   (assert-zero? (emit "recent-reports"))
   (assert-zero? (emit "recent-reviews"))
   (assert-zero? (emit "recent-revisions")))
