@@ -104,6 +104,7 @@
       (put-on . "蔵書の登録")
       (edit-preference . "設定の編集")
       (modify-account . "アカウントの編集")
+      (modify-password . "パスワードの編集")
       (cancel . "アカウントの解除")
       ))
 

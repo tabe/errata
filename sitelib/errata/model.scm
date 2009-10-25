@@ -14,10 +14,8 @@
           account->account-to-modify
           account-to-modify->account
           account-to-modify-name
-          account-to-modify-current-password
-          account-to-modify-new-password
-          account-to-modify-new-password-re
           account-to-modify-mail-address
+          account-to-modify-password
           account-to-login
           account-to-login?
           make-account-to-login
@@ -33,6 +31,13 @@
           password-reset-password
           password-reset-password-re
           password-reset->account
+          make-password-to-modify
+          password-to-modify
+          password-to-modify?
+          password-to-modify-current-password
+          password-to-modify-new-password
+          password-to-modify-new-password-re
+          password-to-modify->account
           preference
           preference?
           make-preference
@@ -185,23 +190,22 @@
                     key)))
 
   (define-record-type account-to-modify
-    (fields name current-password new-password new-password-re mail-address))
+    (fields name mail-address password))
 
   (define (account->account-to-modify a)
     (make-account-to-modify (account-name a)
-                            #f
-                            #f
-                            #f
-                            (account-mail-address a)))
+                            (account-mail-address a)
+                            #f))
 
   (define (account-to-modify->account a current-account)
-    (let ((key (make-uuid)))
-      (make-account (account-nick current-account)
-                    (account-to-modify-name a)
-                    (hmac:sha-256 key (string->utf8 (account-to-modify-new-password a)))
-                    (account-to-modify-mail-address a)
-                    "sha-256"
-                    key)))
+    (let* ((acc (make-account (account-nick current-account)
+                              (account-to-modify-name a)
+                              (account-password current-account)
+                              (account-to-modify-mail-address a)
+                              (account-hash-algorithm current-account)
+                              (account-hash-key current-account))))
+      (id-set! acc (id-of current-account))
+      acc))
 
   (define-record-type account-to-login
     (fields nick password))
@@ -218,6 +222,20 @@
                             #f
                             (hmac:sha-256 key (string->utf8 (password-reset-password p)))
                             #f
+                            "sha-256"
+                            key)))
+      (id-set! a (id-of current-account))
+      a))
+
+  (define-record-type password-to-modify
+    (fields current-password new-password new-password-re))
+
+  (define (password-to-modify->account p current-account)
+    (let* ((key (make-uuid))
+           (a (make-account (account-nick current-account)
+                            (account-name current-account)
+                            (hmac:sha-256 key (string->utf8 (password-to-modify-new-password p)))
+                            (account-mail-address current-account)
                             "sha-256"
                             key)))
       (id-set! a (id-of current-account))

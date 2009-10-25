@@ -163,13 +163,30 @@
                  (lambda (ht) (loop (form (io sess) (account-to-modify a) private (hashtable->messages ht))))
                  (lambda _
                    (let ((a (account-to-modify->account a current-account)))
-                     (id-set! a (id-of current-account))
                      (cond ((save a)
                             (do-logout sess)
                             (let ((sess (do-login a)))
                               (page (io sess) private (__ your-account-has-been-updated))))
                            (else
                             (page (io sess) private (__ hmm-an-error-occurred)))))))
+               (page (io sess) index)))))))
+
+  (define-scenario (modify-password io request)
+    (with-session
+     (io request)
+     (lambda (sess)
+       (let ((current-account (user-account (session-user sess))))
+         (let loop ((p (form (io sess) (password-to-modify) private)))
+           (if (password-to-modify? p)
+               (guide (validate-password-to-modify p current-account)
+                 (lambda (ht) (loop (form (io sess) (password-to-modify p) private (hashtable->messages ht))))
+                 (lambda _
+                   (let ((a (password-to-modify->account p current-account)))
+                     (cond ((save a)
+                            (do-logout sess)
+                            (let ((sess (do-login a)))
+                              (page (io sess) private (__ your-account-has-been-updated))))
+                           (else (page (io sess) private (__ hmm-an-error-occurred)))))))
                (page (io sess) index)))))))
 
   (define-scenario (cancel io request)
@@ -870,10 +887,8 @@
      (text)))
   (add-input-fields account-to-modify
     ((text)
-     (password)
-     (password *password-advice*)
-     (password *password-advice*)
-     (text)))
+     (text)
+     (password)))
   (add-input-fields account-to-login
     ((text)
      (password)))
@@ -881,6 +896,10 @@
     ((text)))
   (add-input-fields password-reset
     ((password *password-advice*)
+     (password *password-advice*)))
+  (add-input-fields password-to-modify
+    ((password)
+     (password *password-advice*)
      (password *password-advice*)))
   (add-input-fields preference-to-edit
     (((radio (plain "標準" #t) (manued "Manued(真鵺道)方式" #f)))))

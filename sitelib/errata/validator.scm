@@ -8,6 +8,7 @@
           authenticate-account
           existing-mail-address
           validate-password-reset
+          validate-password-to-modify
           validate-preference-to-edit
           validate-bib-title
           validate-revision
@@ -107,15 +108,10 @@
 
   (define-composite-validator validate-account-to-modify
     ((lambda (a _) (account-to-modify-name a)) validate-account-name)
-    ((lambda (a _) (account-to-modify-current-password a)) validate-password)
-    ((lambda (a _) (account-to-modify-new-password a)) validate-password)
-    ((lambda (a c) (make-account-to-login (account-nick c) (account-to-modify-current-password a)))
-     existing-account)
-    ((lambda (a _) (account-to-modify-new-password-re a)) validate-password)
-    ((lambda (a _) (values (account-to-modify-new-password a)
-                           (account-to-modify-new-password-re a)))
-     same-password)
-    ((lambda (a _) (account-to-modify-mail-address a)) validate-mail-address))
+    ((lambda (a _) (account-to-modify-mail-address a)) validate-mail-address)
+    ((lambda (a _) (account-to-modify-password a)) validate-password)
+    ((lambda (a c) (make-account-to-login (account-nick c) (account-to-modify-password a)))
+     existing-account))
 
   (define-validator (validate-new-nick nick)
     (nick-already-used)
@@ -166,6 +162,16 @@
     (password-reset-password-re validate-password)
     ((lambda (x) (values (password-reset-password x)
                          (password-reset-password-re x)))
+     same-password))
+
+  (define-composite-validator validate-password-to-modify
+    ((lambda (p _) (password-to-modify-current-password p)) validate-password)
+    ((lambda (p c) (make-account-to-login (account-nick c) (password-to-modify-current-password p)))
+     existing-account)
+    ((lambda (p _) (password-to-modify-new-password p)) validate-password)
+    ((lambda (p _) (password-to-modify-new-password-re p)) validate-password)
+    ((lambda (p _) (values (password-to-modify-new-password p)
+                           (password-to-modify-new-password-re p)))
      same-password))
 
   (define-validator (validate-preference-report-format str)
