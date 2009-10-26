@@ -29,13 +29,13 @@
 
   (define (feed-entry tuple)
     (match tuple
-      ((rvw ex a r b)
+      ((rvw ex a pref r b)
        (rdf:li ((rdf:resource (string-append url-base (bib&revision->url b r #f rvw))))))
       (_ '())))
 
   (define (feed-item tuple)
     (match tuple
-      ((rvw ex a r b)
+      ((rvw ex a pref r b)
        (let ((url (string-append url-base (bib&revision->url b r #f rvw)))
              (et (escape-string (string-append (review->caption rvw) " -- " (bib-title b)))))
          (item
@@ -47,7 +47,7 @@
           (description
            (escape-string
             (tree->string
-             (review-div (list rvw ex a))))))))
+             (review-div (list rvw ex a pref))))))))
       (_ '())))
 
 )

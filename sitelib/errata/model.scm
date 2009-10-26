@@ -43,10 +43,12 @@
           make-preference
           preference-account-id
           preference-account-id-set!
+          preference-gravatar
           preference-report-format
           preference-to-edit
           preference-to-edit?
           make-preference-to-edit
+          preference-to-edit-gravatar
           preference-to-edit-report-format
           bib
           bib?
@@ -242,16 +244,22 @@
       a))
 
   (define-persistent-record-type preference
-    (fields (mutable account-id) report-format)
+    (fields (mutable account-id) gravatar report-format)
     (protocol
      (persistent-protocol
       (lambda (p)
-        (lambda (account-id report-format)
+        (lambda (account-id gravatar report-format)
           (p (maybe-id account-id)
+             (maybe-integer gravatar)
              report-format))))))
 
   (define-record-type preference-to-edit
-    (fields report-format))
+    (fields gravatar report-format)
+    (protocol
+     (lambda (p)
+       (lambda (gravatar report-format)
+         (p (maybe-integer gravatar)
+            report-format)))))
 
   (define-persistent-record-type bib
     (fields uuid (mutable title) (mutable isbn13) (mutable isbn10) (mutable image))
@@ -413,6 +421,7 @@
   (define (recent-acknowledgements n)
     (lookup-all (acknowledgement
                  (account acknowledgement)
+                 (preference (account left))
                  (quotation acknowledgement)
                  (report (quotation))
                  (revision quotation)
@@ -426,6 +435,7 @@
   (define (recent-agreements n)
     (lookup-all (agreement
                  (account agreement)
+                 (preference (account left))
                  (correction agreement)
                  (quotation correction)
                  (report (quotation))
@@ -441,6 +451,7 @@
     (lookup-all (publicity
                  (exlibris publicity)
                  (account exlibris)
+                 (preference (account left))
                  (revision exlibris)
                  (bib revision))
                 ()
@@ -451,6 +462,7 @@
     (lookup-all (review
                  (exlibris review)
                  (account exlibris)
+                 (preference (account left))
                  (revision exlibris)
                  (bib revision))
                 ((exists (publicity)
@@ -461,6 +473,7 @@
   (define (recent-reports n)
     (lookup-all (report
                  (account report)
+                 (preference (account left))
                  (revision report)
                  (bib revision)
                  (quotation report)

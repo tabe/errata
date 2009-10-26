@@ -28,11 +28,12 @@
           (only (lcs) lcs-fold)
           (prefix (only (uri) encode-string) uri:)
           (only (lunula gettext) __ ___)
+          (only (lunula md) md5)
           (only (lunula mysql) lookup lookup-all)
           (prefix (lunula html) html:)
           (only (lunula path) build-entry-path build-api-path)
           (only (lunula persistent-record) id-of created-at-of)
-          (only (lunula session) account account-nick account-name)
+          (only (lunula session) account account-nick account-name account-mail-address)
           (only (lunula string) blank? string-truncate)
           (only (errata calendar) ad->japanese-era datetime->date datetime->y/m/d)
           (only (errata configuration) url-base)
@@ -110,7 +111,7 @@
 
   (define (recent-acknowledgement uuid tuple)
     (match tuple
-      ((ack a q rep r b)
+      ((ack a pref q rep r b)
        (html:p
         (html:a ((href (report->url rep uuid ack)))
                 (html:escape-string (acknowledgement->caption ack)))))
@@ -118,7 +119,7 @@
 
   (define (recent-agreement uuid tuple)
     (match tuple
-      ((agr a c q rep r b)
+      ((agr a pref c q rep r b)
        (html:p
         (html:a ((href (report->url rep uuid agr)))
                 (html:escape-string (agreement->caption agr)))))
@@ -126,20 +127,20 @@
 
   (define (recent-revision uuid tuple)
     (match tuple
-      ((pub ex a r b)
+      ((pub ex a pref r b)
        (html:p (html:a ((href (bib&revision->url b r uuid))) (bib-title b))))
       (_ "?")))
 
   (define (recent-review uuid tuple)
     (match tuple
-      ((rvw ex a r b)
+      ((rvw ex a pref r b)
        (html:p (html:a ((href (bib&revision->url b r uuid rvw)))
                        (html:escape-string (review->caption rvw)))))
       (_ "?")))
 
   (define (recent-report uuid tuple)
     (match tuple
-      ((rep a r b q c)
+      ((rep a pref r b q c)
        (html:p (html:a ((href (bib&revision->url b r uuid rep)))
                        (html:escape-string (report->caption rep)))))
       (_ "?")))
@@ -222,9 +223,22 @@
     (cond ((datetime->date str) => date->ymd)
           (else #f)))
 
-  (define (signature a)
+  (define *gravatar-size* 24)
+
+  (define (optional-gravatar a pref)
+    (if (and (number? (preference-gravatar pref))
+             (= 1 (preference-gravatar pref)))
+        (html:img ((src (format "http://www.gravatar.com/gravatar/~a.jpg?s=~d"
+                                (md5 (string->utf8 (account-mail-address a)))
+                                *gravatar-size*))
+                   (alt (account-nick a))
+                   (width *gravatar-size*)
+                   (height *gravatar-size*)))
+        (account-nick a)))
+
+  (define (signature a pref)
     (html:span ((title (html:escape-string (account-name a))))
-               (account-nick a)))
+               (optional-gravatar a pref)))
 
   (define-syntax with-uuid
     (syntax-rules ()
@@ -338,18 +352,24 @@
 
   (define (report-window uuid id)
     (assert (integer? id))
-    (match (lookup (report (account report) (quotation report) (correction report) (revision report) (bib revision))
+    (match (lookup (report
+                    (account report)
+                    (preference (account left))
+                    (quotation report)
+                    (correction report)
+                    (revision report)
+                    (bib revision))
                    ((report (id id))))
-      ((rep a q c r b) (report-frame uuid rep a q c r b))
+      ((rep a pref q c r b) (report-frame uuid rep a pref q c r b))
       (_ "?")))
 
-  (define (report-frame uuid rep a q c r b)
+  (define (report-frame uuid rep a pref q c r b)
     (html:div
      (go-to-table uuid r)
      (revision-skeleton b r '() '() '())
      (html:h4 (__ Detail) "&nbsp;" creativecommons-attribution-logo)
      (diff-table
-      (revision-report-tr uuid rep a q c '() (ack/nak-tr uuid rep q c)))))
+      (revision-report-tr uuid rep a pref q c '() (ack/nak-tr uuid rep q c)))))
 
   (define (diff-table x)
     (html:table
@@ -367,7 +387,7 @@
                 a0 ...)
                e0 ...))))
 
-  (define (revision-report-tr uuid rep a q c x y)
+  (define (revision-report-tr uuid rep a pref q c x y)
     (append
      (html:tr
       (html:td ((colspan 2) (style "font-size:small;"))
@@ -375,7 +395,7 @@
                (anchor (rep (class "subject")) (report-subject rep)) "&nbsp;"
                "("
                (html:span ((style "font-size:x-small;")) "reported by ")
-               (signature a)
+               (signature a pref)
                (cond ((created-at-of rep) => (lambda (t) (cons "&nbsp;@&nbsp;" (html:span ((style "text-align:right;")) t))))
                      (else '()))
                ")"))
@@ -384,9 +404,9 @@
 
   (define (review-div tuple)
     (match tuple
-      ((rvw ex a)
+      ((rvw ex a pref)
        (html:div ((class "dog") (style "background-color:#c7ff6f;"))
-                 (anchor (rvw) (signature a) ":")
+                 (anchor (rvw) (signature a pref) ":")
                  (html:pre (html:escape-string (review-body rvw)))
                  ))
       (_ "?")))
@@ -394,7 +414,11 @@
   (define (revision-reviews r)
     (html:div
      (html:h4 (__ Review) "&nbsp;" creativecommons-attribution-logo)
-     (let ((ls (lookup-all (review (exlibris review) (account exlibris)) ((exlibris (revision-id (id-of r)))))))
+     (let ((ls (lookup-all (review
+                            (exlibris review)
+                            (account exlibris)
+                            (preference (account left)))
+                           ((exlibris (revision-id (id-of r)))))))
        (if (null? ls)
            "(なし)"
            (map review-div ls)))))
@@ -447,15 +471,15 @@
                    (html:div ((class "dog")) (html:blockquote (reverse xb))))
           (html:td forms))))))
 
-  (define (acknowledgement-view ack a)
+  (define (acknowledgement-view ack a pref)
     (html:div
-     (anchor (ack (class "credit")) (signature a) ":&nbsp;")
+     (anchor (ack (class "credit")) (signature a pref) ":&nbsp;")
      (html:span ((class (if (acknowledgement-positive? ack) "ack" "nak")))
                 (html:escape-string (acknowledgement-comment ack)))))
 
-  (define (agreement-view agr a)
+  (define (agreement-view agr a pref)
     (html:div
-     (anchor (agr (class "credit")) (signature a) ":&nbsp;")
+     (anchor (agr (class "credit")) (signature a pref) ":&nbsp;")
      (html:span (html:escape-string (agreement-comment agr)))))    
 
   (define (ack/nak-tr uuid rep q c)
@@ -475,7 +499,9 @@
                    (html:input ((type "submit") (value (__ agree))))))))
      (html:tr
       (html:td
-       (let ((tuples (lookup-all (acknowledgement (account acknowledgement))
+       (let ((tuples (lookup-all (acknowledgement
+                                  (account acknowledgement)
+                                  (preference (account left)))
                                  ((acknowledgement (quotation-id (id-of q))))
                                  ((order-by (acknowledgement (created-at desc)))))))
          (if (null? tuples)
@@ -484,12 +510,12 @@
               ((class "acknowledgement"))
               (map
                (lambda (tuple)
-                 (match tuple
-                   ((ack a) (acknowledgement-view ack a))
-                   (_ "?")))
+                 (apply acknowledgement-view tuple))
                tuples))))
        (html:td
-        (let ((tuples (lookup-all (agreement (account agreement))
+        (let ((tuples (lookup-all (agreement
+                                   (account agreement)
+                                   (preference (account left)))
                                   ((agreement (correction-id (id-of c))))
                                   ((order-by (agreement (created-at desc)))))))
           (if (null? tuples)
@@ -498,9 +524,7 @@
                ((class "agreement"))
                (map
                 (lambda (tuple)
-                  (match tuple
-                    ((agr a) (agreement-view agr a))
-                    (_ "?")))
+                  (apply agreement-view tuple))
                 tuples)))))))))
 
   (define (revision-reports uuid r proc)
@@ -508,12 +532,16 @@
      (map
       (lambda (tuple)
         (match tuple
-          ((rep a q c) (revision-report-tr uuid rep a q c (proc rep) '()))))
+          ((rep a pref q c) (revision-report-tr uuid rep a pref q c (proc rep) '()))))
       (list-sort
        (lambda (t0 t1)
-         (page<? (quotation-page (caddr t0))
-                 (quotation-page (caddr t1))))
-       (lookup-all (report (account report) (quotation report) (correction report))
+         (page<? (quotation-page (cadddr t0))
+                 (quotation-page (cadddr t1))))
+       (lookup-all (report
+                    (account report)
+                    (preference (account left))
+                    (quotation report)
+                    (correction report))
                    ((report (revision-id (id-of r)))))))))
 
   (define (revision-frame uuid b r)
@@ -572,7 +600,7 @@
        (html:form ((action (build-entry-path 'edit-review uuid)))
                   (hidden-field "id" id)
                   (html:input ((type "submit") (value (__ edit-review)))))
-       (cond ((lookup (review (exlibris review) (account exlibris)) ((exlibris (id id)))) => review-div)
+       (cond ((lookup (review (exlibris review) (account exlibris) (preference (account left))) ((exlibris (id id)))) => review-div)
              (else "(なし)"))
        (html:h4 (__ Table) "&nbsp;" creativecommons-attribution-logo)
        (html:div

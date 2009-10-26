@@ -179,7 +179,13 @@
     (unless (member str '("plain" "manued"))
       (invalid-report-format)))
 
+  (define-validator (validate-zero-or-one str)
+    (neither-zero-nor-one)
+    (unless (memv str '(0 1))
+      (neither-zero-nor-one)))
+
   (define-composite-validator validate-preference-to-edit
+    (preference-to-edit-gravatar validate-zero-or-one)
     (preference-to-edit-report-format validate-preference-report-format))
 
   (define-string-length-validator validate-bib-title

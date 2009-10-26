@@ -28,13 +28,13 @@
 
   (define (feed-entry tuple)
     (match tuple
-      ((agr a c q rep r b)
+      ((agr a pref c q rep r b)
        (rdf:li ((rdf:resource (string-append url-base (report->url rep #f agr))))))
       (_ '())))
 
   (define (feed-item tuple)
     (match tuple
-      ((agr a c q rep r b)
+      ((agr a pref c q rep r b)
        (let ((url (string-append url-base (report->url rep #f agr)))
              (et (escape-string (agreement->caption agr))))
          (item
@@ -46,7 +46,7 @@
           (description
            (escape-string
             (tree->string
-             (agreement-view agr a)))))))
+             (agreement-view agr a pref)))))))
       (_ '())))
 
 )

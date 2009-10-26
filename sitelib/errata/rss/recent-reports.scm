@@ -30,13 +30,13 @@
 
   (define (feed-entry tuple)
     (match tuple
-      ((rep a r b q c)
+      ((rep a pref r b q c)
        (rdf:li ((rdf:resource (string-append url-base (bib&revision->url b r #f rep))))))
       (_ '())))
 
   (define (feed-item tuple)
     (match tuple
-      ((rep a r b q c)
+      ((rep a pref r b q c)
        (let* ((url (string-append url-base (bib&revision->url b r #f rep)))
               (t (string-append (report->caption rep) " -- " (bib-title b)))
               (et (escape-string t)))
@@ -51,7 +51,7 @@
             (tree->string
              (html:table
               (html:tbody
-               (revision-report-tr #f rep a q c '() '())))))))))
+               (revision-report-tr #f rep a pref q c '() '())))))))))
       (_ '())))
 
 )

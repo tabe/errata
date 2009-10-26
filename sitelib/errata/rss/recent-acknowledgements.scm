@@ -29,13 +29,13 @@
 
   (define (feed-entry tuple)
     (match tuple
-      ((ack a q rep r b)
+      ((ack a pref q rep r b)
        (rdf:li ((rdf:resource (string-append url-base (report->url rep #f ack))))))
       (_ '())))
 
   (define (feed-item tuple)
     (match tuple
-      ((ack a q rep r b)
+      ((ack a pref q rep r b)
        (let ((url (string-append url-base (report->url rep #f ack)))
              (et (escape-string (acknowledgement->caption ack))))
          (item
@@ -47,7 +47,7 @@
           (description
            (escape-string
             (tree->string
-             (acknowledgement-view ack a)))))))
+             (acknowledgement-view ack a pref)))))))
       (_ '())))
 
 )

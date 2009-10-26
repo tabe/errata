@@ -37,6 +37,8 @@
                                     (ja "新しいパスワード"))
    (password-to-modify-new-password-re (en "new password-re")
                                        (ja "新しいパスワード(再入力)"))
+   (preference-to-edit-gravatar (en "Gravatar")
+                                (ja "Gravatar"))
    (preference-to-edit-report-format (en "Report format")
                                      (ja "報告の書式"))
    (confirmation-ok (en "OK?")

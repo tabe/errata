@@ -17,7 +17,7 @@
           (lunula session)
           (only (lunula string) blank?)
           (lunula tree)
-          (only (lunula persistent-record) string->id id-of id-set!)
+          (only (lunula persistent-record) id-of id-set! maybe-id)
           (only (lunula request) content->alist parameter-of)
           (only (lunula server) start)
           (only (lunula template) template-environment)
@@ -221,7 +221,7 @@
        (page (io) public (__ now-you-have-logged-out)))))
 
   (define (preference->preference-to-edit pref)
-    (make-preference-to-edit (preference-report-format pref)))
+    (make-preference-to-edit (preference-gravatar pref) (preference-report-format pref)))
 
   (define-scenario (edit-preference io request)
     (with-session
@@ -234,7 +234,9 @@
                   (guide (validate-preference-to-edit e)
                     (lambda (ht) (loop (form (io sess) (preference-to-edit e) private (hashtable->messages ht))))
                     (lambda _
-                      (let ((p (make-preference (if (preference? pref) #f a-id) (preference-to-edit-report-format e))))
+                      (let ((p (make-preference (if (preference? pref) #f a-id)
+                                                (preference-to-edit-gravatar e)
+                                                (preference-to-edit-report-format e))))
                         (when (preference? pref) (id-set! p (id-of pref)))
                         (if (save p)
                             (page (io sess) private (__ your-preference-has-been-updated))
@@ -401,7 +403,7 @@
         (lambda (sess)
           (cond ((and data (assq 'id (content->alist data)))
                  => (lambda (pair)
-                      (cond ((string->id (cdr pair))
+                      (cond ((maybe-id (cdr pair))
                              => (lambda (id) (proc sess id)))
                             (else (redirect (io sess) 'shelf)))))
                 (else (redirect (io sess) 'shelf))))))))
@@ -625,7 +627,7 @@
   (define-scenario (table io request data)
     (with-or-without-session/
      (io request data)
-     (sess (id id string->id #f))
+     (sess (id id maybe-id #f))
      (if id
          (page (io sess) table id)
          (redirect (io sess) 'index))))
@@ -633,7 +635,7 @@
   (define-scenario (detail io request data)
     (with-or-without-session/
      (io request data)
-     (sess (id id string->id #f))
+     (sess (id id maybe-id #f))
      (if id
          (page (io sess) detail id)
          (redirect (io sess) 'index))))
@@ -750,8 +752,8 @@
   (define-scenario (modify-report io request data)
     (with-session/
      (io request data)
-     (sess (rep-id report string->id #f)
-           (ex-id exlibris string->id #f))
+     (sess (rep-id report maybe-id #f)
+           (ex-id exlibris maybe-id #f))
      (if (and rep-id ex-id)
          (match (lookup (report (quotation report) (correction report))
                         ((report
@@ -775,8 +777,8 @@
   (define-scenario (drop-report io request data)
     (with-session/
      (io request data)
-     (sess (rep-id report string->id #f)
-           (ex-id exlibris string->id #f))
+     (sess (rep-id report maybe-id #f)
+           (ex-id exlibris maybe-id #f))
      (cond ((and rep-id
                  ex-id
                  (lookup report
@@ -793,8 +795,8 @@
   (define-scenario (acknowledge io request data)
     (with-session/
      (io request data)
-     (sess (r-id report string->id #f)
-           (q-id quotation string->id #f))
+     (sess (r-id report maybe-id #f)
+           (q-id quotation maybe-id #f))
      (cond ((and q-id
                  (lookup quotation q-id))
             => (lambda (q)
@@ -815,8 +817,8 @@
   (define-scenario (agree io request data)
     (with-session/
      (io request data)
-     (sess (r-id report string->id #f)
-           (c-id correction string->id #f))
+     (sess (r-id report maybe-id #f)
+           (c-id correction maybe-id #f))
      (cond ((and r-id
                  c-id
                  (lookup correction c-id))
@@ -902,7 +904,8 @@
      (password *password-advice*)
      (password *password-advice*)))
   (add-input-fields preference-to-edit
-    (((radio (plain "標準" #t) (manued "Manued(真鵺道)方式" #f)))))
+    (((radio (0 "無効" #t) (1 "有効" #f)))
+     ((radio (plain "標準" #t) (manued "Manued(真鵺道)方式" #f)))))
   (add-input-fields confirmation
     (((radio (yes "はい" #f) (no "いいえ" #t)))))
   (add-input-fields new-exlibris

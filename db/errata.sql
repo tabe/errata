@@ -29,6 +29,7 @@ create table account (
 create table preference (
   id int not null auto_increment,
   account_id int not null,
+  gravatar tinyint not null,
   report_format varchar(8) not null,
   created_at datetime,
   updated_at datetime,

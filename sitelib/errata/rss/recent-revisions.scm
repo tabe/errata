@@ -27,13 +27,13 @@
 
   (define (feed-entry tuple)
     (match tuple
-      ((pub ex a r b)
+      ((pub ex a pref r b)
        (rdf:li ((rdf:resource (string-append url-base (bib&revision->url b r))))))
       (_ '())))
 
   (define (feed-item tuple)
     (match tuple
-      ((pub ex a r b)
+      ((pub ex a pref r b)
        (let ((url (string-append url-base (bib&revision->url b r)))
              (et (escape-string (bib-title b))))
          (item
