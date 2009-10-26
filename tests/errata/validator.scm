@@ -113,7 +113,7 @@
                   (("300") invalid-day)
                   )
 
-(assert-validator validate-isbn10/revision-name/year/month/day
+(assert-validator validate-/isbn10/revision-name/year/month/day
                   ((("4894712741" "初版第15刷" "2006" "06" "15")))
                   ((("489471274" "初版第15刷" "2006" "06" "15")) invalid-isbn10)
                   ((("489471274" "" "2006" "06" "15")) invalid-isbn10 name-is-blank)

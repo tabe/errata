@@ -839,7 +839,7 @@
     (format "~d文字以上~d文字以下" *account-password-min-length* *account-password-max-length*))
 
   (define-api (r isbn10 name year month day)
-    validate-isbn10/revision-name/year/month/day
+    validate-/isbn10/revision-name/year/month/day
     table
     (cond ((lookup (publicity
                     (exlibris publicity)

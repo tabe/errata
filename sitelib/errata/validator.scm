@@ -20,7 +20,7 @@
           validate-year
           validate-month
           validate-day
-          validate-isbn10/revision-name/year/month/day
+          validate-/isbn10/revision-name/year/month/day
           validate-/uuid
           validate-/uuid/revision-name/year/month/day)
   (import (rnrs)
@@ -288,7 +288,7 @@
     invalid-day
     (lambda (s) (pregexp-match "^(?:0[1-9]|1[0-9]|2[0-9]|3[01])$" s)))
 
-  (define-composite-validator validate-isbn10/revision-name/year/month/day
+  (define-composite-validator validate-/isbn10/revision-name/year/month/day
     ((0) validate-isbn10)
     ((1) validate-revision-name)
     ((2) validate-year)
