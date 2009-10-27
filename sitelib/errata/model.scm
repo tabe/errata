@@ -143,6 +143,7 @@
           report-to-modify-correction-body
           report-history
           report-history?
+          report-history-subject
           report->report-history
           acknowledgement
           acknowledgement?
@@ -361,25 +362,25 @@
     (fields subject page position quotation-body correction-body))
 
   (define-persistent-record-type report-history
-    (fields account-id revision-id subject quotation-id correction-id report-id)
+    (fields uuid account-id revision-id subject quotation-id correction-id)
     (protocol
      (persistent-protocol
       (lambda (p)
-        (lambda (account-id revision-id subject quotation-id correction-id report-id)
-          (p (maybe-id account-id)
+        (lambda (uuid account-id revision-id subject quotation-id correction-id)
+          (p uuid
+             (maybe-id account-id)
              (maybe-id revision-id)
              subject
              (maybe-id quotation-id)
-             (maybe-id correction-id)
-             (maybe-id report-id)))))))
+             (maybe-id correction-id)))))))
 
-  (define (report->report-history r id)
-    (make-report-history (report-account-id r)
+  (define (report->report-history r)
+    (make-report-history (report-uuid r)
+                         (report-account-id r)
                          (report-revision-id r)
                          (report-subject r)
                          (report-quotation-id r)
-                         (report-correction-id r)
-                         id))
+                         (report-correction-id r)))
 
   (define-persistent-record-type acknowledgement
     (fields (mutable account-id) (mutable quotation-id) sign comment)

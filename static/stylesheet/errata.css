@@ -93,6 +93,13 @@ h1 a {
     font-size: x-small;
 }
 
+.history {
+    padding: 0.5em;
+    background-color: dimgray;
+    width: 70%;
+    float: left;
+}
+
 .diff {
     width: 98%;
     border: 1px solid #dddddd;

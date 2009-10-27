@@ -14,6 +14,7 @@
           bib-window
           acknowledgement-view
           agreement-view
+          report-history-window
           report-window
           review-div
           revision-report-tr
@@ -297,6 +298,11 @@
     (html:form ((action (build-entry-path 'shelf uuid)))
                (html:input ((type "submit") (value (__ to-shelf))))))
 
+  (define (go-to-detail uuid rep)
+    (html:form ((action (build-entry-path 'detail uuid)))
+               (hidden-field "id" (id-of rep))
+               (html:input ((type "submit") (value (__ to-detail))))))
+
   (define (public-revisions uuid page)
     (with-pagination
      (board uuid page)
@@ -353,6 +359,48 @@
       ((r b) (revision-frame uuid b r))
       (_ "?")))
 
+  (define (report-history-window uuid id)
+    (assert (integer? id))
+    (cond ((lookup (report (revision report) (bib revision)) ((report (id id))))
+           => (lambda (tuple0)
+                (match tuple0
+                  ((rep r b)
+                   (html:div
+                    (go-to-detail uuid rep)
+                    (revision-skeleton b r '() '() '())
+                    (html:h4 (__ History) "&nbsp;" creativecommons-attribution-logo)
+                    (diff-table
+                     (map
+                      (lambda (tuple1)
+                        (match tuple1
+                          ((rh a pref q c)
+                           (report-history-tr uuid rh a pref q c))
+                          (_ "?")))
+                      (lookup-all (report-history
+                                   (account report-history)
+                                   (preference (account left))
+                                   (quotation report-history)
+                                   (correction report-history))
+                                  ((report-history (uuid (report-uuid rep))))
+                                  ((order-by (report-history (created-at desc)))))))))
+                  (_ '()))))
+          (else '())))
+
+  (define-syntax report-history-tr
+    (syntax-rules ()
+      ((_ uuid rh a pref q c)
+       (append
+        (html:tr
+         (html:td ((colspan 2) (style "font-size:small;"))
+                  (html:span ((class "pp")) "pp." (quotation-page q) "/" (quotation-position q)) "&nbsp;"
+                  (anchor (rh (class "subject")) (report-history-subject rh)) "&nbsp;"
+                  "("
+                  (html:span ((style "font-size:x-small;")) "reported by ")
+                  (signature a pref)
+                  ")"))
+        (diff-tr uuid q c '())
+        (ack/nak-tr uuid q c '())))))
+
   (define (report-window uuid id)
     (assert (integer? id))
     (match (lookup (report
@@ -372,7 +420,24 @@
      (revision-skeleton b r '() '() '())
      (html:h4 (__ Detail) "&nbsp;" creativecommons-attribution-logo)
      (diff-table
-      (revision-report-tr uuid rep a pref q c '() (ack/nak-tr uuid rep q c)))))
+      (revision-report-tr uuid rep a pref q c
+                          (html:form ((action (build-entry-path 'show-report-history uuid)))
+                                     (hidden-field "id" (id-of rep))
+                                     (html:input ((type "submit") (value (__ show-report-history)))))
+                          (ack/nak-tr uuid q c
+                                      (with-uuid
+                                       uuid
+                                       (html:tr
+                                        (html:td
+                                         (html:form ((action (build-entry-path 'acknowledge uuid)))
+                                                    (hidden-field "report" (id-of rep))
+                                                    (hidden-field "quotation" (id-of q))
+                                                    (html:input ((type "submit") (value (__ acknowledge))))))
+                                        (html:td
+                                         (html:form ((action (build-entry-path 'agree uuid)))
+                                                    (hidden-field "report" (id-of rep))
+                                                    (hidden-field "correction" (id-of c))
+                                                    (html:input ((type "submit") (value (__ agree)))))))))))))
 
   (define (diff-table x)
     (html:table
@@ -402,7 +467,7 @@
                (cond ((created-at-of rep) => (lambda (t) (cons "&nbsp;@&nbsp;" (html:span ((style "text-align:right;")) t))))
                      (else '()))
                ")"))
-     (diff-tr uuid rep q c x)
+     (diff-tr uuid q c x)
      y))
 
   (define (review-div tuple)
@@ -456,7 +521,7 @@
          (else
           `(,(cons (html:escape-char x) xa) . ,(cons (html:escape-char x) xb)))))))
 
-  (define (diff-tr uuid rep q c forms)
+  (define (diff-tr uuid q c forms)
     (let ((a (string->list (quotation-body q)))
           (b (string->list (correction-body c))))
       (match (lcs-fold
@@ -485,21 +550,9 @@
      (anchor (agr (class "credit")) (signature a pref) ":&nbsp;")
      (html:span (html:escape-string (agreement-comment agr)))))    
 
-  (define (ack/nak-tr uuid rep q c)
+  (define (ack/nak-tr uuid q c x)
     (append
-     (with-uuid
-      uuid
-      (html:tr
-       (html:td
-        (html:form ((action (build-entry-path 'acknowledge uuid)))
-                   (hidden-field "report" (id-of rep))
-                   (hidden-field "quotation" (id-of q))
-                   (html:input ((type "submit") (value (__ acknowledge))))))
-       (html:td
-        (html:form ((action (build-entry-path 'agree uuid)))
-                   (hidden-field "report" (id-of rep))
-                   (hidden-field "correction" (id-of c))
-                   (html:input ((type "submit") (value (__ agree))))))))
+     x
      (html:tr
       (html:td
        (let ((tuples (lookup-all (acknowledgement
@@ -562,10 +615,7 @@
                                        url-base
                                        (bib&revision->url b r))))))
      (html:h4 (__ Table) "&nbsp;" creativecommons-attribution-logo)
-     (revision-reports uuid r (lambda (rep)
-                                (html:form ((action (build-entry-path 'detail uuid)))
-                                           (hidden-field "id" (id-of rep))
-                                           (html:input ((type "submit") (value (__ to-detail)))))))))
+     (revision-reports uuid r (lambda (rep) (go-to-detail uuid rep)))))
 
   (define (exlibris-panel uuid b r ex)
     (html:div

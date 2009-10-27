@@ -755,17 +755,19 @@
       (and (save q-new)
            (let ((c-new (update-correction c q-new modified)))
              (and (save c-new)
-                  (let ((rep-new (make-report
-                                  (make-uuid)
-                                  (report-account-id rep)
-                                  (report-revision-id rep)
-                                  (report-to-modify-subject modified)
-                                  (id-of q-new)
-                                  (id-of c-new))))
-                    (and (save rep-new)
-                         (let ((rep-h (report->report-history rep (id-of rep-new))))
-                           (and (save rep-h)
-                                (destroy rep)
+                  (let ((rep-h (report->report-history rep)))
+                    (and (save rep-h)
+                         ;; destroy the old report before saving new one,
+                         ;; in order to avoid duplicate report-uuid
+                         (destroy rep)
+                         (let ((rep-new (make-report
+                                         (report-uuid rep)
+                                         (report-account-id rep)
+                                         (report-revision-id rep)
+                                         (report-to-modify-subject modified)
+                                         (id-of q-new)
+                                         (id-of c-new))))
+                           (and (save rep-new)
                                 rep-new)))))))))
 
   (define-scenario (modify-report io request data)
@@ -810,6 +812,14 @@
                       (rss:query recent-reports))
                  (page (io sess) desk ex-id)))
            (else (redirect (io sess) 'shelf)))))
+
+  (define-scenario (show-report-history io request data)
+    (with-or-without-session/
+     (io request data)
+     (sess (id id maybe-id #f))
+     (if id
+         (page (io sess) report-history id)
+         (redirect (io sess) 'index))))
 
   (define-scenario (acknowledge io request data)
     (with-session/

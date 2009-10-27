@@ -114,12 +114,12 @@ create table report (
 ) default charset=utf8;
 create table report_history (
   id int not null auto_increment,
+  uuid varchar(256) not null,
   account_id int not null,
   revision_id int not null,
   subject varchar(256) not null,
   quotation_id int not null,
   correction_id int,
-  report_id int not null,
   created_at datetime,
   updated_at datetime,
   primary key (id)
