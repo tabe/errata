@@ -752,23 +752,25 @@
 
   (define (update-report rep q c modified)
     (let ((q-new (update-quotation q modified)))
-      (and (save q-new)
-           (let ((c-new (update-correction c q-new modified)))
-             (and (save c-new)
-                  (let ((rep-h (report->report-history rep)))
-                    (and (save rep-h)
-                         ;; destroy the old report before saving new one,
-                         ;; in order to avoid duplicate report-uuid
-                         (destroy rep)
-                         (let ((rep-new (make-report
-                                         (report-uuid rep)
-                                         (report-account-id rep)
-                                         (report-revision-id rep)
-                                         (report-to-modify-subject modified)
-                                         (id-of q-new)
-                                         (id-of c-new))))
-                           (and (save rep-new)
-                                rep-new)))))))))
+      (call-with-mysql
+       (lambda (mysql)
+         (and (save mysql q-new)
+              (let ((c-new (update-correction c q-new modified)))
+                (and (save mysql c-new)
+                     (let ((rep-h (report->report-history rep)))
+                       (and (save mysql rep-h)
+                            ;; destroy the old report before saving new one,
+                            ;; in order to avoid duplicate report-uuid
+                            (destroy mysql rep)
+                            (let ((rep-new (make-report
+                                            (report-uuid rep)
+                                            (report-account-id rep)
+                                            (report-revision-id rep)
+                                            (report-to-modify-subject modified)
+                                            (id-of q-new)
+                                            (id-of c-new))))
+                              (and (save mysql rep-new)
+                                   rep-new)))))))))))
 
   (define-scenario (modify-report io request data)
     (with-session/
