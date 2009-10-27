@@ -19,7 +19,8 @@
           revision-report-tr
           revision-window
           shelf-window
-          exlibris-window)
+          exlibris-window
+          notification-window)
   (import (except (rnrs) div)
           (only (core) format)
           (match)
@@ -39,9 +40,10 @@
           (only (errata configuration) url-base)
           (only (errata isbn) isbn10->amazon)
           (errata model)
+          (only (errata notification) notification notification-subject notification-body notification->url)
           (errata helper pagination)
           (errata page)
-          (only (errata url) bib&revision->url record-fragment report->url))
+          (only (errata url) bib&revision->url record->fragment report->url))
 
   (define errata-description
     (html:meta ((name "description") (content "書籍などの正誤表を共有するためのサービス。"))))
@@ -101,7 +103,8 @@
   (define *public-links* '((board . "書誌一覧")))
 
   (define *private-links*
-    '((shelf . "書棚の閲覧")
+    '((inbox . "Inbox")
+      (shelf . "書棚の閲覧")
       (put-on . "蔵書の登録")
       (edit-preference . "設定の編集")
       (modify-account . "アカウントの編集")
@@ -383,7 +386,7 @@
   (define-syntax anchor
     (syntax-rules ()
       ((_ (record a0 ...) e0 ...)
-       (html:a ((name (record-fragment record))
+       (html:a ((name (record->fragment record))
                 a0 ...)
                e0 ...))))
 
@@ -637,4 +640,29 @@
       ((ex r b) (exlibris-frame uuid b r ex))
       (_ "?")))
 
-  )
+  (define (notification-window uuid id)
+    (let ((ls (lookup-all
+               (notification)
+               ((notification (account-id id)))
+               ((order-by (notification (created-at desc)))))))
+      (if (null? ls)
+          (html:p "(新しい通知はありません)")
+          (html:ul
+           (map
+            (lambda (tuple)
+              (match tuple
+                ((nt)
+                 (html:li
+                  (html:escape-string (notification-subject nt))
+                  (html:span ((style "font-size:x-small;"))
+                             "(" (created-at-of nt) ")")
+                  (html:form ((action (build-entry-path 'drop-notification uuid)))
+                             (hidden-field "id" (id-of nt))
+                             (html:input ((type "submit") (value (__ drop-notification)))))
+                  (html:br)
+                  (html:a ((href (notification->url nt uuid)))
+                          (html:q (html:escape-string (notification-body nt))))))
+                (_ '())))
+            ls)))))
+
+)

@@ -22,7 +22,7 @@
     (id-set! ack 100)
     ack))
 
-(assert-string=? "acknowledgement100" (record-fragment ack-100))
+(assert-string=? "acknowledgement100" (record->fragment ack-100))
 
 (assert-string=? "/r/0123456789/%E5%88%9D%E7%89%88%E7%AC%AC2%E5%88%B7/2009/10/23.html"
                  (bib&revision->url bib-a rev-a))

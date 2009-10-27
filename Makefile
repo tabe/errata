@@ -43,6 +43,7 @@ test:
 	$(YPSILON) tests/errata/isbn.scm
 	$(YPSILON) tests/errata/message.scm
 	$(YPSILON) tests/errata/model.scm
+	$(YPSILON) tests/errata/notification.scm
 	$(YPSILON) tests/errata/page.scm
 	$(YPSILON) tests/errata/query.scm
 	$(YPSILON) tests/errata/rss/recent-acknowledgements.scm

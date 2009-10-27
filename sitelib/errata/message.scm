@@ -228,6 +228,8 @@
              (ja "正誤表へ"))
    (find-bib (en "Find Bib")
              (ja "書誌検索"))
+   (drop-notification (en "Drop Notification")
+                      (ja "通知を削除"))
    (share-exlibris (en "Share Exlibris")
                    (ja "共有する"))
    (hide-exlibris (en "Hide Exlibris")

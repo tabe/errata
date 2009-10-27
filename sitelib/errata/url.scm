@@ -1,6 +1,7 @@
 (library (errata url)
-  (export record-fragment
+  (export record->fragment
           bib&revision->url
+          report->path
           report->url)
   (import (rnrs)
           (only (uri) encode-string)
@@ -15,7 +16,7 @@
                 revision-name
                 revision-revised-at))
 
-  (define-syntax record-fragment
+  (define-syntax record->fragment
     (syntax-rules ()
       ((_ record)
        (string-append
@@ -32,7 +33,7 @@
           ((arg0 arg1 ... uuid)
            (x->path arg0 arg1 ... uuid))
           ((arg0 arg1 ... uuid record)
-           (string-append (x->path arg0 arg1 ... uuid) "#" (record-fragment record))))))))
+           (string-append (x->path arg0 arg1 ... uuid) "#" (record->fragment record))))))))
 
   (define-syntax bib&revision->path
     (syntax-rules ()
@@ -49,14 +50,18 @@
                               uuid
                               (bib-uuid b)
                               (encode-string (revision-name r))
-                              (datetime->y/m/d (revision-revised-at r))))))))
+                              (datetime->y/m/d (revision-revised-at r))))))
+      ((_ b r)
+       (bib&revision->path b r #f))))
 
   (define-x->url bib&revision->url bib&revision->path b r)
 
   (define-syntax report->path
     (syntax-rules ()
       ((_ rep uuid)
-       (build-api-path 'report uuid (report-uuid rep)))))
+       (build-api-path 'report uuid (report-uuid rep)))
+      ((_ rep)
+       (report->path rep #f))))
 
   (define-x->url report->url report->path rep)
 
