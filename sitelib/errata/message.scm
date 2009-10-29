@@ -179,6 +179,8 @@
                                      (ja "設定が更新されました。"))
    (please-input-title-or-isbn (en "Please input title or ISBN.")
                                (ja "タイトルまたは ISBN を入力してください。"))
+   (please-check-isbn (en "Please check the ISBN.")
+                      (ja "ISBN を確認してください。"))
    (is-this-content-ok? (en "Is this content OK?")
                         (ja "この内容でよろしいですか?"))
    (please-retry (en "Please check your input and retry.")
