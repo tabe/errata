@@ -33,6 +33,20 @@
     (assert-string=? "sha-256" (account-hash-algorithm acc))
     (assert-string? (account-hash-key acc))))
 
+(let ((b (string->bib "0000000000000\n0000000000\n題名\nhttp://www.example.com/image\n")))
+  (assert-string? (bib-uuid b))
+  (assert-string=? "0000000000" (bib-isbn10 b))
+  (assert-string=? "0000000000000" (bib-isbn13 b))
+  (assert-string=? "題名" (bib-title b))
+  (assert-string=? "http://www.example.com/image" (bib-image b)))
+
+(let ((b (string->bib "8888888888888\n8888888888\nタイトル\n")))
+  (assert-string? (bib-uuid b))
+  (assert-string=? "8888888888" (bib-isbn10 b))
+  (assert-string=? "8888888888888" (bib-isbn13 b))
+  (assert-string=? "タイトル" (bib-title b))
+  (assert-boolean=? #f (bib-image b)))
+
 (let ((ack (make-acknowledgement #f #f #f "This is a comment.")))
   (assert-string=? "This is a comment." (acknowledgement->caption ack)))
 

@@ -1,4 +1,6 @@
-#!/usr/bin/env ypsilon
 #!r6rs
 
-(import (errata query))
+(import (errata query)
+        (xunit))
+
+(report)

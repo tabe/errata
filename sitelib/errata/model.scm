@@ -62,6 +62,7 @@
           bib-isbn13-set!
           bib-image
           bib-image-set!
+          string->bib
           revision
           revision?
           make-revision
@@ -273,6 +274,19 @@
              isbn13
              isbn10
              image))))))
+
+  (define (string->bib str)
+    (call-with-port (open-string-input-port str)
+      (lambda (port)
+        (let* ((isbn13 (get-line port))
+               (isbn10 (get-line port))
+               (title  (get-line port))
+               (url    (get-line port)))
+          (make-bib (make-uuid)
+                    (and (not (eof-object? title)) title)
+                    (and (not (eof-object? isbn13)) isbn13)
+                    (and (not (eof-object? isbn10)) isbn10)
+                    (and (not (eof-object? url)) url))))))
 
   (define-persistent-record-type revision
     (fields (mutable bib-id) (mutable name) revised-at)
