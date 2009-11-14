@@ -1,4 +1,4 @@
-YPSILON_SITELIB=submodules/lunula/sitelib:submodules/lunula/submodules/base64:submodules/lcs:submodules/manued:/home/tabe/ssax:submodules/lunula/submodules/uri:submodules/lunula/submodules/xunit:submodules/lunula/submodules/ypsilon-foreign-lib/sitelib:/home/tabe/ypsilon-http/sitelib
+YPSILON_SITELIB=submodules/lunula/sitelib:submodules/lunula/submodules/base64:submodules/lcs:submodules/manued:/home/tabe/sxml/sitelib:submodules/lunula/submodules/uri:submodules/lunula/submodules/xunit:submodules/lunula/submodules/ypsilon-foreign-lib/sitelib:/home/tabe/ypsilon-http/sitelib
 
 YPSILON=env YPSILON_SITELIB=$(YPSILON_SITELIB) \
   LUNULA_CONFIGURATION_DIRECTORY=config \
