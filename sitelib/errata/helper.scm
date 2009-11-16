@@ -392,7 +392,7 @@
        (append
         (html:tr
          (html:td ((colspan 2) (style "font-size:small;"))
-                  (html:span ((class "pp")) "pp." (quotation-page q) "/" (quotation-position q)) "&nbsp;"
+                  (html:span ((class "page")) "page " (quotation-page q) "/" (quotation-position q)) "&nbsp;"
                   (anchor (rh (class "subject")) (report-history-subject rh)) "&nbsp;"
                   "("
                   (html:span ((style "font-size:x-small;")) "reported by ")
@@ -459,7 +459,7 @@
     (append
      (html:tr
       (html:td ((colspan 2) (style "font-size:small;"))
-               (html:span ((class "pp")) "pp." (quotation-page q) "/" (quotation-position q)) "&nbsp;"
+               (html:span ((class "page")) "page " (quotation-page q) "/" (quotation-position q)) "&nbsp;"
                (anchor (rep (class "subject")) (report-subject rep)) "&nbsp;"
                "("
                (html:span ((style "font-size:x-small;")) "reported by ")
