@@ -9,9 +9,10 @@
           (only (srfi :13) string-null?)
           (srfi :48)
           (only (ypsilon concurrent) make-uuid)
-          (only (lunula controller) add-input-fields define-api define-scenario form mail page redirect)
+          (only (lunula controller) define-api define-scenario form mail page redirect)
           (lunula gettext)
           (prefix (lunula html) html:)
+          (only (lunula input-field) add-input-fields)
           (prefix (lunula log) log:)
           (lunula mysql)
           (lunula session)
@@ -133,6 +134,16 @@
         "下記の URL にアクセスして新しいパスワードを指定してください。\n"
         "(このメールは安全に無視できます; 何もしなければパスワードはそのままです。)\n"
         (format "~a~a~%" errata:url-base path)))))
+
+  (define select-font-face
+    '(select (unspecified "(指定なし)")
+             (bold "太字")
+             (italic "イタリック体")
+             (oblique "斜体")
+             (constant-width "等幅")
+             (constant-width-bold "等幅太字")
+             (constant-width-italic "等幅イタリック体")
+             (constant-width-oblique "等幅斜体")))
 
   (define-scenario (forgot-password io request)
     (without-session
@@ -654,12 +665,14 @@
                     r-id
                     (report-to-modify-page rep)
                     (report-to-modify-position rep)
-                    (report-to-modify-quotation-body rep)))
+                    (report-to-modify-quotation-body rep)
+                    (report-to-modify-quotation-font-face rep)))
 
   (define (report-to-modify->correction rep a-id q-id)
     (make-correction a-id
                      q-id
-                     (report-to-modify-correction-body rep)))
+                     (report-to-modify-correction-body rep)
+                     (report-to-modify-correction-font-face rep)))
 
   (define (report-to-modify->report rep a-id r-id q-id c-id)
     (make-report (make-uuid)
@@ -707,7 +720,9 @@
                                                                                 (report-by-manued-page rbm)
                                                                                 (report-by-manued-position rbm)
                                                                                 q-body
-                                                                                c-body))))
+                                                                                (report-by-manued-quotation-font-face rbm)
+                                                                                c-body
+                                                                                (report-by-manued-correction-font-face rbm)))))
                                     (page (io sess) desk id))))
                              (else
                               (let loop ((rep (form (io sess) (report-to-modify) private)))
@@ -724,7 +739,9 @@
      (quotation-page q)
      (quotation-position q)
      (quotation-body q)
-     (correction-body c)))
+     (quotation-font-face q)
+     (correction-body c)
+     (correction-font-face c)))
 
   (define (update-quotation q modified)
     (make-quotation
@@ -732,13 +749,15 @@
      (quotation-revision-id q)
      (report-to-modify-page modified)
      (report-to-modify-position modified)
-     (report-to-modify-quotation-body modified)))
+     (report-to-modify-quotation-body modified)
+     (report-to-modify-quotation-font-face modified)))
 
   (define (update-correction c q modified)
     (make-correction
      (correction-account-id c)
      (id-of q)
-     (report-to-modify-correction-body modified)))
+     (report-to-modify-correction-body modified)
+     (report-to-modify-correction-font-face modified)))
 
   (define (update-report rep q c modified)
     (let ((q-new (update-quotation q modified)))
@@ -951,22 +970,28 @@
      #f
      (text "(例: 「7」「vi」)")
      (text "(例: 「10行目」「末尾」「図A-1内」)")
-     (textarea)))
+     (textarea)
+     select-font-face))
   (add-input-fields correction
     (#f
      #f
-     (textarea)))
+     (textarea)
+     select-font-face))
   (add-input-fields report-to-modify
     ((text)
      (text "(例: 「7」「vi」)")
      (text "(例: 「10行目」「末尾」「図A-1内」)")
      (textarea)
-     (textarea)))
+     select-font-face
+     (textarea)
+     select-font-face))
   (add-input-fields report-by-manued
     ((text)
      (text "(例: 「7」「vi」)")
      (text "(例: 「10行目」「末尾」「図A-1内」)")
-     (textarea "例: 「あ[あ/い]うえお」「0123[6|5|4]789」")))
+     (textarea "例: 「あ[あ/い]うえお」「0123[6|5|4]789」")
+     select-font-face
+     select-font-face))
   (add-input-fields acknowledgement
     (#f
      #f

@@ -39,6 +39,7 @@
           (only (lunula string) blank? string-truncate)
           (only (errata calendar) ad->japanese-era datetime->date datetime->y/m/d)
           (only (errata configuration) url-base)
+          (only (errata font) face->style)
           (only (errata isbn) isbn10->amazon)
           (errata model)
           (only (errata notification) notification notification-subject notification-body notification->url)
@@ -534,9 +535,13 @@
         ((xa . xb)
          (html:tr
           (html:td ((class "width:49%;"))
-                   (html:div ((class "dog")) (html:blockquote (reverse xa))))
+                   (html:div ((class "dog"))
+                             (html:blockquote ((style (face->style (quotation-font-face q))))
+                                              (reverse xa))))
           (html:td ((class "width:49%;"))
-                   (html:div ((class "dog")) (html:blockquote (reverse xb))))
+                   (html:div ((class "dog"))
+                             (html:blockquote ((style (face->style (correction-font-face c))))
+                                              (reverse xb))))
           (html:td forms))))))
 
   (define (acknowledgement-view ack a pref)

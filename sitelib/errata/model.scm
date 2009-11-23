@@ -105,6 +105,7 @@
           quotation-page
           quotation-position
           quotation-body
+          quotation-font-face
           correction
           correction?
           make-correction
@@ -113,6 +114,7 @@
           correction-quotation-id
           correction-quotation-id-set!
           correction-body
+          correction-font-face
           report
           report?
           make-report
@@ -134,6 +136,8 @@
           report-by-manued-page
           report-by-manued-position
           report-by-manued-body
+          report-by-manued-quotation-font-face
+          report-by-manued-correction-font-face
           report-to-modify
           report-to-modify?
           make-report-to-modify
@@ -141,7 +145,9 @@
           report-to-modify-page
           report-to-modify-position
           report-to-modify-quotation-body
+          report-to-modify-quotation-font-face
           report-to-modify-correction-body
+          report-to-modify-correction-font-face
           report-history
           report-history?
           report-history-subject
@@ -332,26 +338,28 @@
     (string-truncate (review-body rvw) 32))
 
   (define-persistent-record-type quotation
-    (fields (mutable account-id) (mutable revision-id) page position body)
+    (fields (mutable account-id) (mutable revision-id) page position body font-face)
     (protocol
      (persistent-protocol
       (lambda (p)
-        (lambda (account-id revision-id page position body)
+        (lambda (account-id revision-id page position body font-face)
           (p (maybe-id account-id)
              (maybe-id revision-id)
              page
              position
-             body))))))
+             body
+             font-face))))))
 
   (define-persistent-record-type correction
-    (fields (mutable account-id) (mutable quotation-id) body)
+    (fields (mutable account-id) (mutable quotation-id) body font-face)
     (protocol
      (persistent-protocol
       (lambda (p)
-        (lambda (account-id quotation-id body)
+        (lambda (account-id quotation-id body font-face)
           (p (maybe-id account-id)
              (maybe-id quotation-id)
-             body))))))
+             body
+             font-face))))))
 
   (define-persistent-record-type report
     (fields uuid (mutable account-id) (mutable revision-id) subject (mutable quotation-id) (mutable correction-id))
@@ -370,10 +378,10 @@
     (string-truncate (report-subject r) 32))
 
   (define-record-type report-by-manued
-    (fields subject page position body))
+    (fields subject page position body quotation-font-face correction-font-face))
 
   (define-record-type report-to-modify
-    (fields subject page position quotation-body correction-body))
+    (fields subject page position quotation-body quotation-font-face correction-body correction-font-face))
 
   (define-persistent-record-type report-history
     (fields uuid account-id revision-id subject quotation-id correction-id)

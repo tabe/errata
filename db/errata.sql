@@ -87,6 +87,7 @@ create table quotation (
   page varchar(256),
   position varchar(256),
   body text not null,
+  font_face varchar(16) not null,
   created_at datetime,
   updated_at datetime,
   primary key (id)
@@ -96,6 +97,7 @@ create table correction (
   account_id int not null,
   quotation_id int not null,
   body text not null,
+  font_face varchar(16) not null,
   created_at datetime,
   updated_at datetime,
   primary key (id)

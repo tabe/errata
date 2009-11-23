@@ -1,5 +1,4 @@
 body {
-    font-family: Verdana, Arial, Helvetica, sans-serif;
     background-color: #ffffff;
 }
 
@@ -18,6 +17,7 @@ h1 a {
 }
 
 #logo {
+    font-family: Verdana, Arial, Helvetica, sans-serif;
     padding: 0px;
     margin: 0px;
 }
