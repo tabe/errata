@@ -13,6 +13,7 @@
           validate-bib-title
           validate-revision
           validate-review
+          validate-occurrence-to-add
           validate-report-to-modify
           validate-report-by-manued
           validate-acknowledgement
@@ -53,10 +54,11 @@
   (define *review-body-min-length* 1)
   (define *review-body-max-length* 1024)
 
-  (define *quotation-page-min-length* 1)
-  (define *quotation-page-max-length* 32)
-  (define *quotation-position-min-length* 1)
-  (define *quotation-position-max-length* 32)
+  (define *occurrence-page-min-length* 1)
+  (define *occurrence-page-max-length* 32)
+  (define *occurrence-position-min-length* 1)
+  (define *occurrence-position-max-length* 32)
+
   (define *quotation-body-min-length* 1)
   (define *quotation-body-max-length* 256)
 
@@ -209,21 +211,21 @@
   (define-composite-validator validate-review
     (review-body validate-review-body))
 
-  (define-string-length-validator validate-quotation-page
+  (define-string-length-validator validate-occurrence-page
     (page-is-blank page-too-long)
-    (*quotation-page-max-length*))
+    (*occurrence-page-max-length*))
 
-  (define-string-length-validator validate-quotation-position
+  (define-string-length-validator validate-occurrence-position
     (position-is-blank position-too-long)
-    (*quotation-position-max-length*))
+    (*occurrence-position-max-length*))
 
   (define-string-length-validator validate-quotation-body
     (body-is-blank body-too-long)
     (*quotation-body-max-length*))
 
   (define-composite-validator validate-quotation
-    (quotation-page validate-quotation-page)
-    (quotation-position validate-quotation-position)
+    (occurrence-page validate-occurrence-page)
+    (occurrence-position validate-occurrence-position)
     (quotation-body validate-quotation-body))
 
   (define-string-length-validator validate-correction-body
@@ -240,10 +242,14 @@
   (define-composite-validator validate-report
     (report-subject validate-report-subject))
 
+  (define-composite-validator validate-occurrence-to-add
+    (occurrence-to-add-page validate-occurrence-page)
+    (occurrence-to-add-position validate-occurrence-position))
+
   (define-composite-validator validate-report-to-modify
     (report-to-modify-subject validate-report-subject)
-    (report-to-modify-page validate-quotation-page)
-    (report-to-modify-position validate-quotation-position)
+    (report-to-modify-page validate-occurrence-page)
+    (report-to-modify-position validate-occurrence-position)
     (report-to-modify-quotation-body validate-quotation-body)
     (report-to-modify-correction-body validate-correction-body))
 
@@ -255,8 +261,8 @@
 
   (define-composite-validator validate-report-by-manued
     (report-by-manued-subject validate-report-subject)
-    (report-by-manued-page validate-quotation-page)
-    (report-by-manued-position validate-quotation-position)
+    (report-by-manued-page validate-occurrence-page)
+    (report-by-manued-position validate-occurrence-position)
     (report-by-manued-body validate-report-by-manued-body))
 
   (define-validator (validate-acknowledgement-sign str)

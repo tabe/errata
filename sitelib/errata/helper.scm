@@ -145,7 +145,7 @@
 
   (define (recent-report uuid tuple)
     (match tuple
-      ((rep a pref r b q c)
+      ((rep a pref r b q o c)
        (html:p (html:a ((href (bib&revision->url b r uuid rep)))
                        (html:escape-string (report->caption rep)))))
       (_ "?")))
@@ -374,13 +374,14 @@
                      (map
                       (lambda (tuple1)
                         (match tuple1
-                          ((rh a pref q c)
-                           (report-history-tr uuid rh a pref q c))
+                          ((rh a pref q o c)
+                           (report-history-tr uuid rh a pref q o c))
                           (_ "?")))
                       (lookup-all (report-history
                                    (account report-history)
                                    (preference (account left))
                                    (quotation report-history)
+                                   (occurrence report-history)
                                    (correction report-history))
                                   ((report-history (uuid (report-uuid rep))))
                                   ((order-by (report-history (created-at desc)))))))))
@@ -389,11 +390,11 @@
 
   (define-syntax report-history-tr
     (syntax-rules ()
-      ((_ uuid rh a pref q c)
+      ((_ uuid rh a pref q o c)
        (append
         (html:tr
          (html:td ((colspan 2) (style "font-size:small;"))
-                  (html:span ((class "page")) "page " (quotation-page q) "/" (quotation-position q)) "&nbsp;"
+                  (html:span ((class "page")) "page " (occurrence-page o) "/" (occurrence-position o)) "&nbsp;"
                   (anchor (rh (class "subject")) (report-history-subject rh)) "&nbsp;"
                   "("
                   (html:span ((style "font-size:x-small;")) "reported by ")
@@ -408,20 +409,21 @@
                     (account report)
                     (preference (account left))
                     (quotation report)
+                    (occurrence report)
                     (correction report)
                     (revision report)
                     (bib revision))
                    ((report (id id))))
-      ((rep a pref q c r b) (report-frame uuid rep a pref q c r b))
+      ((rep a pref q o c r b) (report-frame uuid rep a pref q o c r b))
       (_ "?")))
 
-  (define (report-frame uuid rep a pref q c r b)
+  (define (report-frame uuid rep a pref q o c r b)
     (html:div
      (go-to-table uuid r)
      (revision-skeleton b r '() '() '())
      (html:h4 (__ Detail) "&nbsp;" creativecommons-attribution-logo)
      (diff-table
-      (revision-report-tr uuid rep a pref q c
+      (revision-report-tr uuid rep a pref q o c
                           (html:form ((action (build-entry-path 'show-report-history uuid)))
                                      (hidden-field "id" (id-of rep))
                                      (html:input ((type "submit") (value (__ show-report-history)))))
@@ -456,11 +458,11 @@
                 a0 ...)
                e0 ...))))
 
-  (define (revision-report-tr uuid rep a pref q c x y)
+  (define (revision-report-tr uuid rep a pref q o c x y)
     (append
      (html:tr
       (html:td ((colspan 2) (style "font-size:small;"))
-               (html:span ((class "page")) "page " (quotation-page q) "/" (quotation-position q)) "&nbsp;"
+               (html:span ((class "page")) "page " (occurrence-page o) "/" (occurrence-position o)) "&nbsp;"
                (anchor (rep (class "subject")) (report-subject rep)) "&nbsp;"
                "("
                (html:span ((style "font-size:x-small;")) "reported by ")
@@ -593,15 +595,16 @@
      (map
       (lambda (tuple)
         (match tuple
-          ((rep a pref q c) (revision-report-tr uuid rep a pref q c (proc rep) '()))))
+          ((rep a pref q o c) (revision-report-tr uuid rep a pref q o c (proc rep) '()))))
       (list-sort
        (lambda (t0 t1)
-         (page<? (quotation-page (cadddr t0))
-                 (quotation-page (cadddr t1))))
+         (page<? (occurrence-page (cadddr (cdr t0)))
+                 (occurrence-page (cadddr (cdr t1)))))
        (lookup-all (report
                     (account report)
                     (preference (account left))
                     (quotation report)
+                    (occurrence report)
                     (correction report))
                    ((report (revision-id (id-of r)))))))))
 
@@ -667,6 +670,10 @@
                    (html:input ((type "submit") (value (__ new-report))))))
        (revision-reports uuid r (lambda (rep)
                                   (append
+                                   (html:form ((action (build-entry-path 'add-occurrence uuid)))
+                                              (hidden-field "report" (id-of rep))
+                                              (hidden-field "exlibris" (id-of ex))
+                                              (html:input ((type "submit") (value (__ add-occurrence)))))
                                    (html:form ((action (build-entry-path 'modify-report uuid)))
                                               (hidden-field "report" (id-of rep))
                                               (hidden-field "exlibris" (id-of ex))

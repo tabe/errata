@@ -13,7 +13,7 @@
 (define rev-a (make-revision #f "初版第2刷" "2009-10-23 15:40:00"))
 
 (define rep-b224
-  (let ((rep (make-report "b224c158-598d-4897-8db5-875d167daee2" #f #f #f #f #f)))
+  (let ((rep (make-report "b224c158-598d-4897-8db5-875d167daee2" #f #f #f #f #f #f)))
     (id-set! rep 10)
     rep))
 

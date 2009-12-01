@@ -102,10 +102,20 @@
           quotation-account-id-set!
           quotation-revision-id
           quotation-revision-id-set!
-          quotation-page
-          quotation-position
           quotation-body
           quotation-font-face
+          occurrence
+          occurrence?
+          make-occurrence
+          occurrence-account-id
+          occurrence-quotation-id
+          occurrence-page
+          occurrence-position
+          occurrence-to-add
+          occurrence-to-add?
+          make-occurrence-to-add
+          occurrence-to-add-page
+          occurrence-to-add-position
           correction
           correction?
           make-correction
@@ -126,6 +136,8 @@
           report-subject
           report-quotation-id
           report-quotation-id-set!
+          report-occurrence-id
+          report-occurrence-id-set!
           report-correction-id
           report-correction-id-set!
           report->caption
@@ -338,17 +350,29 @@
     (string-truncate (review-body rvw) 32))
 
   (define-persistent-record-type quotation
-    (fields (mutable account-id) (mutable revision-id) page position body font-face)
+    (fields (mutable account-id) (mutable revision-id) body font-face)
     (protocol
      (persistent-protocol
       (lambda (p)
-        (lambda (account-id revision-id page position body font-face)
+        (lambda (account-id revision-id body font-face)
           (p (maybe-id account-id)
              (maybe-id revision-id)
-             page
-             position
              body
              font-face))))))
+
+  (define-persistent-record-type occurrence
+    (fields account-id quotation-id page position)
+    (protocol
+     (persistent-protocol
+      (lambda (p)
+        (lambda (account-id quotation-id page position)
+          (p (maybe-id account-id)
+             (maybe-id quotation-id)
+             page
+             position))))))
+
+  (define-record-type occurrence-to-add
+    (fields page position))
 
   (define-persistent-record-type correction
     (fields (mutable account-id) (mutable quotation-id) body font-face)
@@ -362,16 +386,17 @@
              font-face))))))
 
   (define-persistent-record-type report
-    (fields uuid (mutable account-id) (mutable revision-id) subject (mutable quotation-id) (mutable correction-id))
+    (fields uuid (mutable account-id) (mutable revision-id) subject (mutable quotation-id) (mutable occurrence-id) (mutable correction-id))
     (protocol
      (persistent-protocol
       (lambda (p)
-        (lambda (uuid account-id revision-id subject quotation-id correction-id)
+        (lambda (uuid account-id revision-id subject quotation-id occurrence-id correction-id)
           (p uuid
              (maybe-id account-id)
              (maybe-id revision-id)
              subject
              (maybe-id quotation-id)
+             (maybe-id occurrence-id)
              (maybe-id correction-id)))))))
 
   (define (report->caption r)
@@ -384,16 +409,17 @@
     (fields subject page position quotation-body quotation-font-face correction-body correction-font-face))
 
   (define-persistent-record-type report-history
-    (fields uuid account-id revision-id subject quotation-id correction-id)
+    (fields uuid account-id revision-id subject quotation-id occurrence-id correction-id)
     (protocol
      (persistent-protocol
       (lambda (p)
-        (lambda (uuid account-id revision-id subject quotation-id correction-id)
+        (lambda (uuid account-id revision-id subject quotation-id occurrence-id correction-id)
           (p uuid
              (maybe-id account-id)
              (maybe-id revision-id)
              subject
              (maybe-id quotation-id)
+             (maybe-id occurrence-id)
              (maybe-id correction-id)))))))
 
   (define (report->report-history r)
@@ -402,6 +428,7 @@
                          (report-revision-id r)
                          (report-subject r)
                          (report-quotation-id r)
+                         (report-occurrence-id r)
                          (report-correction-id r)))
 
   (define-persistent-record-type acknowledgement
@@ -500,6 +527,7 @@
                  (revision report)
                  (bib revision)
                  (quotation report)
+                 (occurrence report)
                  (correction report))
                 ((exists (publicity (exlibris publicity))
                          ((exlibris (revision))

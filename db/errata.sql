@@ -7,6 +7,7 @@ drop table if exists publicity;
 drop table if exists review;
 drop table if exists quotation;
 drop table if exists correction;
+drop table if exists occurrence;
 drop table if exists report;
 drop table if exists report_history;
 drop table if exists acknowledgement;
@@ -92,6 +93,16 @@ create table quotation (
   updated_at datetime,
   primary key (id)
 ) default charset=utf8;
+create table occurrence (
+  id int not null auto_increment,
+  account_id int not null,
+  quotation_id int not null,
+  page varchar(256),
+  position varchar(256),
+  created_at datetime,
+  updated_at datetime,
+  primary key (id)
+) default charset=utf8;
 create table correction (
   id int not null auto_increment,
   account_id int not null,
@@ -109,6 +120,7 @@ create table report (
   revision_id int not null,
   subject varchar(256) not null,
   quotation_id int not null,
+  occurrence_id int not null,
   correction_id int,
   created_at datetime,
   updated_at datetime,

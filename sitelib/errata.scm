@@ -663,10 +663,14 @@
   (define (report-to-modify->quotation rep a-id r-id)
     (make-quotation a-id
                     r-id
-                    (report-to-modify-page rep)
-                    (report-to-modify-position rep)
                     (report-to-modify-quotation-body rep)
                     (report-to-modify-quotation-font-face rep)))
+
+  (define (report-to-modify->occurrence rep a-id q-id)
+    (make-occurrence a-id
+                     q-id
+                     (report-to-modify-page rep)
+                     (report-to-modify-position rep)))
 
   (define (report-to-modify->correction rep a-id q-id)
     (make-correction a-id
@@ -674,12 +678,13 @@
                      (report-to-modify-correction-body rep)
                      (report-to-modify-correction-font-face rep)))
 
-  (define (report-to-modify->report rep a-id r-id q-id c-id)
+  (define (report-to-modify->report rep a-id r-id q-id o-id c-id)
     (make-report (make-uuid)
                  a-id
                  r-id
                  (report-to-modify-subject rep)
                  q-id
+                 o-id
                  c-id))
 
   (define (report-format account-id)
@@ -700,13 +705,16 @@
                        (define (save-new-report rep)
                          (let ((q (report-to-modify->quotation rep a-id (exlibris-revision-id ex))))
                            (if (save q)
-                               (let ((c (report-to-modify->correction rep a-id (id-of q))))
-                                 (if (save c)
-                                     (let ((r (report-to-modify->report rep a-id (exlibris-revision-id ex) (id-of q) (id-of c))))
-                                       (cond ((save r)
-                                              (rss:query recent-reports)
-                                              (page (io sess) desk id))
-                                             (else (page (io sess) private (__ hmm-an-error-occurred)))))
+                               (let ((o (report-to-modify->occurrence rep a-id (id-of q))))
+                                 (if (save o)
+                                     (let ((c (report-to-modify->correction rep a-id (id-of q))))
+                                       (if (save c)
+                                           (let ((r (report-to-modify->report rep a-id (exlibris-revision-id ex) (id-of q) (id-of o) (id-of c))))
+                                             (cond ((save r)
+                                                    (rss:query recent-reports)
+                                                    (page (io sess) desk id))
+                                                   (else (page (io sess) private (__ hmm-an-error-occurred)))))
+                                           (page (io sess) private (__ hmm-an-error-occurred))))
                                      (page (io sess) private (__ hmm-an-error-occurred))))
                                (page (io sess) private (__ hmm-an-error-occurred)))))
 
@@ -733,11 +741,11 @@
                                     (page (io sess) desk id))))))))
                (else (redirect (io sess) 'shelf)))))))
 
-  (define (prepare-report-to-modify rep q c)
+  (define (prepare-report-to-modify rep q o c)
     (make-report-to-modify
      (report-subject rep)
-     (quotation-page q)
-     (quotation-position q)
+     (occurrence-page o)
+     (occurrence-position o)
      (quotation-body q)
      (quotation-font-face q)
      (correction-body c)
@@ -747,10 +755,15 @@
     (make-quotation
      (quotation-account-id q)
      (quotation-revision-id q)
-     (report-to-modify-page modified)
-     (report-to-modify-position modified)
      (report-to-modify-quotation-body modified)
      (report-to-modify-quotation-font-face modified)))
+
+  (define (update-occurrence o q modified)
+    (make-occurrence
+     (occurrence-account-id o)
+     (id-of q)
+     (report-to-modify-page modified)
+     (report-to-modify-position modified)))
 
   (define (update-correction c q modified)
     (make-correction
@@ -759,13 +772,15 @@
      (report-to-modify-correction-body modified)
      (report-to-modify-correction-font-face modified)))
 
-  (define (update-report rep q c modified)
+  (define (update-report rep q o c modified)
     (let ((q-new (update-quotation q modified)))
       (call-with-mysql
        (lambda (mysql)
          (and (save mysql q-new)
-              (let ((c-new (update-correction c q-new modified)))
-                (and (save mysql c-new)
+              (let ((o-new (update-occurrence o q-new modified))
+                    (c-new (update-correction c q-new modified)))
+                (and (save mysql o-new)
+                     (save mysql c-new)
                      (let ((rep-h (report->report-history rep)))
                        (and (save mysql rep-h)
                             ;; destroy the old report before saving new one,
@@ -777,9 +792,49 @@
                                             (report-revision-id rep)
                                             (report-to-modify-subject modified)
                                             (id-of q-new)
+                                            (id-of o-new)
                                             (id-of c-new))))
                               (and (save mysql rep-new)
                                    rep-new)))))))))))
+
+  (define-scenario (add-occurrence io request data)
+    (with-session/
+     (io request data)
+     (sess (rep-id report maybe-id #f)
+           (ex-id exlibris maybe-id #f))
+     (if (and rep-id ex-id)
+         (match (lookup (report (quotation report))
+                        ((report
+                          (account-id (session->account-id sess))
+                          (id rep-id))))
+           ((rep q)
+            (let loop ((o (form (io sess) (occurrence-to-add #f) private (__ where-do-you-find-the-same-body?) (html:escape-string (quotation-body q)))))
+              (if (occurrence-to-add? o)
+                  (guide (validate-occurrence-to-add o)
+                    (lambda (ht)
+                      (loop (form (io sess) (occurrence-to-add o) private (hashtable->messages ht))))
+                    (lambda _
+                      (let ((new-o (make-occurrence (session->account-id sess)
+                                                    (id-of q)
+                                                    (occurrence-to-add-page o)
+                                                    (occurrence-to-add-position o))))
+                        (if (save new-o)
+                            (let ((new-rep (make-report
+                                            (make-uuid)
+                                            (report-account-id rep)
+                                            (report-revision-id rep)
+                                            (report-subject rep)
+                                            (report-quotation-id rep)
+                                            (id-of new-o)
+                                            (report-correction-id rep))))
+                              (cond ((save new-rep)
+                                     (rss:query recent-reports)
+                                     (page (io sess) desk ex-id))
+                                    (else (page (io sess) private (__ hmm-an-error-occurred)))))
+                            (page (io sess) private (__ hmm-an-error-occurred))))))
+                  (page (io sess) desk ex-id))))
+           (_ (page (io sess) desk ex-id)))
+         (redirect (io sess) 'shelf))))
 
   (define-scenario (modify-report io request data)
     (with-session/
@@ -787,18 +842,18 @@
      (sess (rep-id report maybe-id #f)
            (ex-id exlibris maybe-id #f))
      (if (and rep-id ex-id)
-         (match (lookup (report (quotation report) (correction report))
+         (match (lookup (report (quotation report) (occurrence report) (correction report))
                         ((report
                           (account-id (session->account-id sess)) ; security
                           (id rep-id))))
-           ((rep q c)
-            (let loop ((modified (form (io sess) (report-to-modify (prepare-report-to-modify rep q c)) private)))
+           ((rep q o c)
+            (let loop ((modified (form (io sess) (report-to-modify (prepare-report-to-modify rep q o c)) private)))
               (if (report-to-modify? modified)
                   (guide (validate-report-to-modify modified)
                     (lambda (ht)
                       (loop (form (io sess) (report-to-modify modified) private (hashtable->messages ht))))
                     (lambda _
-                      (cond ((update-report rep q c modified)
+                      (cond ((update-report rep q o c modified)
                              (rss:query recent-reports)
                              (page (io sess) desk ex-id))
                             (else (page (io sess) private (__ hmm-an-error-occurred))))))
@@ -977,6 +1032,9 @@
      #f
      (textarea)
      select-font-face))
+  (add-input-fields occurrence-to-add
+    ((text)
+     (text)))
   (add-input-fields report-to-modify
     ((text)
      (text "(例: 「7」「vi」)")

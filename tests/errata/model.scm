@@ -56,7 +56,7 @@
 (let ((rvw (make-review #f "これはテストが含まれている。")))
   (assert-string=? "これはテストが含まれている。" (review->caption rvw)))
 
-(let ((rep (make-report #f #f #f "レポートの題名" #f #f)))
+(let ((rep (make-report #f #f #f "レポートの題名" #f #f #f)))
   (assert-string=? "レポートの題名" (report->caption rep)))
 
 (define-syntax assert-recent-stuff
