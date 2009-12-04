@@ -253,15 +253,13 @@
            '()))))
 
   (define (bib->image b)
-    (let ((image (bib-image b)))
-      (cond ((blank? image)
-             (html:img ((src "/image/no-image.png") (alt "No Image"))))
-            ((isbn10->amazon (bib-isbn10 b))
-             => (lambda (url)
-                  (html:a ((href url) (target "_blank"))
-                          (html:img ((src image) (alt (html:escape-string (bib-title b))) (style "border-width:0px;"))))))
-            (else
-             (html:img ((src image) (alt (html:escape-string (bib-title b))) (style "border-width:0px;")))))))
+    (let* ((image (bib-image b))
+           (img (if (blank? image)
+                    (html:img ((src "/image/no-image.png") (alt "No Image")))
+                    (html:img ((src image) (alt (html:escape-string (bib-title b))) (style "border-width:0px;"))))))
+      (cond ((isbn10->amazon (bib-isbn10 b))
+             => (lambda (url) (html:a ((href url) (target "_blank")) img)))
+            (else img))))
 
   (define-syntax revision-skeleton
     (syntax-rules ()
