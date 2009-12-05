@@ -98,8 +98,6 @@
           quotation
           quotation?
           make-quotation
-          quotation-account-id
-          quotation-account-id-set!
           quotation-revision-id
           quotation-revision-id-set!
           quotation-body
@@ -107,7 +105,6 @@
           occurrence
           occurrence?
           make-occurrence
-          occurrence-account-id
           occurrence-quotation-id
           occurrence-page
           occurrence-position
@@ -119,8 +116,6 @@
           correction
           correction?
           make-correction
-          correction-account-id
-          correction-account-id-set!
           correction-quotation-id
           correction-quotation-id-set!
           correction-body
@@ -350,24 +345,22 @@
     (string-truncate (review-body rvw) 32))
 
   (define-persistent-record-type quotation
-    (fields (mutable account-id) (mutable revision-id) body font-face)
+    (fields (mutable revision-id) body font-face)
     (protocol
      (persistent-protocol
       (lambda (p)
-        (lambda (account-id revision-id body font-face)
-          (p (maybe-id account-id)
-             (maybe-id revision-id)
+        (lambda (revision-id body font-face)
+          (p (maybe-id revision-id)
              body
              font-face))))))
 
   (define-persistent-record-type occurrence
-    (fields account-id quotation-id page position)
+    (fields quotation-id page position)
     (protocol
      (persistent-protocol
       (lambda (p)
-        (lambda (account-id quotation-id page position)
-          (p (maybe-id account-id)
-             (maybe-id quotation-id)
+        (lambda (quotation-id page position)
+          (p (maybe-id quotation-id)
              page
              position))))))
 
@@ -375,13 +368,12 @@
     (fields page position))
 
   (define-persistent-record-type correction
-    (fields (mutable account-id) (mutable quotation-id) body font-face)
+    (fields (mutable quotation-id) body font-face)
     (protocol
      (persistent-protocol
       (lambda (p)
-        (lambda (account-id quotation-id body font-face)
-          (p (maybe-id account-id)
-             (maybe-id quotation-id)
+        (lambda (quotation-id body font-face)
+          (p (maybe-id quotation-id)
              body
              font-face))))))
 

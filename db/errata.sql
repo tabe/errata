@@ -83,7 +83,6 @@ create table review (
 ) default charset=utf8;
 create table quotation (
   id int not null auto_increment,
-  account_id int not null,
   revision_id int not null,
   page varchar(256),
   position varchar(256),
@@ -95,7 +94,6 @@ create table quotation (
 ) default charset=utf8;
 create table occurrence (
   id int not null auto_increment,
-  account_id int not null,
   quotation_id int not null,
   page varchar(256),
   position varchar(256),
@@ -105,7 +103,6 @@ create table occurrence (
 ) default charset=utf8;
 create table correction (
   id int not null auto_increment,
-  account_id int not null,
   quotation_id int not null,
   body text not null,
   font_face varchar(16) not null,

@@ -670,21 +670,18 @@
          (page (io sess) detail id)
          (redirect (io sess) 'index))))
 
-  (define (report-to-modify->quotation rep a-id r-id)
-    (make-quotation a-id
-                    r-id
+  (define (report-to-modify->quotation rep r-id)
+    (make-quotation r-id
                     (report-to-modify-quotation-body rep)
                     (report-to-modify-quotation-font-face rep)))
 
-  (define (report-to-modify->occurrence rep a-id q-id)
-    (make-occurrence a-id
-                     q-id
+  (define (report-to-modify->occurrence rep q-id)
+    (make-occurrence q-id
                      (report-to-modify-page rep)
                      (report-to-modify-position rep)))
 
-  (define (report-to-modify->correction rep a-id q-id)
-    (make-correction a-id
-                     q-id
+  (define (report-to-modify->correction rep q-id)
+    (make-correction q-id
                      (report-to-modify-correction-body rep)
                      (report-to-modify-correction-font-face rep)))
 
@@ -713,11 +710,11 @@
                      (let ((f (report-format a-id)))
 
                        (define (save-new-report rep)
-                         (let ((q (report-to-modify->quotation rep a-id (exlibris-revision-id ex))))
+                         (let ((q (report-to-modify->quotation rep (exlibris-revision-id ex))))
                            (if (save q)
-                               (let ((o (report-to-modify->occurrence rep a-id (id-of q))))
+                               (let ((o (report-to-modify->occurrence rep (id-of q))))
                                  (if (save o)
-                                     (let ((c (report-to-modify->correction rep a-id (id-of q))))
+                                     (let ((c (report-to-modify->correction rep (id-of q))))
                                        (if (save c)
                                            (let ((r (report-to-modify->report rep a-id (exlibris-revision-id ex) (id-of q) (id-of o) (id-of c))))
                                              (cond ((save r)
@@ -763,21 +760,18 @@
 
   (define (update-quotation q modified)
     (make-quotation
-     (quotation-account-id q)
      (quotation-revision-id q)
      (report-to-modify-quotation-body modified)
      (report-to-modify-quotation-font-face modified)))
 
   (define (update-occurrence o q modified)
     (make-occurrence
-     (occurrence-account-id o)
      (id-of q)
      (report-to-modify-page modified)
      (report-to-modify-position modified)))
 
   (define (update-correction c q modified)
     (make-correction
-     (correction-account-id c)
      (id-of q)
      (report-to-modify-correction-body modified)
      (report-to-modify-correction-font-face modified)))
@@ -814,9 +808,7 @@
            (ex-id exlibris maybe-id #f))
      (if (and rep-id ex-id)
          (match (lookup (report (quotation report))
-                        ((report
-                          (account-id (session->account-id sess))
-                          (id rep-id))))
+                        ((report (id rep-id)))) ; the user does not have to be the report's owner.
            ((rep q)
             (let loop ((o (form (io sess) (occurrence-to-add #f) private (__ where-do-you-find-the-same-body?) (html:escape-string (quotation-body q)))))
               (if (occurrence-to-add? o)
@@ -824,14 +816,13 @@
                     (lambda (ht)
                       (loop (form (io sess) (occurrence-to-add o) private (hashtable->messages ht))))
                     (lambda _
-                      (let ((new-o (make-occurrence (session->account-id sess)
-                                                    (id-of q)
+                      (let ((new-o (make-occurrence (id-of q)
                                                     (occurrence-to-add-page o)
                                                     (occurrence-to-add-position o))))
                         (if (save new-o)
                             (let ((new-rep (make-report
                                             (make-uuid)
-                                            (report-account-id rep)
+                                            (session->account-id sess)
                                             (report-revision-id rep)
                                             (report-subject rep)
                                             (report-quotation-id rep)
