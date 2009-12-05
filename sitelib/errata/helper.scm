@@ -588,23 +588,32 @@
                   (apply agreement-view tuple))
                 tuples)))))))))
 
+  (define-syntax report-table
+    (syntax-rules ()
+      ((_ uuid r proc tuples)
+       (diff-table
+        (map
+         (lambda (tuple)
+           (match tuple
+             ((rep a pref q o c) (revision-report-tr uuid rep a pref q o c (proc rep) '()))))
+         (list-sort
+          (lambda (t0 t1)
+            (page<? (occurrence-page (cadddr (cdr t0)))
+                    (occurrence-page (cadddr (cdr t1)))))
+          tuples))))))
+
   (define (revision-reports uuid r proc)
-    (diff-table
-     (map
-      (lambda (tuple)
-        (match tuple
-          ((rep a pref q o c) (revision-report-tr uuid rep a pref q o c (proc rep) '()))))
-      (list-sort
-       (lambda (t0 t1)
-         (page<? (occurrence-page (cadddr (cdr t0)))
-                 (occurrence-page (cadddr (cdr t1)))))
-       (lookup-all (report
-                    (account report)
-                    (preference (account left))
-                    (quotation report)
-                    (occurrence report)
-                    (correction report))
-                   ((report (revision-id (id-of r)))))))))
+    (report-table uuid r proc
+                  (lookup-all (report
+                               (account report)
+                               (preference (account left))
+                               (quotation report)
+                               (occurrence report)
+                               (correction report))
+                              ((report (revision-id (id-of r)))
+                               (exists (publicity (exlibris publicity))
+                                       ((exlibris (account))
+                                        (exlibris (revision-id (id-of r)))))))))
 
   (define (revision-frame uuid b r)
     (html:div
@@ -639,6 +648,30 @@
                                    (html:input ((type "submit") (value (__ put-at-top))))))
      (html:hr ((style "color:#999999;")))))
 
+  (define (exlibris-reports uuid ex r proc)
+    (report-table uuid r proc
+                  (append
+                   (if (lookup publicity ((exlibris-id (id-of ex))))
+                       '() ; the public ones suffice
+                       (lookup-all (report
+                                    (account report)
+                                    (preference (account left))
+                                    (quotation report)
+                                    (occurrence report)
+                                    (correction report))
+                                   ((report (revision-id (id-of r)))
+                                    (account (id (exlibris-account-id ex))))))
+                   (lookup-all (report
+                                (account report)
+                                (preference (account left))
+                                (quotation report)
+                                (occurrence report)
+                                (correction report))
+                               ((report (revision-id (id-of r)))
+                                (exists (publicity (exlibris publicity))
+                                        ((exlibris (account))
+                                         (exlibris (revision-id (id-of r))))))))))
+
   (define (exlibris-frame uuid b r ex)
     (let ((id (id-of ex)))
       (html:div
@@ -670,20 +703,23 @@
         (html:form ((action (build-entry-path 'new-report uuid)))
                    (hidden-field "id" (id-of ex))
                    (html:input ((type "submit") (value (__ new-report))))))
-       (revision-reports uuid r (lambda (rep)
-                                  (append
-                                   (html:form ((action (build-entry-path 'add-occurrence uuid)))
-                                              (hidden-field "report" (id-of rep))
-                                              (hidden-field "exlibris" (id-of ex))
-                                              (html:input ((type "submit") (value (__ add-occurrence)))))
-                                   (html:form ((action (build-entry-path 'modify-report uuid)))
-                                              (hidden-field "report" (id-of rep))
-                                              (hidden-field "exlibris" (id-of ex))
-                                              (html:input ((type "submit") (value (__ modify-report)))))
-                                   (html:form ((action (build-entry-path 'drop-report uuid)))
-                                              (hidden-field "report" (id-of rep))
-                                              (hidden-field "exlibris" (id-of ex))
-                                              (html:input ((type "submit") (value (__ drop-report)))))))))))
+       (exlibris-reports uuid ex r (lambda (rep)
+                                     (append
+                                      (html:form ((action (build-entry-path 'add-occurrence uuid)))
+                                                 (hidden-field "report" (id-of rep))
+                                                 (hidden-field "exlibris" (id-of ex))
+                                                 (html:input ((type "submit") (value (__ add-occurrence)))))
+                                      (if (= (exlibris-account-id ex) (report-account-id rep)) ; it is one's own report
+                                          (append
+                                           (html:form ((action (build-entry-path 'modify-report uuid)))
+                                                      (hidden-field "report" (id-of rep))
+                                                      (hidden-field "exlibris" (id-of ex))
+                                                      (html:input ((type "submit") (value (__ modify-report)))))
+                                           (html:form ((action (build-entry-path 'drop-report uuid)))
+                                                      (hidden-field "report" (id-of rep))
+                                                      (hidden-field "exlibris" (id-of ex))
+                                                      (html:input ((type "submit") (value (__ drop-report))))))
+                                          '())))))))
 
   (define (shelf-window uuid body)
     (match body
