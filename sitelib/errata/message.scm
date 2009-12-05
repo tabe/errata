@@ -266,6 +266,8 @@
                (ja "新たに報告"))
    (modify-revision (en "Modify Revision")
                     (ja "修正"))
+   (import-bib (en "Import Bib")
+               (ja "書棚にインポート"))
    (add-occurrence (en "Add occurrence")
                    (ja "報告を追加"))
    (modify-report (en "Modify Report")

@@ -620,6 +620,10 @@
                                       (string-append
                                        url-base
                                        (bib&revision->url b r))))))
+     (with-uuid uuid
+                (html:form ((action (build-entry-path 'import-bib uuid)))
+                           (hidden-field "id" (id-of b))
+                           (html:input ((type "submit") (value (__ import-bib))))))
      (html:h4 (__ Table) "&nbsp;" creativecommons-attribution-logo)
      (revision-reports uuid r (lambda (rep) (go-to-detail uuid rep)))))
 

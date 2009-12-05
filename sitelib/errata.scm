@@ -323,6 +323,41 @@
               revisions)
              (html:p (__ or-specify-revision)))))))
 
+  (define-syntax specify-revision
+    (syntax-rules ()
+      ((_ io sess b initial-r)
+       (let loop ((r initial-r))
+
+         (define (save-exlibris r)
+           (let ((a-id (session->account-id sess))
+                 (done (lambda (ex) (page (io sess) desk (id-of ex)))))
+             (cond ((lookup exlibris ((account-id a-id)
+                                      (revision-id (id-of r))))
+                    => done)
+                   (else
+                    (let ((ex (make-exlibris a-id (id-of r) 0)))
+                      (if (call-with-mysql
+                           (lambda (mysql)
+                             (and (execute mysql "BEGIN")
+                                  (execute mysql "UPDATE exlibris SET position = position + 1")
+                                  (save mysql ex)
+                                  (execute mysql "COMMIT"))))
+                          (done ex)
+                          (page (io sess) private (__ hmm-an-error-occurred))))))))
+
+         (cond ((revision? r)
+                (guide (validate-revision r)
+                  (lambda (ht) (loop (form (io sess) (revision r) private (hashtable->messages ht))))
+                  (lambda _
+                    (cond ((lookup revision ((bib-id (id-of b))
+                                             (name (revision-name r))
+                                             (revised-at (revision-revised-at r))))
+                           => save-exlibris)
+                          ((begin (revision-bib-id-set! r (id-of b)) (save r))
+                           (save-exlibris r))
+                          (else (page (io sess) private (__ hmm-an-error-occurred)))))))
+               (else (redirect (io sess) 'shelf)))))))
+
   (define-scenario (put-on io request)
     (with-session
      (io request)
@@ -331,57 +366,23 @@
        (define (specify-bib new-ex)
 
          (define (confirm-bib b)
-
-             (define (specify-revision r)
-
-               (define (save-exlibris r)
-                 (let ((a-id (session->account-id sess))
-                       (done (lambda (ex) (page (io sess) desk (id-of ex)))))
-                   (cond ((lookup exlibris ((account-id a-id)
-                                            (revision-id (id-of r))))
-                          => done)
-                         (else
-                          (let ((ex (make-exlibris a-id (id-of r) 0)))
-                            (if (call-with-mysql
-                                 (lambda (mysql)
-                                   (and (execute mysql "BEGIN")
-                                        (execute mysql "UPDATE exlibris SET position = position + 1")
-                                        (save mysql ex)
-                                        (execute mysql "COMMIT"))))
-                                (done ex)
-                                (page (io sess) private (__ hmm-an-error-occurred))))))))
-
-               (cond ((revision? r)
-                      (guide (validate-revision r)
-                        (lambda (ht) (specify-revision (form (io sess) (revision r) private (hashtable->messages ht))))
-                        (lambda _
-                          (cond ((lookup revision ((bib-id (id-of b))
-                                                   (name (revision-name r))
-                                                   (revised-at (revision-revised-at r))))
-                                 => save-exlibris)
-                                ((begin (revision-bib-id-set! r (id-of b)) (save r))
-                                 (save-exlibris r))
-                                (else (page (io sess) private (__ hmm-an-error-occurred)))))))
-                     (else (redirect (io sess) 'shelf))))
-
-             (if (yes? (form (io sess) (confirmation) private
-                             (__ is-this-content-ok?)
-                             (tree->string
-                              (cons* (html:br)
-                                     (bib-title b)
-                                     (cond ((bib-image b)
-                                            => (lambda (url)
-                                                 (append (html:br) (html:img ((src url))))))
-                                           (else '()))))))
-                 (cond ((id-of b)
-                        => (lambda (id)
-                             (specify-revision (form (io sess) (revision) private (show-existing-revisions id)))))
-                       ((save b)
-                        (specify-revision
-                         (form (io sess) (revision) private (__ specify-revision) (bib-title b))))
-                       (else
-                        (page (io sess) private (__ hmm-an-error-occurred))))
-                 (specify-bib (form (io sess) (new-exlibris new-ex) private (__ please-retry)))))
+           (if (yes? (form (io sess) (confirmation) private
+                           (__ is-this-content-ok?)
+                           (tree->string
+                            (cons* (html:br)
+                                   (bib-title b)
+                                   (cond ((bib-image b)
+                                          => (lambda (url)
+                                               (append (html:br) (html:img ((src url))))))
+                                         (else '()))))))
+               (cond ((id-of b)
+                      => (lambda (id)
+                           (specify-revision io sess b (form (io sess) (revision) private (show-existing-revisions id)))))
+                     ((save b)
+                      (specify-revision io sess b (form (io sess) (revision) private (__ specify-revision) (bib-title b))))
+                     (else
+                      (page (io sess) private (__ hmm-an-error-occurred))))
+               (specify-bib (form (io sess) (new-exlibris new-ex) private (__ please-retry)))))
 
          (if (new-exlibris? new-ex)
              (let ((title (new-exlibris-title new-ex))
@@ -569,6 +570,15 @@
                                       (else (page (io sess) private (__ hmm-an-error-occurred))))))
                             (page (io sess) desk id))))
                      (_ (redirect (io sess) 'shelf)))))
+             (else (redirect (io sess) 'shelf))))))
+
+  (define-scenario (import-bib io request data)
+    (with-session&id
+     (io request data)
+     (lambda (sess id)
+       (cond ((lookup bib id)
+              => (lambda (b)
+                   (specify-revision io sess b (form (io sess) (revision) private (show-existing-revisions id)))))
              (else (redirect (io sess) 'shelf))))))
 
   (define-scenario (share-exlibris io request data)
