@@ -465,7 +465,8 @@
                "("
                (html:span ((style "font-size:x-small;")) "reported by ")
                (signature a pref)
-               (cond ((created-at-of rep) => (lambda (t) (cons "&nbsp;@&nbsp;" (html:span ((style "text-align:right;")) t))))
+               (cond ((created-at-of rep)
+                      => (lambda (t) (cons "&nbsp;@&nbsp;" (html:span ((style "text-align:right;")) (datetime->ymd t)))))
                      (else '()))
                ")"))
      (diff-tr uuid q c x)
@@ -755,7 +756,7 @@
                  (html:li
                   (html:escape-string (notification-subject nt))
                   (html:span ((style "font-size:x-small;"))
-                             "(" (created-at-of nt) ")")
+                             "(" (datetime->ymd (created-at-of nt)) ")")
                   (html:form ((action (build-entry-path 'drop-notification uuid)))
                              (hidden-field "id" (id-of nt))
                              (html:input ((type "submit") (value (__ drop-notification)))))
