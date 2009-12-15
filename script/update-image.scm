@@ -2,6 +2,7 @@
 #!r6rs
 
 (import (rnrs (6))
+        (only (core) usleep)
         (match)
         (prefix (lunula log) log:)
         (only (lunula mysql) connect close lookup-all save)
