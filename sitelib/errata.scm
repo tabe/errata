@@ -25,7 +25,7 @@
           (lunula validation)
           (prefix (only (errata configuration) url-base mail-address) errata:)
           (only (errata query) query-image)
-          (only (errata isbn) valid-isbn?)
+          (only (errata isbn) tolerant-isbn? isbn-strip)
           (errata message)
           (errata model)
           (only (errata notification) notification notification-account-id notify)
@@ -276,25 +276,26 @@
   (define-scenario (find-bib io request data)
     (with-or-without-session/
      (io request data)
-     (sess (isbn isbn values #f))
-     (cond ((and (string? isbn) (valid-isbn? isbn))
+     (sess (isbn- isbn values #f))
+     (cond ((and (string? isbn-) (tolerant-isbn? isbn-))
             => (lambda (n)
-                 (cond ((case n
-                          ((10) (lookup (publicity
-                                         (exlibris publicity)
-                                         (account exlibris)
-                                         (revision exlibris)
-                                         (bib revision))
-                                        ((bib (isbn10 isbn)))))
-                          (else (lookup (publicity
-                                         (exlibris publicity)
-                                         (account exlibris)
-                                         (revision exlibris)
-                                         (bib revision))
-                                        ((bib (isbn13 isbn))))))
-                        => (lambda (tuple)
-                             (page (io sess) find-bib (id-of (list-ref tuple 4)))))
-                       (else (page (io sess) public (__ bib-not-found))))))
+                 (let ((isbn (isbn-strip isbn-)))
+                   (cond ((case n
+                            ((10) (lookup (publicity
+                                           (exlibris publicity)
+                                           (account exlibris)
+                                           (revision exlibris)
+                                           (bib revision))
+                                          ((bib (isbn10 isbn)))))
+                            (else (lookup (publicity
+                                           (exlibris publicity)
+                                           (account exlibris)
+                                           (revision exlibris)
+                                           (bib revision))
+                                          ((bib (isbn13 isbn))))))
+                          => (lambda (tuple)
+                               (page (io sess) find-bib (id-of (list-ref tuple 4)))))
+                         (else (page (io sess) public (__ bib-not-found)))))))
            (else (page (io sess) public (__ please-retry))))))
 
   (define (existing-revisions bib-id . last)
@@ -386,30 +387,31 @@
 
          (if (new-exlibris? new-ex)
              (let ((title (new-exlibris-title new-ex))
-                   (isbn (new-exlibris-isbn new-ex)))
-               (cond ((and (blank? title) (blank? isbn))
+                   (isbn- (new-exlibris-isbn new-ex)))
+               (cond ((and (blank? title) (blank? isbn-))
                       (specify-bib (form (io sess) (new-exlibris new-ex) private (__ please-input-title-or-isbn))))
-                     ((blank? isbn)
+                     ((blank? isbn-)
                       (guide (validate-bib-title title)
                         (lambda (ht) (specify-bib (form (io sess) (new-exlibris new-ex) private (hashtable->messages ht))))
                         (lambda _ (confirm-bib (make-bib (make-uuid) title #f #f #f)))))
-                     ((valid-isbn? isbn)
+                     ((tolerant-isbn? isbn-)
                       => (lambda (n)
-                           (let ((b (case n
-                                      ((10) (lookup bib ((isbn10 isbn))))
-                                      (else (lookup bib ((isbn13 isbn)))))))
-                             (if (bib? b)
-                                 (confirm-bib b)
-                                 (call/cc
-                                  (lambda (cont)
-                                    (let ((info (guard (e
-                                                        ((i/o-error? e)
-                                                         (log:info "errata> ~s" e)
-                                                         (cont (specify-bib (form (io sess) (new-exlibris new-ex) private (__ hmm-an-error-occurred))))))
-                                                  (query-image isbn))))
-                                      (if (string? info)
-                                          (confirm-bib (string->bib info))
-                                          (specify-bib (form (io sess) (new-exlibris new-ex) private (__ please-check-isbn)))))))))))
+                           (let ((isbn (isbn-strip isbn-)))
+                             (let ((b (case n
+                                        ((10) (lookup bib ((isbn10 isbn))))
+                                        (else (lookup bib ((isbn13 isbn)))))))
+                               (if (bib? b)
+                                   (confirm-bib b)
+                                   (call/cc
+                                    (lambda (cont)
+                                      (let ((info (guard (e
+                                                          ((i/o-error? e)
+                                                           (log:info "errata> ~s" e)
+                                                           (cont (specify-bib (form (io sess) (new-exlibris new-ex) private (__ hmm-an-error-occurred))))))
+                                                    (query-image isbn))))
+                                        (if (string? info)
+                                            (confirm-bib (string->bib info))
+                                            (specify-bib (form (io sess) (new-exlibris new-ex) private (__ please-check-isbn))))))))))))
                      (else
                       (specify-bib (form (io sess) (new-exlibris new-ex) private (__ please-check-isbn))))))
              (redirect (io sess) 'shelf)))
@@ -1013,7 +1015,7 @@
     (((radio (yes "はい" #f) (no "いいえ" #t)))))
   (add-input-fields new-exlibris
     ((text)
-     (text "半角英数字で10または13桁(例: \"2222222222\" / \"475614084X\" / \"9784873113487\")")))
+     (text "半角英数字で10または13桁(例: \"2222222222\" / \"4-756-14084-X\" / \"978-4873113487\")")))
   (add-input-fields revision
     (#f
      (text "(例: 「初版第1刷」)")
