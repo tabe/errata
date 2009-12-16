@@ -322,17 +322,18 @@
 
   (define (bib-window uuid id)
     (assert (integer? id))
-    (let ((tuples (lookup-all (publicity
-                               (exlibris publicity)
-                               (account exlibris)
-                               (revision exlibris)
+    (let ((tuples (lookup-all (revision
                                (bib revision))
-                              ((bib (id id)))
+                              ((bib (id id))
+                               (exists (publicity
+                                        (exlibris publicity)
+                                        (account exlibris))
+                                       ((exlibris (revision)))))
                               ((order-by (revision (revised-at desc)))))))
       (cond ((null? tuples)
              (__ bib-not-found))
             (else
-             (let ((title (bib-title (list-ref (car tuples) 4))))
+             (let ((title (bib-title (cadr (car tuples)))))
                (html:div
                 (html:h3 (html:escape-string title))
                 (html:p (__ following-revisions-found))
@@ -341,7 +342,7 @@
                   (map
                    (lambda (tuple)
                      (match tuple
-                       ((pub ex a r b)
+                       ((r b)
                         (html:tr
                          (html:td (html:escape-string (revision-name r))
                                   "("

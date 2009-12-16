@@ -281,20 +281,22 @@
             => (lambda (n)
                  (let ((isbn (isbn-strip isbn-)))
                    (cond ((case n
-                            ((10) (lookup (publicity
-                                           (exlibris publicity)
-                                           (account exlibris)
-                                           (revision exlibris)
+                            ((10) (lookup (revision
                                            (bib revision))
-                                          ((bib (isbn10 isbn)))))
-                            (else (lookup (publicity
-                                           (exlibris publicity)
-                                           (account exlibris)
-                                           (revision exlibris)
+                                          ((bib (isbn10 isbn))
+                                           (exists (publicity
+                                                    (exlibris publicity)
+                                                    (account exlibris))
+                                                   ((exlibris (revision)))))))
+                            (else (lookup (revision
                                            (bib revision))
-                                          ((bib (isbn13 isbn))))))
+                                          ((bib (isbn13 isbn))
+                                           (exists (publicity
+                                                    (exlibris publicity)
+                                                    (account exlibris))
+                                                   ((exlibris (revision))))))))
                           => (lambda (tuple)
-                               (page (io sess) find-bib (id-of (list-ref tuple 4)))))
+                               (page (io sess) find-bib (id-of (cadr tuple)))))
                          (else (page (io sess) public (__ bib-not-found)))))))
            (else (page (io sess) public (__ please-retry))))))
 
