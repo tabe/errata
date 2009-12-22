@@ -331,12 +331,19 @@
       ((_ io sess b initial-r)
        (let loop ((r initial-r))
 
+         (define (make-it-shared ex)
+           (let ((id (id-of ex))
+                 (c (form (io sess) (confirmation) private (__ do-you-want-to-make-exlibris-shared?))))
+             (when (yes? c)
+               (let ((pub (make-publicity id)))
+                 (save pub)))
+             (page (io sess) desk id)))
+
          (define (save-exlibris r)
-           (let ((a-id (session->account-id sess))
-                 (done (lambda (ex) (page (io sess) desk (id-of ex)))))
+           (let ((a-id (session->account-id sess)))
              (cond ((lookup exlibris ((account-id a-id)
                                       (revision-id (id-of r))))
-                    => done)
+                    => make-it-shared)
                    (else
                     (let ((ex (make-exlibris a-id (id-of r) 0)))
                       (if (call-with-mysql
@@ -345,7 +352,7 @@
                                   (execute mysql "UPDATE exlibris SET position = position + 1")
                                   (save mysql ex)
                                   (execute mysql "COMMIT"))))
-                          (done ex)
+                          (make-it-shared ex)
                           (page (io sess) private (__ hmm-an-error-occurred))))))))
 
          (cond ((revision? r)
