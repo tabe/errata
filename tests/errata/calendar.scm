@@ -24,6 +24,7 @@
     ((_ expected datetime)
      (assert-string=? expected (datetime->y/m/d datetime)))))
 
+(assert-era "平成22年" 2010)
 (assert-era "平成21年" 2009)
 (assert-era "平成元年" 1989)
 (assert-era "昭和63年" 1988)

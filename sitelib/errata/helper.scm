@@ -211,7 +211,7 @@
         (terms-of-service . "利用規約")
         (privacy-policy . "プライバシーポリシー")
         (feedback . "フィードバック")))
-     " &copy; 2009 "
+     " &copy; 2009,2010 "
      (html:a ((href "http://fixedpoint.jp/")) "fixedpoint.jp")))
 
   (define (hidden-field name value)
