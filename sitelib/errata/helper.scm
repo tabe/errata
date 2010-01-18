@@ -154,6 +154,15 @@
     (define (p-link pair)
       (html:p (html:a ((href (build-entry-path (car pair) uuid))) (cdr pair))))
     (append
+     '("<form action=\"http://www.google.co.jp/cse\" id=\"cse-search-box\" target=\"_blank\">
+ <div>ページ:
+  <input type=\"hidden\" name=\"cx\" value=\"partner-pub-8264857658682413:ovzm35djm63\" />
+  <input type=\"hidden\" name=\"ie\" value=\"UTF-8\" />
+  <input type=\"text\" name=\"q\" size=\"16\" />
+  <input type=\"submit\" name=\"sa\" value=\"&#x691c;&#x7d22;\" />
+ </div>
+</form>
+<script type=\"text/javascript\" src=\"http://www.google.co.jp/cse/brand?form=cse-search-box&amp;lang=ja\"></script>")
      (html:div
       (html:form ((action (build-entry-path 'find-bib uuid)))
                  "ISBN:"
