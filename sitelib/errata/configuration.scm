@@ -11,7 +11,8 @@
           query-port-number
           rss-port-number
           rss-temporary-directory
-          rss-output-directory)
+          rss-output-directory
+          google-cx)
   (import (only (rnrs) string-append)
           (lunula configuration))
 
@@ -33,5 +34,7 @@
   (define-configuration rss-port-number)
   (define-configuration rss-temporary-directory "/tmp")
   (define-configuration rss-output-directory)
+
+  (define-configuration google-cx)
 
 )

@@ -38,7 +38,7 @@
           (only (lunula session) account account-nick account-name account-mail-address)
           (only (lunula string) blank? string-truncate)
           (only (errata calendar) ad->japanese-era datetime->date datetime->y/m/d)
-          (only (errata configuration) url-base)
+          (only (errata configuration) url-base google-cx)
           (only (errata font) face->style)
           (only (errata isbn) isbn10->amazon)
           (errata model)
@@ -150,19 +150,23 @@
                        (html:escape-string (report->caption rep)))))
       (_ "?")))
 
-  (define (links uuid . _)
-    (define (p-link pair)
-      (html:p (html:a ((href (build-entry-path (car pair) uuid))) (cdr pair))))
-    (append
-     '("<form action=\"http://www.google.co.jp/cse\" id=\"cse-search-box\" target=\"_blank\">
+  (define (google-search-form)
+    (format "<form action=\"http://www.google.co.jp/cse\" id=\"cse-search-box\" target=\"_blank\">
  <div>ページ:
-  <input type=\"hidden\" name=\"cx\" value=\"partner-pub-8264857658682413:ovzm35djm63\" />
+  <input type=\"hidden\" name=\"cx\" value=\"~a\" />
   <input type=\"hidden\" name=\"ie\" value=\"UTF-8\" />
   <input type=\"text\" name=\"q\" size=\"16\" />
   <input type=\"submit\" name=\"sa\" value=\"&#x691c;&#x7d22;\" />
  </div>
 </form>
-<script type=\"text/javascript\" src=\"http://www.google.co.jp/cse/brand?form=cse-search-box&amp;lang=ja\"></script>")
+<script type=\"text/javascript\" src=\"http://www.google.co.jp/cse/brand?form=cse-search-box&amp;lang=ja\"></script>"
+            google-cx))
+
+  (define (links uuid . _)
+    (define (p-link pair)
+      (html:p (html:a ((href (build-entry-path (car pair) uuid))) (cdr pair))))
+    (append
+     `(,(google-search-form))
      (html:div
       (html:form ((action (build-entry-path 'find-bib uuid)))
                  "ISBN:"
