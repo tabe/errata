@@ -555,7 +555,7 @@
   (define (agreement-view agr a pref)
     (html:div
      (anchor (agr (class "credit")) (signature a pref) ":&nbsp;")
-     (html:span (html:escape-string (agreement-comment agr)))))    
+     (html:span (html:escape-string (agreement-comment agr)))))
 
   (define (ack/nak-tr uuid q c x)
     (append
