@@ -152,10 +152,10 @@
 
   (define (google-search-form)
     (format "<form action=\"http://www.google.co.jp/cse\" id=\"cse-search-box\" target=\"_blank\">
- <div>ページ:
+ <div>
   <input type=\"hidden\" name=\"cx\" value=\"~a\" />
   <input type=\"hidden\" name=\"ie\" value=\"UTF-8\" />
-  <input type=\"text\" name=\"q\" size=\"16\" />
+  <input type=\"text\" name=\"q\" size=\"20\" />
   <input type=\"submit\" name=\"sa\" value=\"&#x691c;&#x7d22;\" />
  </div>
 </form>
