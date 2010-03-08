@@ -88,7 +88,7 @@
       "$('#public').corner();"
       "$('.corner').corner();"
       "$('.dog').corner('dog tr 15px');"
-      "$('.parmalink').focus(function() {$(this).select();});"
+      "$('.permalink').focus(function() {$(this).select();});"
       "});"))
 
   (define (menu uuid . _)
@@ -635,8 +635,8 @@
      (go-to-board uuid)
      (revision-skeleton b r
                         '()
-                        (__ parmalink)
-                        (html:input ((class "parmalink")
+                        (__ permalink)
+                        (html:input ((class "permalink")
                                      (type "text")
                                      (readonly #t)
                                      (size 64)
