@@ -1,4 +1,3 @@
-#!/usr/bin/env ypsilon
 #!r6rs
 
 (import (rnrs)
@@ -14,7 +13,7 @@
     ((_ name ((valid0 valid1 ...)) e ...)
      (begin
        (guide (name 'valid0 'valid1 ...)
-         (lambda _ (add-failure (format "~a: ~s seems invalid" 'name '(valid0 valid1 ...))))
+         (lambda _ (fail! (format "~a: ~s seems invalid" 'name '(valid0 valid1 ...))))
          values)
        (assert-validator name e ...)))
     ((_ name ((invalid0 invalid1 ...) message0 message1 ...) e ...)
@@ -24,7 +23,7 @@
            (define (symbol<? s0 s1) (string<? (symbol->string s0) (symbol->string s1)))
            (assert-equal? (vector-sort symbol<? '#(message0 message1 ...))
                           (vector-sort symbol<? (hashtable-keys ht))))
-         (lambda _ (add-failure (format "~a: ~s seems valid" 'name '(invalid0 invalid1 ...)))))
+         (lambda _ (fail! (format "~a: ~s seems valid" 'name '(invalid0 invalid1 ...)))))
        (assert-validator name e ...)))))
 
 (assert-validator validate-year
