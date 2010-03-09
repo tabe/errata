@@ -1074,6 +1074,7 @@
 
   ;; templates
   (template-environment (except (rnrs) div)
+                        (only (lunula gettext) localize)
                         (lunula html)
                         (lunula path)
                         (errata helper))

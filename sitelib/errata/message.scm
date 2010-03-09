@@ -1,6 +1,6 @@
 (library (errata message)
   (export)
-  (import (lunula gettext))
+  (import (only (lunula gettext) gettext))
 
   (gettext
 
@@ -295,7 +295,5 @@
    (recent-agreements (en "Recent agreements")
                       (ja "新たに公開された同意"))
    )
-
-  (locale ja)
 
 )
