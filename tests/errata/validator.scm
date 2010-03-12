@@ -2,6 +2,7 @@
 
 (import (rnrs)
         (only (core) format)
+        (ypsilon gcrypt)
         (only (lunula validation) guide)
         (errata validator)
         (xunit))
@@ -25,6 +26,10 @@
                           (vector-sort symbol<? (hashtable-keys ht))))
          (lambda _ (fail! (format "~a: ~s seems valid" 'name '(invalid0 invalid1 ...)))))
        (assert-validator name e ...)))))
+
+(gcry_check_version "1.4.5") ; you might modify the version
+(gcry_control GCRYCTL_DISABLE_SECMEM)
+(gcry_control GCRYCTL_INITIALIZATION_FINISHED)
 
 (assert-validator validate-year
                   (("2009"))

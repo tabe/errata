@@ -1,6 +1,7 @@
 #!r6rs
 
 (import (rnrs)
+        (ypsilon gcrypt)
         (only (lunula mysql) close connect)
         (only (lunula persistent-record) id-of id-set!)
         (lunula session)
@@ -8,6 +9,10 @@
         (errata model)
         (only (xunit) assert-list? skip-unless)
         (rename (xunit) (report xunit:report)))
+
+(gcry_check_version "1.4.5") ; you might modify the version
+(gcry_control GCRYCTL_DISABLE_SECMEM)
+(gcry_control GCRYCTL_INITIALIZATION_FINISHED)
 
 (let ((a (make-account-to-modify "F. M. Name" "name@example.com" "00000000"))
       (current-account (make-account "nick" "Full Name" "00000000" "nick@example.com" "plain" "")))
