@@ -39,6 +39,7 @@ test:
 	$(YPSILON) tests/errata/calendar.scm
 	$(YPSILON) tests/errata/configuration.scm
 	$(YPSILON) tests/errata/font.scm
+	$(YPSILON) tests/errata/gcrypt.scm
 	$(YPSILON) tests/errata/helper/pagination.scm
 	$(YPSILON) tests/errata/helper.scm
 	$(YPSILON) tests/errata/isbn.scm

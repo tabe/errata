@@ -1,6 +1,6 @@
-#!/usr/bin/env ypsilon
 #!r6rs
 
-(import (only (errata query) start))
+(import (errata gcrypt)
+        (only (errata query) start))
 
 (start)

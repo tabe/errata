@@ -1,7 +1,7 @@
-#!/usr/bin/env ypsilon
 #!r6rs
 
 (import (rnrs)
+        (errata gcrypt)
         (only (errata configuration) port-number mysql-user mysql-password mysql-database)
         (only (errata) connect close start))
 
