@@ -1,4 +1,4 @@
-YPSILON_SITELIB=submodules/lunula/sitelib:submodules/lunula/submodules/base64:submodules/lcs:submodules/manued:/home/tabe/sxml/sitelib:submodules/lunula/submodules/uri:submodules/lunula/submodules/xunit:submodules/lunula/submodules/ypsilon-foreign-lib/sitelib:/home/tabe/ypsilon-http/sitelib
+include config.mk
 
 YPSILON=env YPSILON_SITELIB=$(YPSILON_SITELIB) \
   LUNULA_CONFIGURATION_DIRECTORY=config \
@@ -19,7 +19,7 @@ fixtures:
 	$(YPSILON) db/fixtures.scm
 
 restore:
-	zcat /home/tabe/.adel/errata.dump.gz | mysql -u root -p errata
+	zcat $(DUMP_GZ) | mysql -u root -p errata
 
 svc:
 	sudo svc -t /etc/service/errata

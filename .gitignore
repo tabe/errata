@@ -1,3 +1,4 @@
 config
+config.mk
 static/*.rss
 templates/00TOUCHED
