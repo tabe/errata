@@ -16,7 +16,11 @@
        (h2 "フィードバック")
        (ul
         (li
-         (p "開発に関しては、公開されているGoogle グループ "
+         (p "Errata のコードは "
+            (a ((href "http://github.com/tabe/errata")) "http://github.com/tabe/errata")
+            " で公開しています。"))
+        (li
+         (p "開発に関しては、Google グループの "
             (a ((href "http://groups.google.com/group/errata")) "Errata")
             " で意見交換できます。"))
         (li
