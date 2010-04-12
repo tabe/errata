@@ -3,6 +3,7 @@
           errata-keywords
           errata-logo
           errata-rss-links
+          jquery-scripts
           powered-by-lunula
           creativecommons-attribution-logo
           creativecommons-attribution
@@ -67,6 +68,13 @@
        recent-reviews
        recent-acknowledgements
        recent-agreements)))
+
+  (define jquery-scripts
+    (map
+     (lambda (src)
+       (html:script ((type "text/javascript") (src (format "/javascript/~a" src)))))
+     '(jquery-1.4.2.min.js
+       jquery.corner.js)))
 
   (define powered-by-lunula
     (html:div ((id "bottom")) "powered by "

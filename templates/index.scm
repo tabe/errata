@@ -6,8 +6,7 @@
   (title "Errata")
   (link ((href "/stylesheet/errata.css") (rel "stylesheet") (type "text/css")))
   errata-rss-links
-  (script ((type "text/javascript") (src "/javascript/jquery-1.3.2.min.js")))
-  (script ((type "text/javascript") (src "/javascript/jquery.corner.js")))
+  jquery-scripts
   (script ((type "text/javascript")) preload-script)
   )
  (body
