@@ -6,8 +6,8 @@ drop table if exists exlibris;
 drop table if exists publicity;
 drop table if exists review;
 drop table if exists quotation;
-drop table if exists correction;
 drop table if exists occurrence;
+drop table if exists correction;
 drop table if exists report;
 drop table if exists report_history;
 drop table if exists acknowledgement;
@@ -84,10 +84,8 @@ create table review (
 create table quotation (
   id int not null auto_increment,
   revision_id int not null,
-  page varchar(256),
-  position varchar(256),
   body text not null,
-  font_face varchar(16) not null,
+  font_face varchar(32) not null,
   created_at datetime,
   updated_at datetime,
   primary key (id)
@@ -105,7 +103,7 @@ create table correction (
   id int not null auto_increment,
   quotation_id int not null,
   body text not null,
-  font_face varchar(16) not null,
+  font_face varchar(32) not null,
   created_at datetime,
   updated_at datetime,
   primary key (id)
@@ -130,6 +128,7 @@ create table report_history (
   revision_id int not null,
   subject varchar(256) not null,
   quotation_id int not null,
+  occurrence_id int not null,
   correction_id int,
   created_at datetime,
   updated_at datetime,
