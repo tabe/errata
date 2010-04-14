@@ -16,7 +16,7 @@
   (div ((id "public"))
        (h2 "Errata って何?")
        (p "書籍などの正誤表を共有するためのサービスです。正誤情報のポータルサイトを目指しています。現時点ではベータ版です。")
-       (h2 "Errata で何ができるの?")
+       (h2 "何ができるの?")
        (p "誰でも公開されている正誤表を見ることができます。")
        (p "さらに利用者として登録された方は")
        (ul
@@ -26,7 +26,12 @@
         (li "それらを" creativecommons-attribution "の下で公開する")
         )
        (p "ことができます。ご利用は無料です。")
-       (h2 "Errata についてさらに詳しく")
+       (h2 "何が新しいの?")
+       (ul
+        (li (span ((class "MathJax_Preview")) "TeX")
+            (script ((type "math/tex")) "\\TeX") "表記での数式が書けます。")
+        )
+       (h2 "さらに詳しく")
        (p (a ((href (lambda args (build-entry-path 'faq (car args))))) "FAQ") " をご覧ください。")
        )
   belt

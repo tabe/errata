@@ -26,6 +26,7 @@
           (prefix (only (errata configuration) url-base mail-address) errata:)
           (only (errata query) query-image)
           (only (errata isbn) tolerant-isbn? isbn-strip)
+          (only (errata helper) diff-table diff-tr)
           (errata message)
           (errata model)
           (only (errata notification) notification notification-account-id notify)
@@ -137,6 +138,8 @@
 
   (define select-font-face
     '(select (unspecified "(指定なし)")
+             (tex-text "TeX(テキストスタイル)")
+             (tex-display "TeX(ディスプレイスタイル)")
              (bold "太字")
              (italic "イタリック体")
              (oblique "斜体")
@@ -736,26 +739,50 @@
                                      (page (io sess) private (__ hmm-an-error-occurred))))
                                (page (io sess) private (__ hmm-an-error-occurred)))))
 
+                       (define (confirmation-form-for-diff q-body q-ff c-body c-ff)
+                         (form (io sess) (confirmation) private
+                               (__ is-this-content-ok?)
+                               (tree->string
+                                (diff-table
+                                 (diff-tr (make-uuid)
+                                          (make-quotation (exlibris-revision-id ex) q-body q-ff)
+                                          (make-correction #f c-body c-ff))))))
+
                        (cond ((string=? f "manued")
                               (let loop ((rbm (form (io sess) (report-by-manued) private)))
                                 (if (report-by-manued? rbm)
                                     (guide (validate-report-by-manued rbm)
                                       (lambda (ht) (loop (form (io sess) (report-by-manued rbm) private (hashtable->messages ht))))
                                       (lambda (q-body c-body)
-                                        (save-new-report (make-report-to-modify (report-by-manued-subject rbm)
-                                                                                (report-by-manued-page rbm)
-                                                                                (report-by-manued-position rbm)
-                                                                                q-body
-                                                                                (report-by-manued-quotation-font-face rbm)
-                                                                                c-body
-                                                                                (report-by-manued-correction-font-face rbm)))))
+                                        (let ((c (confirmation-form-for-diff
+                                                  q-body
+                                                  (report-by-manued-quotation-font-face rbm)
+                                                  c-body
+                                                  (report-by-manued-correction-font-face rbm))))
+                                          (if (yes? c)
+                                              (save-new-report (make-report-to-modify (report-by-manued-subject rbm)
+                                                                                      (report-by-manued-page rbm)
+                                                                                      (report-by-manued-position rbm)
+                                                                                      q-body
+                                                                                      (report-by-manued-quotation-font-face rbm)
+                                                                                      c-body
+                                                                                      (report-by-manued-correction-font-face rbm)))
+                                              (loop (form (io sess) (report-by-manued rbm) private))))))
                                     (page (io sess) desk id))))
                              (else
                               (let loop ((rep (form (io sess) (report-to-modify) private)))
                                 (if (report-to-modify? rep)
                                     (guide (validate-report-to-modify rep)
                                       (lambda (ht) (loop (form (io sess) (report-to-modify rep) private (hashtable->messages ht))))
-                                      (lambda _ (save-new-report rep)))
+                                      (lambda _
+                                        (let ((c (confirmation-form-for-diff
+                                                  (report-to-modify-quotation-body rep)
+                                                  (report-to-modify-quotation-font-face rep)
+                                                  (report-to-modify-correction-body rep)
+                                                  (report-to-modify-correction-font-face rep))))
+                                          (if (yes? c)
+                                              (save-new-report rep)
+                                              (loop (form (io sess) (report-to-modify rep) private))))))
                                     (page (io sess) desk id))))))))
                (else (redirect (io sess) 'shelf)))))))
 
@@ -865,10 +892,23 @@
                     (lambda (ht)
                       (loop (form (io sess) (report-to-modify modified) private (hashtable->messages ht))))
                     (lambda _
-                      (cond ((update-report rep q o c modified)
-                             (rss:query recent-reports)
-                             (page (io sess) desk ex-id))
-                            (else (page (io sess) private (__ hmm-an-error-occurred))))))
+                      (let ((c (form (io sess) (confirmation) private
+                                     (__ is-this-content-ok?)
+                                     (tree->string
+                                      (diff-table
+                                       (diff-tr (make-uuid)
+                                                (make-quotation #f
+                                                                (report-to-modify-quotation-body modified)
+                                                                (report-to-modify-quotation-font-face modified))
+                                                (make-correction #f
+                                                                 (report-to-modify-correction-body modified)
+                                                                 (report-to-modify-correction-font-face modified))))))))
+                        (if (yes? c)
+                            (cond ((update-report rep q o c modified)
+                                   (rss:query recent-reports)
+                                   (page (io sess) desk ex-id))
+                                  (else (page (io sess) private (__ hmm-an-error-occurred))))
+                            (loop (form (io sess) (report-to-modify modified) private))))))
                   (page (io sess) desk ex-id))))
            (_ (page (io sess) desk ex-id)))
          (redirect (io sess) 'shelf))))

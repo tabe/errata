@@ -19,6 +19,8 @@
           report-window
           review-div
           revision-report-tr
+          diff-table
+          diff-tr
           revision-window
           shelf-window
           exlibris-window
@@ -74,7 +76,8 @@
      (lambda (src)
        (html:script ((type "text/javascript") (src (format "/javascript/~a" src)))))
      '(jquery-1.4.2.min.js
-       jquery.corner.js)))
+       jquery.corner.js
+       MathJax/MathJax.js)))
 
   (define powered-by-lunula
     (html:div ((id "bottom")) "powered by "
@@ -420,7 +423,7 @@
                   (html:span ((style "font-size:x-small;")) "reported by ")
                   (signature a pref)
                   ")"))
-        (diff-tr uuid q c '())
+        (diff-tr uuid q c)
         (ack/nak-tr uuid q c '())))))
 
   (define (report-window uuid id)
@@ -545,9 +548,32 @@
          (else
           `(,(cons (html:escape-char x) xa) . ,(cons (html:escape-char x) xb)))))))
 
-  (define (diff-tr uuid q c forms)
-    (let ((a (string->list (quotation-body q)))
-          (b (string->list (correction-body c))))
+  (define (tex-display body)
+    (html:script ((type "math/tex; mode=display")) body))
+
+  (define (tex-text body)
+    (html:script ((type "math/tex")) body))
+
+  (define (diff-tr uuid q c . forms)
+    (let* ((q-body (quotation-body q))
+           (c-body (correction-body c))
+           (a (string->list q-body))
+           (b (string->list c-body)))
+
+      (define (side ff body zc)
+        (html:td ((class "width:49%;"))
+                 (html:blockquote
+                  (let ((bq (html:span ((style (face->style ff))) (reverse zc))))
+                    (cond ((string=? "tex-display" ff)
+                           (cons
+                            (html:span ((class "MathJax_Preview")) bq)
+                            (tex-display (html:escape-string body))))
+                          ((string=? "tex-text" ff)
+                           (cons
+                            (html:span ((class "MathJax_Preview")) bq)
+                            (tex-text (html:escape-string body))))
+                          (else bq))))))
+
       (match (lcs-fold
               lcs-filter-minus
               lcs-filter-plus
@@ -557,14 +583,8 @@
               b)
         ((xa . xb)
          (html:tr
-          (html:td ((class "width:49%;"))
-                   (html:div ((class "dog"))
-                             (html:blockquote ((style (face->style (quotation-font-face q))))
-                                              (reverse xa))))
-          (html:td ((class "width:49%;"))
-                   (html:div ((class "dog"))
-                             (html:blockquote ((style (face->style (correction-font-face c))))
-                                              (reverse xb))))
+          (side (quotation-font-face q) q-body xa)
+          (side (correction-font-face c) c-body xb)
           (html:td forms))))))
 
   (define (acknowledgement-view ack a pref)

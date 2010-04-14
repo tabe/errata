@@ -1,4 +1,5 @@
 config
 config.mk
 static/*.rss
+static/javascript/MathJax
 templates/00TOUCHED
