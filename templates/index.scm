@@ -28,6 +28,7 @@
        (p "ことができます。ご利用は無料です。")
        (h2 "何が新しいの?")
        (ul
+        (li "引用と訂正から計算された差分を表示します。")
         (li (span ((class "MathJax_Preview")) "TeX")
             (script ((type "math/tex")) "\\TeX") "表記での数式が書けます。")
         )
