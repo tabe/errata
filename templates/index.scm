@@ -31,6 +31,10 @@
         (li "引用と訂正から計算された差分を表示します。")
         (li (span ((class "MathJax_Preview")) "TeX")
             (script ((type "math/tex")) "\\TeX") "表記での数式が書けます。")
+        (li "オープンソースライセンスの下で Web アプリケーションのソースコードを"
+            (a ((href "http://github.com/tabe/errata")
+                (target "_blank")) "公開")
+            "しています。")
         )
        (h2 "さらに詳しく")
        (p (a ((href (lambda args (build-entry-path 'faq (car args))))) "FAQ") " をご覧ください。")
