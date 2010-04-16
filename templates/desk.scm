@@ -14,4 +14,5 @@
   (div ((id "private")) exlibris-window)
   belt
   powered-by-lunula
+  powered-by-mathjax
   ))

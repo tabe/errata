@@ -14,4 +14,5 @@
   (div ((class "corner history")) report-history-window)
   belt
   powered-by-lunula
+  powered-by-mathjax
   ))

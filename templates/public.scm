@@ -14,4 +14,5 @@
   (div ((id "public")) (lambda (uuid body) body))
   belt
   powered-by-lunula
+  powered-by-mathjax
   ))

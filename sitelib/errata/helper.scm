@@ -5,6 +5,7 @@
           errata-rss-links
           jquery-scripts
           powered-by-lunula
+          powered-by-mathjax
           creativecommons-attribution-logo
           creativecommons-attribution
           preload-script
@@ -82,6 +83,16 @@
   (define powered-by-lunula
     (html:div ((id "bottom")) "powered by "
               (html:a ((href "http://fixedpoint.jp/lunula/") (target "_blank")) 'Lunula)))
+
+  (define powered-by-mathjax
+    (let ((title "Powered by MathJax")
+          (url "http://www.mathjax.org/"))
+      (html:a ((href url)
+               (target "_blank"))
+              (html:img ((src (string-append url "/badge.gif"))
+                         (border 0)
+                         (alt title)
+                         (title title))))))
 
   (define creativecommons-attribution
     (html:a ((href "http://creativecommons.org/licenses/by/2.1/jp/")

@@ -14,4 +14,5 @@
   (div ((id "public")) report-window)
   belt
   powered-by-lunula
+  powered-by-mathjax
   ))

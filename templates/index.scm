@@ -41,4 +41,5 @@
        )
   belt
   powered-by-lunula
+  powered-by-mathjax
   ))

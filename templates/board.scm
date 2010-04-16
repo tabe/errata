@@ -14,4 +14,5 @@
   (div ((id "public")) public-revisions)
   belt
   powered-by-lunula
+  powered-by-mathjax
   ))
