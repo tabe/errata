@@ -307,7 +307,7 @@
            ((rowspan 4))
            (bib->image b))
           (html:th ((rowspan 2) (style "text-align:left;")) (__ ISBN))
-          (html:td ((style "color:#555555;")) (or (pretty-isbn13 (bib-isbn13 b)) "-")))
+          (html:td ((style "color:#555555;")) (cond ((bib-isbn13 b) => pretty-isbn13) (else "-"))))
          (html:tr
           (html:td ((style "color:#555555;")) (or (bib-isbn10 b) "-")))
          (html:tr
