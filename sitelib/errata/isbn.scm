@@ -6,6 +6,7 @@
           valid-isbn13?
           valid-isbn?
           isbn-strip
+          pretty-isbn13
           isbn10->amazon)
   (import (rnrs)
           (only (core) format)
@@ -51,6 +52,11 @@
   (define (tolerant-isbn? str)
     (cond ((tolerant-isbn13? str) 13)
           ((tolerant-isbn10? str) 10)
+          (else #f)))
+
+  (define (pretty-isbn13 str)
+    (cond ((pregexp-match "^([0-9]{3})([0-9]{10})$" str)
+           => (lambda (m) (string-append (cadr m) "-" (caddr m))))
           (else #f)))
 
   (define (isbn10->amazon str)

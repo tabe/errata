@@ -44,7 +44,7 @@
           (only (errata calendar) ad->japanese-era datetime->date datetime->y/m/d)
           (only (errata configuration) url-base google-cx)
           (only (errata font) face->style)
-          (only (errata isbn) isbn10->amazon)
+          (only (errata isbn) pretty-isbn13 isbn10->amazon)
           (errata model)
           (only (errata notification) notification notification-subject notification-body notification->url)
           (errata helper pagination)
@@ -307,7 +307,7 @@
            ((rowspan 4))
            (bib->image b))
           (html:th ((rowspan 2) (style "text-align:left;")) (__ ISBN))
-          (html:td ((style "color:#555555;")) (or (bib-isbn13 b) "-")))
+          (html:td ((style "color:#555555;")) (or (pretty-isbn13 (bib-isbn13 b)) "-")))
          (html:tr
           (html:td ((style "color:#555555;")) (or (bib-isbn10 b) "-")))
          (html:tr

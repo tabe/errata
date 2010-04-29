@@ -102,4 +102,7 @@
 (assert-= 10 (tolerant-isbn? "4-756-14084-X"))
 (assert-= 13 (tolerant-isbn? "978-4873114040"))
 
+(assert-boolean=? #f (pretty-isbn13 "0000000000"))
+(assert-string=? "978-4873114040" (pretty-isbn13 "9784873114040"))
+
 (report)
