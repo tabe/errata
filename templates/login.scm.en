@@ -1,0 +1,20 @@
+(doctype transitional)
+(html
+ (head
+  errata-keywords
+  (title "Errata")
+  (link ((href "/stylesheet/errata.css") (rel "stylesheet") (type "text/css")))
+  jquery-scripts
+  (script ((type "text/javascript")) preload-script)
+  (script ((type "text/javascript")) "$(function() {$('input[name=nick]').focus();});")
+  )
+ (body
+  menu
+  errata-logo
+  (div ((id "links")) links)
+  (div ((id "public"))
+       (lambda (uuid body) body)
+       (p ((style "font-size:small;")) "Or " (a ((href (build-entry-path 'forgot-password))) "forgot my password")))
+  belt
+  powered-by-lunula
+  ))

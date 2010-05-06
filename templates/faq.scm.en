@@ -1,0 +1,94 @@
+(doctype transitional)
+(html
+ (head
+  errata-keywords
+  (title "Errata")
+  (link ((href "/stylesheet/errata.css") (rel "stylesheet") (type "text/css")))
+  jquery-scripts
+  (script ((type "text/javascript")) preload-script)
+  )
+ (body
+  menu
+  errata-logo
+  (div ((id "links")) links)
+  (div ((id "public"))
+       (h2 "Frequently Asked Questions")
+       (ul
+        (li
+         (dl
+          (dt "What do I need to use Errata?")
+          (dd "Just your favorite Web browser." (br)
+              "Plus an active mail address if you want your own account.")
+          ))
+        (li
+         (dl
+          (dt "OK, I got my account. So, how can I edit some errata?")
+          (dd "Log in, and click \"Put it on\" in the menu, and register your book." (br)
+              "Then select the one from \"Look at Shelf\".")
+          ))
+        (li
+         (dl
+          (dt "Hm, the same books appear on the board.")
+          (dd "In Errata different revisions of the same one are regarded as different.")
+          ))
+        (li
+         (dl
+          (dt "Give me a criteria for appropriate errors to share via Errata.")
+          (dd "For any typos." (br)
+              "Not for missing or out-of-order pages." (br)
+              "Left the rest for you.")
+          ))
+        (li
+         (dl
+          (dt "What are typos?")
+          (dd "In Errata a typo is a definite error enjoying both of the following conditions:"
+              (ol
+               (li "out of the author(or the translator)'s intention for its occurrence")
+               (li "we can argue to agree some of its corrections")
+               ))
+          ))
+        (li
+         (dl
+          (dt "Can I quote 1024 lines from my book to describe a typo?")
+          (dd "No. Always respect for the copyright." (br)
+              "Sure, no limitation if its copyright belongs to you, but anyway a short quotation is usually suitable.")
+          ))
+;;         (li
+;;          (dl
+;;           (dt "「ユーザ」、「ユーザー」、「利用者」、どれがいいの?")
+;;           (dd "そのテキストの中で一貫して使われていればいずれも誤植ではありません。" (br)
+;;               "特に、テキストが翻訳の場合には誤植ではなく「訳語の選択」として扱います。")
+;;           ))
+        (li
+         (dl
+          (dt "How about copying official errata its author or publisher provides?")
+          (dd "Ask them. Also check the official errata's usage.")
+          ))
+        (li
+         (dl
+          (dt "Is it OK to reuse public review or correction?")
+          (dd "Yes, provided that you read and follow " creativecommons-attribution ".")
+          ))
+        (li
+         (dl
+          (dt "Hmmm, lost my session suddenly!")
+          (dd "Sorry for your inconvenience, it may be a technical problem." (br)
+              "By the way, with a technical reason, links in the page may be stale after browser's \"Back\" button.")
+          ))
+        (li
+         (dl
+          (dt "Got a "
+              (span ((class "MathJax_Preview")) "TeX")
+              (script ((type "math/tex")) "\\TeX")
+              " manuscript instead of its display.")
+          (dd "Assure to enable Javascript in your browser.")))
+        (li
+         (dl
+          (dt "Full of errors happen!!")
+          (dd "This service is still beta, i.e., experimental." (br)
+              "Your patience is much appreciated.")
+          ))
+        ))
+  belt
+  powered-by-lunula
+  ))

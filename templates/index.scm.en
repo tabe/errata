@@ -1,0 +1,44 @@
+(doctype transitional)
+(html
+ (head
+  errata-description
+  errata-keywords
+  (title "Errata")
+  (link ((href "/stylesheet/errata.css") (rel "stylesheet") (type "text/css")))
+  errata-rss-links
+  jquery-scripts
+  (script ((type "text/javascript")) preload-script)
+  )
+ (body
+  menu
+  errata-logo
+  (div ((id "links")) links)
+  (div ((id "public"))
+       (h2 "What's Errata&#x03B2;?")
+       (p "A beta-status web service to share books' errata.")
+       (h2 "Basic")
+       (p "You can browse public errata which someone shares with.")
+       (p "And if you create your own account (for free),")
+       (ul
+        (li "manage your virtual bookshelf,")
+        (li "collaborate to report errors and edit errata,")
+        (li "add review to books or comments to reports, and")
+        (li "share them under " creativecommons-attribution ".")
+        )
+       (h2 "Features")
+       (ul
+        (li "automated diff between quotation and correction of errors")
+        (li "beautiful mathematical equations via "
+            (span ((class "MathJax_Preview")) "TeX")
+            (script ((type "math/tex")) "\\TeX") " notation.")
+        (li "source code is open and available at "
+            (a ((href "http://github.com/tabe/errata")
+                (target "_blank")) "github"))
+        )
+       (h2 "Sounds great!")
+       (p "Please read " (a ((href (lambda args (build-entry-path 'faq (car args))))) "FAQ") " for more information.")
+       )
+  belt
+  powered-by-lunula
+  powered-by-mathjax
+  ))

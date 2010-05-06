@@ -1,0 +1,31 @@
+(doctype transitional)
+(html
+ (head
+  errata-keywords
+  (title "Errata")
+  (link ((href "/stylesheet/errata.css") (rel "stylesheet") (type "text/css")))
+  jquery-scripts
+  (script ((type "text/javascript")) preload-script)
+  )
+ (body
+  menu
+  errata-logo
+  (div ((id "links")) links)
+  (div ((id "public"))
+       (h2 "Your feedback is welcome")
+       (ul
+        (li
+         (p "check Errata's open source code: "
+            (a ((href "http://github.com/tabe/errata")) "http://github.com/tabe/errata")))
+        (li
+         (p "Join the Google group "
+            (a ((href "http://groups.google.com/group/errata")) "Errata")
+            " on Errata's development."))
+        (li
+         (p "Feel free to drop a line -- tabe at fixedpoint dot jp")
+         (p "Key fingerprint = 26F7 2FE0 FB2A 64AA EA87 C96A 4B40 171F 8AFE 4953"))
+        )
+       )
+  belt
+  powered-by-lunula
+  ))
