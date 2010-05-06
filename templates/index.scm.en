@@ -30,7 +30,7 @@
         (li "automated diff between quotation and correction of errors")
         (li "beautiful mathematical equations via "
             (span ((class "MathJax_Preview")) "TeX")
-            (script ((type "math/tex")) "\\TeX") " notation.")
+            (script ((type "math/tex")) "\\TeX") " notation")
         (li "source code is open and available at "
             (a ((href "http://github.com/tabe/errata")
                 (target "_blank")) "github"))
