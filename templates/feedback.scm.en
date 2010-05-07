@@ -20,9 +20,9 @@
         (li
          (p "Join the Google group "
             (a ((href "http://groups.google.com/group/errata")) "Errata")
-            " on Errata's development."))
+            " on Errata's development"))
         (li
-         (p "Feel free to drop a line -- tabe at fixedpoint dot jp")
+         (p "Feel free to drop a line to tabe at fixedpoint dot jp")
          (p "Key fingerprint = 26F7 2FE0 FB2A 64AA EA87 C96A 4B40 171F 8AFE 4953"))
         )
        )

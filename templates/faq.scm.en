@@ -34,7 +34,7 @@
         (li
          (dl
           (dt "Give me a criteria for appropriate errors to share via Errata.")
-          (dd "For any typos." (br)
+          (dd "For any typo." (br)
               "Not for missing or out-of-order pages." (br)
               "Left the rest for you.")
           ))
@@ -81,7 +81,7 @@
               (span ((class "MathJax_Preview")) "TeX")
               (script ((type "math/tex")) "\\TeX")
               " manuscript instead of its display.")
-          (dd "Assure to enable Javascript in your browser.")))
+          (dd "Assure to enable JavaScript in your browser.")))
         (li
          (dl
           (dt "Full of errors happen!!")
