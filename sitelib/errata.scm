@@ -996,6 +996,9 @@
   (define *password-advice*
     (format "~d文字以上~d文字以下" *account-password-min-length* *account-password-max-length*))
 
+  (define *page-advice* "(例: 「7」「vi」)")
+  (define *position-advice* "(例: 「10行目」「末尾」「図A-1内」)")
+
   (define-api (r isbn10 name year month day)
     validate-/isbn10/revision-name/year/month/day
     table
@@ -1077,8 +1080,8 @@
   (add-input-fields quotation
     (#f
      #f
-     (text "(例: 「7」「vi」)")
-     (text "(例: 「10行目」「末尾」「図A-1内」)")
+     (text *page-advice*)
+     (text *position-advice*)
      (textarea)
      select-font-face))
   (add-input-fields correction
@@ -1091,16 +1094,16 @@
      (text)))
   (add-input-fields report-to-modify
     ((text)
-     (text "(例: 「7」「vi」)")
-     (text "(例: 「10行目」「末尾」「図A-1内」)")
+     (text *page-advice*)
+     (text *position-advice*)
      (textarea)
      select-font-face
      (textarea)
      select-font-face))
   (add-input-fields report-by-manued
     ((text)
-     (text "(例: 「7」「vi」)")
-     (text "(例: 「10行目」「末尾」「図A-1内」)")
+     (text *page-advice*)
+     (text *position-advice*)
      (textarea "例: 「あ[あ/い]うえお」「0123[6|5|4]789」")
      select-font-face
      select-font-face))
